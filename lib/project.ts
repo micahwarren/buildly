@@ -9,6 +9,7 @@ export type Project = {
   description: string;
   originalImage: string;
   generatedImage: string;
+  visualizationMode?: "ai" | "demo";
   width: number;
   length: number;
   budget: string;

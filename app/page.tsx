@@ -65,7 +65,10 @@ export default function Home() {
     [toast, setToast] = useState(""),
     [mobile, setMobile] = useState(false),
     [ready, setReady] = useState(false),
-    [homeBefore, setHomeBefore] = useState(false);
+    [homeBefore, setHomeBefore] = useState(false),
+    [imageAvailable, setImageAvailable] = useState<boolean | null>(null),
+    [generatingDemo, setGeneratingDemo] = useState(false),
+    [regenerating, setRegenerating] = useState(false);
   const file = useRef<HTMLInputElement>(null),
     camera = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -76,10 +79,17 @@ export default function Home() {
       setError("Saved projects could not be opened in this browser.");
     }
     setReady(true);
+    fetch("/api/config")
+      .then((r) => r.json())
+      .then((data) => setImageAvailable(data.imageGenerationAvailable === true))
+      .catch(() => setImageAvailable(false));
   }, []);
   useEffect(() => {
     if (view !== "generating") return;
-    const timer = setInterval(() => setLoading((v) => Math.min(v + 1, 4)), 700);
+    const timer = setInterval(
+      () => setLoading((v) => Math.min(v + 1, 2)),
+      1800,
+    );
     return () => clearInterval(timer);
   }, [view]);
   useEffect(() => {
@@ -142,7 +152,7 @@ export default function Home() {
       const image = new window.Image();
       image.onload = () => {
         const canvas = document.createElement("canvas");
-        const scale = Math.min(1, 1400 / image.width);
+        const scale = Math.min(1, 1400 / image.width, 1400 / image.height);
         canvas.width = image.width * scale;
         canvas.height = image.height * scale;
         canvas
@@ -156,11 +166,12 @@ export default function Home() {
     };
     reader.readAsDataURL(f);
   }
-  async function generate() {
+  async function generate(demo = false) {
     if (!description.trim()) {
       setError("Tell us a little about your idea first.");
       return;
     }
+    setGeneratingDemo(demo);
     setLoading(0);
     go("generating");
     try {
@@ -168,6 +179,7 @@ export default function Home() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          mode: demo ? "demo" : "ai",
           originalImage: photo,
           projectType: type,
           description,
@@ -179,13 +191,50 @@ export default function Home() {
       });
       const data = await res.json();
       if (!res.ok) throw Error(data.error);
-      await new Promise((r) => setTimeout(r, 3200));
+      if (demo) await new Promise((r) => setTimeout(r, 1000));
       setProject(data);
       setTab("Overview");
       go("result");
     } catch (e) {
       go("wizard");
       setError(e instanceof Error ? e.message : "Please try again.");
+    }
+  }
+  async function regenerateDesign() {
+    if (!project || regenerating) return;
+    setRegenerating(true);
+    setError("");
+    try {
+      const res = await fetch("/api/design", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          originalImage: project.originalImage,
+          projectType: project.projectType,
+          description: project.description,
+          width: project.width,
+          length: project.length,
+          budget: project.budget,
+          experienceLevel: project.experienceLevel,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw Error(data.error);
+      update({
+        ...project,
+        generatedImage: data.generatedImage,
+        visualizationMode: data.visualizationMode,
+        updatedAt: new Date().toISOString(),
+      });
+      notify("Your new photo preview is ready.");
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Could not create another design. Please try again.",
+      );
+    } finally {
+      setRegenerating(false);
     }
   }
   async function ask() {
@@ -714,16 +763,22 @@ export default function Home() {
                   +length > 200
                 }
                 onClick={() =>
-                  detail < 2 ? setDetail(detail + 1) : generate()
+                  detail < 2 ? setDetail(detail + 1) : generate(false)
                 }
               >
-                {detail < 2 ? "Continue" : "Create my sample project"}{" "}
+                {detail < 2 ? "Continue" : "Show my project in my photo"}{" "}
                 <ArrowRight size={20} />
               </button>
               <p className="muted center">
-                Demo mode · No API key required. You’ll see an illustrative
-                sample plan.
+                {imageAvailable === false
+                  ? "Photo previews aren’t available on this site yet. A sample plan will not show your project in your yard."
+                  : "Your photo will be sent to our AI image provider to create a design concept. This can take a few minutes."}
               </p>
+              {detail === 2 && (
+                <button className="text-button" onClick={() => generate(true)}>
+                  Explore a sample plan instead (no photo edit)
+                </button>
+              )}
             </>
           )}
         </main>
@@ -733,19 +788,29 @@ export default function Home() {
           <div className="loading-house">
             <House size={52} />
           </div>
-          <span className="badge">DEMO MODE</span>
-          <h1>Putting your idea together…</h1>
-          <p>Preparing a sample concept for your {type.toLowerCase()}.</p>
+          <span className="badge">
+            {generatingDemo ? "SAMPLE PLAN" : "YOUR PHOTO → YOUR DESIGN"}
+          </span>
+          <h1>
+            {generatingDemo
+              ? "Preparing your sample plan…"
+              : "Creating your backyard preview…"}
+          </h1>
+          <p>
+            {generatingDemo
+              ? "This sample won’t include an edit of your photo."
+              : "We’re adding your idea to your photo. This can take a few minutes—please keep this page open."}
+          </p>
           <div className="loading-list">
             {[
-              "Keeping your photo with your project",
-              "Adding your idea and dimensions",
-              "Preparing an inspiration image",
-              "Estimating sample materials",
-              "Putting your next steps together",
+              "Photo received",
+              "Project details ready",
+              generatingDemo
+                ? "Preparing illustrative sample"
+                : "Editing your actual photo…",
             ].map((s, i) => (
-              <div key={s} className={i <= loading ? "done" : ""}>
-                {i <= loading ? (
+              <div key={s} className={i < loading ? "done" : ""}>
+                {i < loading ? (
                   <CheckCircle2 size={23} />
                 ) : (
                   <span className="empty-circle" />
@@ -767,7 +832,10 @@ export default function Home() {
               <h1>Here’s your project.</h1>
               <p>
                 {project.width} × {project.length} ft{" "}
-                {project.projectType.toLowerCase()} · Sample concept
+                {project.projectType.toLowerCase()} ·{" "}
+                {project.visualizationMode === "ai"
+                  ? "AI photo concept"
+                  : "Sample plan"}
               </p>
             </div>
             <button className="primary" onClick={() => store(project)}>
@@ -777,10 +845,15 @@ export default function Home() {
           <div className="demo-banner">
             <ImageIcon size={23} />
             <div>
-              <strong>Demo preview</strong>
+              <strong>
+                {project.visualizationMode === "ai"
+                  ? "Your space, reimagined"
+                  : "Sample plan — no photo preview generated"}
+              </strong>
               <span>
-                The inspiration image is a sample, not an edit of your photo.
-                Plans and prices are illustrative.
+                {project.visualizationMode === "ai"
+                  ? "The design was created from your uploaded photo. Materials, costs, and build steps below remain illustrative; verify them independently."
+                  : "This is a separate generic illustration, not a preview of your property. Use Create a photo preview to visualize the project in your yard."}
               </span>
             </div>
           </div>
@@ -808,23 +881,24 @@ export default function Home() {
               <ProjectComparison
                 originalImage={project.originalImage}
                 generatedImage={project.generatedImage}
+                live={project.visualizationMode === "ai"}
               />
               <div className="design-actions">
-                <span>Slide to compare · Sample imagery only</span>
+                <span>
+                  {project.visualizationMode === "ai"
+                    ? "Your original photo is always kept."
+                    : "Sample illustrations cannot show how your yard will look."}
+                </span>
                 <button
                   className="secondary"
-                  onClick={() => {
-                    update({
-                      ...project,
-                      generatedImage:
-                        project.generatedImage === photos.pergola
-                          ? photos.deck
-                          : photos.pergola,
-                    });
-                    notify("Showing another sample inspiration image.");
-                  }}
+                  disabled={regenerating}
+                  onClick={regenerateDesign}
                 >
-                  Try another sample
+                  {regenerating
+                    ? "Creating your photo preview…"
+                    : project.visualizationMode === "ai"
+                      ? "Try another design"
+                      : "Create a photo preview"}
                 </button>
               </div>
               <h2>
@@ -1169,7 +1243,10 @@ export default function Home() {
                   />
                   <div>
                     <span className="eyebrow">
-                      {p.projectType} · DEMO CONCEPT
+                      {p.projectType} ·{" "}
+                      {p.visualizationMode === "ai"
+                        ? "AI PHOTO CONCEPT"
+                        : "SAMPLE PLAN"}
                     </span>
                     <h3>{p.title}</h3>
                     <p>

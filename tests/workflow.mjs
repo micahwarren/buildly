@@ -17,6 +17,16 @@ console.log("Test artifacts: " + output);
   });
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  // Browser tests never call a paid image provider.
+  await page.route("**/api/config", (route) =>
+    route.fulfill({ json: { imageGenerationAvailable: false } }),
+  );
+  await page.route("**/api/design", (route) =>
+    route.fulfill({
+      status: 503,
+      json: { error: "Photo previews are not connected yet." },
+    }),
+  );
   await page.goto(BASE_URL);
   await page
     .getByRole("heading", { name: "See it. Plan it. Build it." })
@@ -57,10 +67,59 @@ console.log("Test artifacts: " + output);
   await page
     .getByRole("button", { name: "Some experience", exact: true })
     .click();
-  await page.getByRole("button", { name: "Create my sample project" }).click();
+  await page
+    .getByRole("button", {
+      name: "Explore a sample plan instead (no photo edit)",
+    })
+    .click();
   await page.getByRole("heading", { name: "Here’s your project." }).waitFor();
   assert.match(await page.locator(".result-heading").innerText(), /14 × 18/);
+  assert.equal(await page.getByRole("slider").count(), 0);
+  await page
+    .getByRole("button", { name: "Create a photo preview", exact: true })
+    .click();
+  await page
+    .getByRole("alert")
+    .filter({ hasText: "Photo previews are not connected yet" })
+    .waitFor();
+  await page.getByRole("button", { name: "Dismiss error" }).click();
+  assert.equal(await page.locator(".sample-images").count(), 1);
+  await page.unroute("**/api/design");
+  const fixtureImage =
+    "data:image/png;base64," +
+    fs.readFileSync(path.join(output, "yard.png")).toString("base64");
+  await page.route("**/api/design", (route) =>
+    route.fulfill({
+      json: { generatedImage: fixtureImage, visualizationMode: "ai" },
+    }),
+  );
+  await page
+    .getByRole("button", { name: "Create a photo preview", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Your design", exact: true })
+    .waitFor();
+  assert.equal(await page.locator(".sample-images").count(), 0);
+  assert.equal(await page.getByRole("slider").count(), 0);
+  assert.equal(
+    await page.locator(".comparison>img").getAttribute("src"),
+    fixtureImage,
+  );
+  await page.getByRole("button", { name: "Compare before & after" }).click();
   await page.getByRole("slider").fill("30");
+  assert.match(
+    await page.locator(".before-image").getAttribute("style"),
+    /70%/,
+  );
+  const sizes = await page
+    .locator(".comparison")
+    .evaluate((el) => ({
+      width: el.clientWidth,
+      originalWidth: el.querySelector(".before-image img").clientWidth,
+    }));
+  assert.ok(Math.abs(sizes.width - sizes.originalWidth) < 2);
+  await page.getByRole("button", { name: "Your design", exact: true }).click();
+
   await page
     .getByRole("button", { name: "Save my project", exact: true })
     .click();
@@ -137,7 +196,7 @@ console.log("Test artifacts: " + output);
   assert.equal(bad.status(), 400);
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: upload, wizard, dimensions, demo generation, comparison, materials download, tools, build progress, Q&A, persistence after reload, desktop/mobile layouts, invalid request validation; no browser exceptions.",
+    "PASS: upload, wizard, dimensions, explicit demo, missing-key error UI, live-result UI and comparison (mocked provider), materials download, tools, build progress, Q&A, persistence after reload, desktop/mobile layouts, invalid request validation; no browser exceptions.",
   );
   await browser.close();
 })().catch((e) => {
