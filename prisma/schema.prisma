@@ -1,0 +1,43 @@
+// Future cloud storage contract. Browser demo uses localStorage, not this database.
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  projects  Project[]
+  createdAt DateTime  @default(now())
+}
+model Project {
+  id                String   @id @default(cuid())
+  userId            String?
+  user              User?    @relation(fields: [userId], references: [id])
+  title             String
+  projectType       String
+  description       String
+  originalImage     String
+  generatedImage    String
+  width             Float
+  length            Float
+  budget            String
+  experienceLevel   String
+  status            String   @default("concept")
+  estimatedCostLow   Float
+  estimatedCostHigh  Float
+  estimatedHours    String
+  difficulty        String
+  materials         Json
+  tools             Json
+  steps             Json
+  assumptions       Json
+  warnings          Json
+  conversation      Json
+  completed         Int      @default(0)
+  demo              Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
