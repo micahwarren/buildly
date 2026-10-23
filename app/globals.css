@@ -2462,3 +2462,63 @@ progress {
     font-size: 14px;
   }
 }
+
+.home-simple .hero .rotating-headline {
+  font-size: clamp(38px, min(4.1vw, 7svh), 58px);
+  line-height: 1.12;
+  letter-spacing: -2px;
+}
+.headline-endings {
+  display: block;
+  position: relative;
+  height: 1.3em;
+  overflow: hidden;
+  margin-top: 0.08em;
+}
+.headline-endings em {
+  display: block;
+  position: absolute;
+  inset: 0;
+  white-space: nowrap;
+  animation: headline-shuffle 20s cubic-bezier(0.2, 0.7, 0.2, 1) infinite both;
+}
+.rotating-headline.is-paused em {
+  animation-play-state: paused;
+}
+@keyframes headline-shuffle {
+  0% {
+    opacity: 0;
+    transform: translateY(80%);
+  }
+  3%,
+  22% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  25%,
+  100% {
+    opacity: 0;
+    transform: translateY(-80%);
+  }
+}
+@media (max-width: 900px) {
+  .home-simple .hero .rotating-headline {
+    font-size: clamp(30px, 4.8svh, 44px);
+    letter-spacing: -1.3px;
+  }
+}
+@media (max-width: 600px) {
+  .home-simple .hero .rotating-headline {
+    font-size: clamp(29px, 4.5svh, 36px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .headline-endings em {
+    animation: none;
+    opacity: 0;
+    transform: none;
+  }
+  .headline-endings em:last-child {
+    opacity: 1;
+  }
+}

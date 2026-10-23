@@ -65,6 +65,31 @@ try {
       ),
     );
   }
+  const endings = page.locator(".headline-endings em");
+  for (const [index, time] of [1000, 6000, 11000, 16000, 21000].entries()) {
+    const visible = await endings.evaluateAll((elements, time) => {
+      elements.forEach((element) =>
+        element.getAnimations().forEach((animation) => {
+          animation.pause();
+          animation.currentTime = time;
+        }),
+      );
+      return elements.map((element) =>
+        Number(getComputedStyle(element).opacity),
+      );
+    }, time);
+    assert.equal(visible.filter((opacity) => opacity === 1).length, 1);
+    assert.equal(visible[index % 4], 1);
+  }
+  for (const width of [375, 390, 980, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 780 });
+    assert(
+      await endings.evaluateAll((elements) =>
+        elements.every((element) => element.scrollWidth <= element.clientWidth),
+      ),
+      `headline must fit at ${width}`,
+    );
+  }
   await page.emulateMedia({ reducedMotion: "reduce" });
   assert(
     await page

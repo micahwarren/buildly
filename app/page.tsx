@@ -40,6 +40,7 @@ import { ShoppingList } from "@/components/ShoppingList";
 import { PlanReview } from "@/components/PlanReview";
 import { shoppingText } from "@/lib/shopping";
 import type { ProjectDetails } from "@/lib/project-details";
+import { RotatingHeadline } from "@/components/RotatingHeadline";
 import { DeckAnimation } from "@/components/DeckAnimation";
 import { AccountDialog } from "@/components/AccountDialog";
 const categories = [
@@ -57,6 +58,7 @@ const money = (n: number) =>
   }).format(n);
 export default function Home() {
   const [view, setView] = useState("home"),
+    [heroPaused, setHeroPaused] = useState(false),
     [step, setStep] = useState(0),
     [detail, setDetail] = useState(0),
     [photo, setPhoto] = useState(""),
@@ -673,11 +675,7 @@ export default function Home() {
           <section className="hero">
             <div className="hero-copy">
               <div className="eyebrow">LESS GUESSWORK. MORE BUILDING.</div>
-              <h1>
-                Big ideas.
-                <br />
-                <em>Built by you.</em>
-              </h1>
+              <RotatingHeadline paused={heroPaused} />
               <p>
                 Upload a photo and tell us what you want to build. Get a design,
                 a materials list, and step-by-step instructions.
@@ -687,7 +685,10 @@ export default function Home() {
               </button>
               <div className="hero-note">Photo → Idea → Your plan</div>
             </div>
-            <DeckAnimation />
+            <DeckAnimation
+              paused={heroPaused}
+              onToggle={() => setHeroPaused(!heroPaused)}
+            />
           </section>
           <section className="section" id="how">
             <div className="section-heading">

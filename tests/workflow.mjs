@@ -41,7 +41,7 @@ console.log("Test artifacts: " + output);
   });
   await page.goto(BASE_URL);
   await page
-    .getByRole("heading", { name: /Big ideas.*Built by you/ })
+    .getByRole("heading", { name: /Buildly turns.*what if.*a plan to build/ })
     .waitFor();
   await page.screenshot({
     path: path.join(output, "home-desktop.png"),
@@ -50,9 +50,9 @@ console.log("Test artifacts: " + output);
   await page
     .locator(".deck-scene")
     .screenshot({ path: path.join(output, "yard.png") });
-  await page.getByRole("button", { name: "Pause deck animation" }).click();
+  await page.getByRole("button", { name: "Pause animations" }).click();
   assert.ok(await page.locator(".deck-scene.is-paused").count());
-  await page.getByRole("button", { name: "Play deck animation" }).click();
+  await page.getByRole("button", { name: "Play animations" }).click();
   await page
     .getByRole("button", { name: "Start my project", exact: true })
     .first()

@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import { Pause, Play } from "lucide-react";
 
 // Isometric illustration: dimensions are visual, not construction specifications.
@@ -97,8 +96,13 @@ const pieces = [
   })),
   { x: 0, y: 0, z: 125, w: 250, d: 12, h: 6, ...timber },
 ];
-export function DeckAnimation() {
-  const [paused, setPaused] = useState(false);
+export function DeckAnimation({
+  paused,
+  onToggle,
+}: {
+  paused: boolean;
+  onToggle: () => void;
+}) {
   return (
     <div className={`deck-scene${paused ? " is-paused" : ""}`}>
       <div className="scene-top">
@@ -106,8 +110,8 @@ export function DeckAnimation() {
           <i /> A LITTLE VISION. PIECE BY PIECE.
         </span>
         <button
-          onClick={() => setPaused(!paused)}
-          aria-label={paused ? "Play deck animation" : "Pause deck animation"}
+          onClick={onToggle}
+          aria-label={paused ? "Play animations" : "Pause animations"}
         >
           {paused ? <Play size={16} /> : <Pause size={16} />}
         </button>
