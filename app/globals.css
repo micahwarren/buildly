@@ -2334,3 +2334,131 @@ progress {
     transform: none;
   }
 }
+
+/* Keep the first impression together inside the visible browser viewport. */
+.home-header {
+  height: 80px;
+}
+.home-simple .hero {
+  height: calc(100svh - 80px);
+  min-height: 480px;
+  max-height: 960px;
+  padding-top: clamp(20px, 4svh, 44px);
+  padding-bottom: clamp(20px, 4svh, 44px);
+  align-items: center;
+}
+.home-simple .hero-copy {
+  padding-top: 0;
+}
+.home-simple .hero h1 {
+  font-size: clamp(48px, min(5.9vw, 9svh), 82px);
+  margin-top: 16px;
+  margin-bottom: 20px;
+}
+.home-simple .hero-copy p {
+  margin-bottom: 24px;
+}
+.home-simple .deck-scene {
+  height: 100%;
+  max-height: 720px;
+  display: flex;
+  flex-direction: column;
+}
+.home-simple .deck-scene > svg {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 0;
+  width: 100%;
+  margin-top: 0;
+}
+.home-simple .scene-top,
+.home-simple .scene-bottom {
+  flex: 0 0 auto;
+}
+.home-simple .scene-bottom {
+  padding-top: 0;
+}
+@media (max-width: 900px) {
+  .home-simple .hero {
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 24px;
+    max-height: none;
+    min-height: 570px;
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+  .home-simple .hero-copy {
+    width: 100%;
+    max-width: 680px;
+    margin: auto;
+  }
+  .home-simple .hero h1 {
+    font-size: clamp(38px, 5.7svh, 54px);
+    letter-spacing: -2px;
+    margin: 10px 0 14px;
+  }
+  .home-simple .hero .eyebrow {
+    margin-bottom: 10px;
+  }
+  .home-simple .hero-copy p {
+    max-width: 560px;
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 0 0 18px;
+  }
+  .home-simple .hero .primary {
+    min-height: 48px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .home-simple .hero-note {
+    margin-top: 12px;
+    font-size: 12px;
+  }
+  .home-simple .deck-scene {
+    min-height: 200px;
+  }
+  .home-simple .scene-top {
+    padding-top: 12px;
+  }
+  .home-simple .scene-bottom {
+    padding-bottom: 14px;
+  }
+  .home-simple .scene-number {
+    display: none;
+  }
+  .home-simple .scene-bottom strong {
+    margin-top: 0;
+  }
+}
+@media (max-width: 600px) {
+  .home-header {
+    height: 64px;
+    padding: 0 20px;
+  }
+  .home-header .header-cta {
+    display: none;
+  }
+  .home-simple .hero {
+    height: calc(100svh - 64px);
+    padding: 18px 20px;
+    gap: 18px;
+  }
+  .home-simple .hero-copy p {
+    font-size: 15px;
+    line-height: 1.45;
+    margin-bottom: 16px;
+  }
+  .home-simple .hero h1 {
+    font-size: clamp(36px, 5.7svh, 48px);
+  }
+  .home-simple .hero-note {
+    margin-top: 10px;
+  }
+  .home-simple .scene-caption {
+    display: none;
+  }
+  .home-simple .scene-bottom strong {
+    font-size: 14px;
+  }
+}

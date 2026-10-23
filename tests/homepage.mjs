@@ -39,6 +39,32 @@ try {
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   );
+  for (const viewport of [
+    { width: 1440, height: 780 },
+    { width: 1280, height: 650 },
+    { width: 1512, height: 820 },
+    { width: 768, height: 1024 },
+    { width: 390, height: 844 },
+    { width: 375, height: 667 },
+  ]) {
+    await page.setViewportSize(viewport);
+    for (const selector of [
+      ".home-simple .hero",
+      ".hero-copy .primary",
+      ".deck-scene",
+    ]) {
+      const box = await page.locator(selector).boundingBox();
+      assert(
+        box && box.y >= 0 && box.y + box.height <= viewport.height + 1,
+        `${selector} must fit at ${viewport.width}x${viewport.height}`,
+      );
+    }
+    assert(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    );
+  }
   await page.emulateMedia({ reducedMotion: "reduce" });
   assert(
     await page

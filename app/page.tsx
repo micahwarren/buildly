@@ -600,7 +600,7 @@ export default function Home() {
   }
   return (
     <>
-      <header>
+      <header className={view === "home" ? "home-header" : undefined}>
         <button
           className="logo"
           onClick={() => go("home")}
