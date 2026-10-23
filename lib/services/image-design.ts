@@ -1,3 +1,4 @@
+import { imageProviderConfig, type ImageProvider } from "../image-provider";
 import sharp from "sharp";
 import { photos, type Project } from "../project";
 export class DesignError extends Error {
@@ -13,7 +14,12 @@ type DesignInput = Pick<
   Project,
   "originalImage" | "projectType" | "description" | "width" | "length"
 >;
-type Dependencies = { apiKey?: string; model?: string; fetcher?: typeof fetch };
+type Dependencies = {
+  apiKey?: string;
+  model?: string;
+  fetcher?: typeof fetch;
+  provider?: ImageProvider;
+};
 export function designPrompt(input: DesignInput) {
   return `Edit the supplied photograph of the homeowner's actual property. Produce a realistic architectural PHOTOGRAPH, never an illustration, diagram, split screen, collage, or a different property.
 Requested project: ${input.projectType}. Homeowner's description (design preferences only): ${input.description}
@@ -34,7 +40,27 @@ export async function createDesign(
       mode: "demo" as const,
     };
   }
-  const apiKey = dependencies.apiKey ?? process.env.OPENAI_API_KEY;
+  const configured = imageProviderConfig();
+  const provider = dependencies.provider ?? configured.provider;
+  if (!provider)
+    throw new DesignError(
+      "The image provider configuration is invalid. The site owner needs to select Gemini or OpenAI.",
+      503,
+    );
+  const apiKey =
+    dependencies.apiKey ??
+    (dependencies.provider && dependencies.provider !== configured.provider
+      ? undefined
+      : configured.apiKey);
+  const model =
+    dependencies.model ??
+    (provider === configured.provider
+      ? configured.model
+      : provider === "gemini"
+        ? "gemini-3.1-flash-image"
+        : "gpt-image-1.5");
+  if (!/^[a-zA-Z0-9._-]+$/.test(model))
+    throw new DesignError("The image model configuration is invalid.", 503);
   if (!apiKey)
     throw new DesignError(
       "Photo previews are not connected yet. The site owner needs to enable image generation. You can still explore an explicitly labeled sample plan.",
@@ -70,42 +96,90 @@ export async function createDesign(
       400,
     );
   }
-  const form = new FormData();
-  form.set(
-    "model",
-    dependencies.model ?? process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5",
-  );
-  form.set(
-    "image",
-    new Blob([new Uint8Array(source)], { type: "image/jpeg" }),
-    "backyard.jpg",
-  );
-  form.set("prompt", designPrompt(input));
-  if (["gpt-image-1", "gpt-image-1.5"].includes(String(form.get("model"))))
-    form.set("input_fidelity", "high");
-  form.set("quality", "medium");
-  form.set("n", "1");
-  form.set(
-    "size",
-    width > height * 1.2
-      ? "1536x1024"
-      : height > width * 1.2
-        ? "1024x1536"
-        : "1024x1024",
-  );
-  form.set("output_format", "jpeg");
-  form.set("output_compression", "85");
+  let url: string;
+  let body: BodyInit;
+  let headers: Record<string, string>;
+  if (provider === "gemini") {
+    const ratios = [
+      "1:1",
+      "2:3",
+      "3:2",
+      "3:4",
+      "4:3",
+      "4:5",
+      "5:4",
+      "9:16",
+      "16:9",
+      "21:9",
+    ];
+    const aspectRatio = ratios.reduce((best, ratio) => {
+      const value = (v: string) => {
+        const [w, h] = v.split(":").map(Number);
+        return w / h;
+      };
+      return Math.abs(Math.log(value(ratio) / (width / height))) <
+        Math.abs(Math.log(value(best) / (width / height)))
+        ? ratio
+        : best;
+    });
+    url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    headers = { "Content-Type": "application/json", "x-goog-api-key": apiKey };
+    body = JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: source.toString("base64"),
+              },
+            },
+            { text: designPrompt(input) },
+          ],
+        },
+      ],
+      generationConfig: {
+        responseModalities: ["TEXT", "IMAGE"],
+        imageConfig: { aspectRatio, imageSize: "1K" },
+      },
+    });
+  } else {
+    const form = new FormData();
+    form.set("model", model);
+    form.set(
+      "image",
+      new Blob([new Uint8Array(source)], { type: "image/jpeg" }),
+      "backyard.jpg",
+    );
+    form.set("prompt", designPrompt(input));
+    if (["gpt-image-1", "gpt-image-1.5"].includes(String(form.get("model"))))
+      form.set("input_fidelity", "high");
+    form.set("quality", "medium");
+    form.set("n", "1");
+    form.set(
+      "size",
+      width > height * 1.2
+        ? "1536x1024"
+        : height > width * 1.2
+          ? "1024x1536"
+          : "1024x1024",
+    );
+    form.set("output_format", "jpeg");
+    form.set("output_compression", "85");
+
+    url = "https://api.openai.com/v1/images/edits";
+    headers = { Authorization: `Bearer ${apiKey}` };
+    body = form;
+  }
   let response: Response;
   try {
-    response = await (dependencies.fetcher ?? fetch)(
-      "https://api.openai.com/v1/images/edits",
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}` },
-        body: form,
-        signal: AbortSignal.timeout(240_000),
-      },
-    );
+    response = await (dependencies.fetcher ?? fetch)(url, {
+      method: "POST",
+      headers,
+      body,
+      signal: AbortSignal.timeout(240_000),
+    });
   } catch {
     throw new DesignError(
       "Your photo preview took too long or could not connect. Please try again.",
@@ -113,6 +187,11 @@ export async function createDesign(
     );
   }
   if (!response.ok) {
+    if (response.status === 400 && provider === "gemini")
+      throw new DesignError(
+        "Google could not accept the image request. The site owner should check the Gemini API key, model, and billing configuration; you can also try another photo or description.",
+        502,
+      );
     if (response.status === 401)
       throw new DesignError(
         "Image generation is not configured correctly. The site owner needs to check the API key.",
@@ -120,7 +199,14 @@ export async function createDesign(
       );
     if (response.status === 403)
       throw new DesignError(
-        "This AI account does not have access to image editing. The site owner needs to check model access and organization verification.",
+        provider === "gemini"
+          ? "Google denied image generation. The site owner needs to check Gemini API access, key restrictions, billing, and region availability."
+          : "This AI account does not have access to image editing. The site owner needs to check model access and organization verification.",
+        503,
+      );
+    if (response.status === 404)
+      throw new DesignError(
+        "The configured image model is unavailable. The site owner needs to select an available image-generation model.",
         503,
       );
     if (response.status === 429)
@@ -132,12 +218,54 @@ export async function createDesign(
       "We could not create this photo preview. Please try again with a different description or photo.",
     );
   }
-  const data: unknown = await response.json();
-  const encoded = (data as { data?: { b64_json?: unknown }[] })?.data?.[0]
-    ?.b64_json;
+  type ProviderResponse = {
+    data?: { b64_json?: unknown }[];
+    promptFeedback?: { blockReason?: string };
+    candidates?: {
+      finishReason?: string;
+      content?: {
+        parts?: {
+          inlineData?: { mimeType?: string; data?: unknown };
+          thought?: boolean;
+        }[];
+      };
+    }[];
+  };
+  let data: ProviderResponse;
+  try {
+    data = await response.json();
+  } catch {
+    throw new DesignError(
+      "The image service did not return a usable preview. Please try again.",
+    );
+  }
+  const candidate = data?.candidates?.[0];
+  if (
+    provider === "gemini" &&
+    (data?.promptFeedback?.blockReason ||
+      ["SAFETY", "IMAGE_SAFETY", "PROHIBITED_CONTENT", "RECITATION"].includes(
+        candidate?.finishReason || "",
+      ))
+  )
+    throw new DesignError(
+      "The image service could not process this photo or description. Please try a different photo or rephrase your idea.",
+      422,
+    );
+  const encoded =
+    provider === "gemini"
+      ? candidate?.content?.parts?.find(
+          (part) =>
+            !part.thought &&
+            ["image/png", "image/jpeg", "image/webp"].includes(
+              part.inlineData?.mimeType || "",
+            ) &&
+            typeof part.inlineData?.data === "string",
+        )?.inlineData?.data
+      : data?.data?.[0]?.b64_json;
   if (typeof encoded !== "string" || !encoded || encoded.length > 25_000_000)
     throw new DesignError(
       "The image service did not return a usable preview. Please try again.",
+      502,
     );
   try {
     // Normalize both sides to the source frame so comparison cannot independently crop the images.

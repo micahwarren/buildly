@@ -1,8 +1,9 @@
+import { imageProviderConfig } from "./image-provider";
 import { DesignError } from "./services/image-design";
 const attempts = new Map<string, { count: number; expires: number }>();
 /** Per-instance guard. Use a shared limiter or Vercel Firewall for a global production limit. */
 export function checkImageLimit(request: Request, demo: boolean) {
-  if (demo || !process.env.OPENAI_API_KEY) return;
+  if (demo || !imageProviderConfig().apiKey) return;
   const now = Date.now();
   for (const [key, value] of attempts)
     if (value.expires <= now) attempts.delete(key);

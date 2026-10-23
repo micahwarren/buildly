@@ -1,3 +1,4 @@
+import { imageProviderConfig } from "../lib/image-provider";
 import test, { before } from "node:test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
@@ -33,12 +34,15 @@ before(async () => {
 });
 test("missing key returns setup error; never substitutes a sample", async () => {
   await assert.rejects(
-    createDesign(input, false, { apiKey: "" }),
+    createDesign(input, false, { provider: "openai", apiKey: "" }),
     (e) => e instanceof DesignError && e.status === 503,
   );
 });
 test("explicit demo mode returns an identified illustration", async () => {
-  const result = await createDesign(input, true, { apiKey: "" });
+  const result = await createDesign(input, true, {
+    provider: "openai",
+    apiKey: "",
+  });
   assert.equal(result.mode, "demo");
   assert.equal(result.generatedImage, "/images/patio.svg");
 });
@@ -64,6 +68,7 @@ test("real path attaches the actual photo to image edits, includes the idea, and
     return Response.json({ data: [{ b64_json: edited.toString("base64") }] });
   };
   const result = await createDesign(input, false, {
+    provider: "openai",
     apiKey: "test-only",
     fetcher,
   });
@@ -82,7 +87,11 @@ for (const status of [401, 403, 429, 500])
     const fetcher: typeof fetch = async () =>
       new Response("private upstream diagnostic", { status });
     await assert.rejects(
-      createDesign(input, false, { apiKey: "test-only", fetcher }),
+      createDesign(input, false, {
+        provider: "openai",
+        apiKey: "test-only",
+        fetcher,
+      }),
       (e) =>
         e instanceof DesignError && !e.message.includes("private upstream"),
     );
@@ -91,7 +100,11 @@ test("malformed upstream image is rejected", async () => {
   const fetcher: typeof fetch = async () =>
     Response.json({ data: [{ b64_json: "not-an-image" }] });
   await assert.rejects(
-    createDesign(input, false, { apiKey: "test-only", fetcher }),
+    createDesign(input, false, {
+      provider: "openai",
+      apiKey: "test-only",
+      fetcher,
+    }),
     DesignError,
   );
 });
@@ -105,7 +118,7 @@ test("invalid source is rejected before making a paid request", async () => {
     createDesign(
       { ...input, originalImage: "data:image/jpeg;base64,AAAA" },
       false,
-      { apiKey: "test-only", fetcher },
+      { provider: "openai", apiKey: "test-only", fetcher },
     ),
     DesignError,
   );
@@ -115,4 +128,134 @@ test("sample planning remains explicitly demo-only", async () => {
   const project = await planProject(input, true);
   assert.equal(project.visualizationMode, "demo");
   assert.equal(project.demo, true);
+});
+
+test("Gemini sends the actual yard image and returns a normalized edited image", async () => {
+  let calls = 0;
+  const fetcher: typeof fetch = async (url, options) => {
+    calls++;
+    assert.equal(
+      url,
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent",
+    );
+    assert.equal(options?.method, "POST");
+    const headers = options?.headers as Record<string, string>;
+    assert.equal(headers["x-goog-api-key"], "test-only");
+    assert.equal(headers.Authorization, undefined);
+    const body = JSON.parse(String(options?.body));
+    assert.deepEqual(body.generationConfig.responseModalities, [
+      "TEXT",
+      "IMAGE",
+    ]);
+    assert.equal(body.generationConfig.imageConfig.imageSize, "1K");
+    assert.equal(body.generationConfig.imageConfig.aspectRatio, "3:2");
+    const parts = body.contents[0].parts;
+    assert.equal(parts[0].inlineData.mimeType, "image/jpeg");
+    assert.equal(
+      (await sharp(Buffer.from(parts[0].inlineData.data, "base64")).metadata())
+        .width,
+      320,
+    );
+    assert.match(parts[1].text, /stone patio by the back door/);
+    return Response.json({
+      candidates: [
+        {
+          content: {
+            parts: [
+              { text: "Here is the design" },
+              {
+                inlineData: {
+                  mimeType: "image/jpeg",
+                  data: edited.toString("base64"),
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+  };
+  const result = await createDesign(input, false, {
+    provider: "gemini",
+    apiKey: "test-only",
+    fetcher,
+  });
+  assert.equal(calls, 1);
+  assert.equal(result.mode, "ai");
+  assert.equal(result.originalImage, input.originalImage);
+  const metadata = await sharp(
+    Buffer.from(result.generatedImage.split(",")[1], "base64"),
+  ).metadata();
+  assert.equal(metadata.width, 320);
+  assert.equal(metadata.height, 200);
+});
+for (const status of [400, 401, 403, 404, 429, 500])
+  test(`Gemini ${status} fails without falling back to another provider or samples`, async () => {
+    let calls = 0;
+    const fetcher: typeof fetch = async (url) => {
+      calls++;
+      assert.match(String(url), /generativelanguage.googleapis.com/);
+      return new Response("private diagnostic", { status });
+    };
+    await assert.rejects(
+      createDesign(input, false, {
+        provider: "gemini",
+        apiKey: "test-only",
+        fetcher,
+      }),
+      (e) =>
+        e instanceof DesignError && !e.message.includes("private diagnostic"),
+    );
+    assert.equal(calls, 1);
+  });
+test("Gemini text-only response cannot be presented as an image", async () => {
+  const fetcher: typeof fetch = async () =>
+    Response.json({
+      candidates: [
+        { content: { parts: [{ text: "I cannot edit that image" }] } },
+      ],
+    });
+  await assert.rejects(
+    createDesign(input, false, {
+      provider: "gemini",
+      apiKey: "test-only",
+      fetcher,
+    }),
+    DesignError,
+  );
+});
+test("Gemini safety-blocked image does not fall back to artwork", async () => {
+  const fetcher: typeof fetch = async () =>
+    Response.json({ promptFeedback: { blockReason: "SAFETY" } });
+  await assert.rejects(
+    createDesign(input, false, {
+      provider: "gemini",
+      apiKey: "test-only",
+      fetcher,
+    }),
+    (e) => e instanceof DesignError && e.status === 422,
+  );
+});
+
+test("provider selection defaults to Gemini and never reuses the other provider key", () => {
+  const defaults = imageProviderConfig({ OPENAI_API_KEY: "unused-test-value" });
+  assert.equal(defaults.provider, "gemini");
+  assert.equal(defaults.apiKey, undefined);
+  const gemini = imageProviderConfig({
+    GEMINI_API_KEY: "google-test-value",
+    OPENAI_API_KEY: "unused-test-value",
+  });
+  assert.equal(gemini.apiKey, "google-test-value");
+  assert.equal(gemini.model, "gemini-3.1-flash-image");
+  const openai = imageProviderConfig({
+    IMAGE_PROVIDER: "openai",
+    OPENAI_API_KEY: "openai-test-value",
+    GEMINI_API_KEY: "unused-test-value",
+  });
+  assert.equal(openai.provider, "openai");
+  assert.equal(openai.apiKey, "openai-test-value");
+  assert.equal(
+    imageProviderConfig({ IMAGE_PROVIDER: "invalid" }).provider,
+    null,
+  );
 });
