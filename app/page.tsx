@@ -84,6 +84,7 @@ export default function Home() {
     [rebuilding, setRebuilding] = useState(false),
     [refining, setRefining] = useState(false),
     [showAccount, setShowAccount] = useState(false),
+    [accountMode, setAccountMode] = useState<"signup" | "signin">("signup"),
     [draftStatus, setDraftStatus] = useState("");
   const account = useAccount();
   const library = useProjectLibrary(account);
@@ -676,14 +677,39 @@ export default function Home() {
             <div className="hero-copy">
               <div className="eyebrow">LESS GUESSWORK. MORE BUILDING.</div>
               <RotatingHeadline paused={heroPaused} />
-              <p>
-                Upload a photo and tell us what you want to build. Get a design,
-                a materials list, and step-by-step instructions.
-              </p>
-              <button className="primary big" onClick={() => start()}>
-                Start my project <ArrowRight size={21} />
+              {!account.user ? (
+                <div className="hero-account-actions">
+                  <button
+                    className="primary big"
+                    onClick={() => {
+                      setAccountMode("signup");
+                      setShowAccount(true);
+                    }}
+                  >
+                    Create account <ArrowRight size={20} />
+                  </button>
+                  <button
+                    className="secondary big"
+                    onClick={() => {
+                      setAccountMode("signin");
+                      setShowAccount(true);
+                    }}
+                  >
+                    Log in
+                  </button>
+                </div>
+              ) : null}
+              <button
+                className={
+                  account.user ? "primary big" : "text-button hero-guest"
+                }
+                onClick={() => start()}
+              >
+                Start my project <ArrowRight size={account.user ? 21 : 17} />
               </button>
-              <div className="hero-note">Photo → Idea → Your plan</div>
+              {account.user && (
+                <div className="hero-note">Photo → Idea → Your plan</div>
+              )}
             </div>
             <DeckAnimation
               paused={heroPaused}
@@ -1722,7 +1748,14 @@ export default function Home() {
         </main>
       )}
       {showAccount && (
-        <AccountDialog account={account} close={() => setShowAccount(false)} />
+        <AccountDialog
+          account={account}
+          initialMode={accountMode}
+          close={() => {
+            setShowAccount(false);
+            setAccountMode("signup");
+          }}
+        />
       )}
       <footer>
         <button className="logo" onClick={() => go("home")}>

@@ -10,6 +10,21 @@ try {
   });
   await page.goto(process.env.BASE_URL || "http://localhost:3006");
   await page.locator(".deck-piece").first().waitFor({ state: "attached" });
+  await page
+    .locator(".hero-account-actions")
+    .getByRole("button", { name: "Create account" })
+    .click();
+  await page
+    .getByRole("heading", { name: "Create your Buildly account" })
+    .waitFor();
+  await page.getByRole("button", { name: "Close account window" }).click();
+  await page
+    .locator(".hero-account-actions")
+    .getByRole("button", { name: "Log in", exact: true })
+    .click();
+  await page.getByRole("heading", { name: "Welcome back" }).waitFor();
+  await page.getByRole("button", { name: "Close account window" }).click();
+
   const sample = async (time) =>
     page.locator(".deck-piece").evaluateAll((elements, time) => {
       elements.forEach((element) =>

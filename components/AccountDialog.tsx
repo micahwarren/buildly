@@ -4,12 +4,14 @@ import type { AccountState } from "@/lib/accounts/use-account";
 export function AccountDialog({
   account,
   close,
+  initialMode = "signup",
 }: {
   account: AccountState;
   close: () => void;
+  initialMode?: "signup" | "signin";
 }) {
   const [mode, setMode] = useState<"signup" | "signin" | "forgot" | "reset">(
-      account.recovery ? "reset" : "signup",
+      account.recovery ? "reset" : initialMode,
     ),
     [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
