@@ -52,7 +52,7 @@ Create `.env.local` in the repository root using `.env.example` as a reference. 
 - `IMAGE_PROVIDER`: `gemini` (default) or `openai`. Switching this value and redeploying changes provider; saved projects stay intact.
 - `GEMINI_API_KEY`: consumed server-side for Gemini photo edits, planning, revisions and chat. Requires Gemini API billing and access to the selected models. Never prefix this with `NEXT_PUBLIC_`.
 - `GEMINI_IMAGE_MODEL`: optional; defaults to `gemini-3.1-flash-image`. Choose an available model supporting image output and uploaded-image editing. A text-only model cannot produce a preview.
-- `GEMINI_PLANNING_MODEL`: optional explicit pin for the text/vision planner and chat. When unset, starts with `gemini-2.5-flash` and discovers an available non-image Flash model if the default returns 404. A pin is honored without discovery.
+- `GEMINI_PLANNING_MODEL`: optional explicit pin for the text/vision planner and chat. When unset, starts with `gemini-2.5-flash` and discovers an available stable numbered Flash model if the default returns 404. A pin is honored without discovery.
 - `OPENAI_API_KEY`: only used when `IMAGE_PROVIDER=openai`. Requires OpenAI API billing and image-model access. A ChatGPT subscription does not supply API billing.
 - `OPENAI_IMAGE_MODEL`: optional; defaults to `gpt-image-1.5`. Use an image-editing model available to your OpenAI project.
 - `NEXT_PUBLIC_SUPABASE_URL`: your Supabase project URL.
@@ -187,5 +187,13 @@ production credentials are needed to verify actual model availability and output
 - **Update details and rebuild plan only** keeps the image, replaces the plan and clears obsolete quotes/review notes on success. Failure leaves the old project unchanged.
 - Package counts use `ceil(required quantity / package coverage)` in matching units, not an optimized cutting plan. Unknown coverage/quantities are not converted. Supplier links are searches, not confirmed products; quote totals use user-entered package prices and are labeled incomplete where needed. No live inventory/pricing integration is configured.
 - The builder review packet is a standalone HTML download containing both photos and the complete plan; open it to print. Automated findings and user-recorded reviewer notes do not certify a plan or verify the reviewer's credentials. See `docs/BUILDER_REVIEW.md` for the pending human review procedure.
-- Google failure messages include status/code and model without exposing raw provider text, credentials or photos. An unavailable unpinned default model can trigger discovery; a schema-specific 400 can retry JSON mode once with the same specification and runtime validation. All attempts share one deadline. Other errors remain explicit; billing or permissions failures still require account configuration.
+- Google failure messages include status/code and model without exposing raw provider text, credentials or photos. An unavailable unpinned default model can trigger bounded paginated discovery of stable numbered Flash releases (excluding omni, preview, image, audio and lite variants). Discovered output-token limits cap the requested output. Schema/JSON-mode rejections can retry a simpler response format with the same specification and runtime validation; no additional image is generated. All attempts share one deadline. Other errors remain explicit; billing or permissions failures still require account configuration.
 - Run `BROWSER_PATH=/usr/bin/chromium BASE_URL=http://127.0.0.1:3000 node tests/upgrades.mjs` against the app for revision preservation, package quotes, review export, chat UI and mobile checks. Paid services are mocked in automated tests. No claim of live model or professional review is made from those tests.
+
+Planning compatibility regression: `tests/gemini-compatibility.test.ts` reproduces
+the unavailable-default/model-list sequence that previously selected
+`gemini-omni-flash-preview`. Automatic discovery now excludes that model family.
+Explicit `GEMINI_PLANNING_MODEL` pins are still respected; remove an incompatible
+pin or choose a supported stable text/vision model in Vercel and redeploy.
+These regression tests mock Google responses; production acceptance still requires
+rebuilding a saved plan against the configured account.

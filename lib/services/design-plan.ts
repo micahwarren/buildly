@@ -1,4 +1,4 @@
-import { requestGemini } from "./gemini-request";
+import { requestGemini, parseModelJson } from "./gemini-request";
 import sharp from "sharp";
 import type { Project } from "../project";
 import { DesignError } from "./image-design";
@@ -249,7 +249,7 @@ export async function createDesignPlan(
       )
       .map((part) => part.text || "")
       .join("");
-    return planFields(validatePlan(JSON.parse(text || "")));
+    return planFields(validatePlan(parseModelJson(text || "")));
   } catch (error) {
     if (error instanceof DesignError) throw error;
     throw new DesignError(

@@ -1,4 +1,4 @@
-import { requestGemini } from "./gemini-request";
+import { requestGemini, parseModelJson } from "./gemini-request";
 import { DesignError } from "./image-design";
 /** Server-only JSON text adapter; never substitutes a sample response. */
 export async function geminiJson(
@@ -32,7 +32,7 @@ export async function geminiJson(
       )
       .map((p) => p.text || "")
       .join("");
-    return JSON.parse(text || "");
+    return parseModelJson(text || "");
   } catch {
     throw new DesignError(
       "The AI assistant returned an incomplete response. Your project is unchanged; please try again.",
