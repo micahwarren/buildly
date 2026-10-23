@@ -28,7 +28,6 @@ import {
   Sun,
   Image as ImageIcon,
 } from "lucide-react";
-import { estimateProject } from "@/lib/estimates";
 import { brand, photos, type Project } from "@/lib/project";
 import { ProjectComparison } from "@/components/ProjectComparison";
 import { ProgressSteps } from "@/components/ProgressSteps";
@@ -74,6 +73,7 @@ export default function Home() {
     [imageAvailable, setImageAvailable] = useState<boolean | null>(null),
     [generatingDemo, setGeneratingDemo] = useState(false),
     [regenerating, setRegenerating] = useState(false),
+    [rebuilding, setRebuilding] = useState(false),
     [showAccount, setShowAccount] = useState(false),
     [draftStatus, setDraftStatus] = useState("");
   const account = useAccount();
@@ -239,6 +239,7 @@ export default function Home() {
       if (
         view === "generating" ||
         regenerating ||
+        rebuilding ||
         library.saving ||
         draftStatus === "Saving draft…"
       ) {
@@ -248,7 +249,7 @@ export default function Home() {
     };
     window.addEventListener("beforeunload", beforeUnload);
     return () => window.removeEventListener("beforeunload", beforeUnload);
-  }, [view, regenerating, library.saving, draftStatus]);
+  }, [view, regenerating, rebuilding, library.saving, draftStatus]);
   useEffect(() => {
     if (view !== "generating") return;
     const timer = setInterval(
@@ -394,7 +395,7 @@ export default function Home() {
     }
   }
   async function regenerateDesign() {
-    if (!project || regenerating) return;
+    if (!project || regenerating || rebuilding) return;
     setRegenerating(true);
     setError("");
     try {
@@ -415,8 +416,12 @@ export default function Home() {
       if (!res.ok) throw Error(data.error);
       update({
         ...project,
-        generatedImage: data.generatedImage,
-        visualizationMode: data.visualizationMode,
+        ...data,
+        id: project.id,
+        title: project.title,
+        createdAt: project.createdAt,
+        conversation: project.conversation,
+        completed: 0,
         updatedAt: new Date().toISOString(),
       });
       notify("Your new photo preview is ready.");
@@ -428,6 +433,41 @@ export default function Home() {
       );
     } finally {
       setRegenerating(false);
+    }
+  }
+  async function rebuildPlan() {
+    if (!project || rebuilding || regenerating) return;
+    setRebuilding(true);
+    setError("");
+    try {
+      const response = await fetch("/api/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          originalImage: project.originalImage,
+          generatedImage: project.generatedImage,
+          projectType: project.projectType,
+          description: project.description,
+          width: project.width,
+          length: project.length,
+          budget: project.budget,
+          experienceLevel: project.experienceLevel,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error);
+      update({ ...project, ...data, completed: 0 });
+      notify(
+        "Materials and steps rebuilt from this design. Step progress starts fresh.",
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Could not rebuild the plan. Your project is unchanged.",
+      );
+    } finally {
+      setRebuilding(false);
     }
   }
   async function ask() {
@@ -467,7 +507,7 @@ export default function Home() {
             project.materials
               .map(
                 (m) =>
-                  `${m.quantity} × ${m.item} (${m.dimensions}) — ${money(m.quantity * m.unitCost)}`,
+                  `${m.quantity || "Verify quantity"} × ${m.item} (${m.dimensions}) — ${m.quantity && m.unitCost ? money(m.quantity * m.unitCost) : "Not priced"}\n${m.purpose || ""}\n${m.quantityBasis || ""}`,
               )
               .join("\n"),
         ],
@@ -1071,11 +1111,47 @@ export default function Home() {
               </strong>
               <span>
                 {project.visualizationMode === "ai"
-                  ? "The design was created from your uploaded photo. Materials, costs, and build steps below remain illustrative; verify them independently."
+                  ? "The image is a visual concept. A design-based plan, when available, uses both photos and your description. Confirm unresolved details before buying or building."
                   : "This is a separate generic illustration, not a preview of your property. Use Create a photo preview to visualize the project in your yard."}
               </span>
             </div>
           </div>
+          {project.visualizationMode === "ai" && (
+            <section className="panel" aria-label="Design-based plan">
+              <h3>
+                {project.planStatus === "design-based"
+                  ? "Plan for this design"
+                  : "This design needs a matching plan"}
+              </h3>
+              <p>
+                {project.planSummary ||
+                  "This saved project has a category-based estimate. Rebuild it using your description, original photo and this design."}
+              </p>
+              <button
+                className="secondary"
+                disabled={rebuilding || regenerating}
+                onClick={rebuildPlan}
+              >
+                {rebuilding
+                  ? "Reviewing photos and building your plan…"
+                  : "Rebuild plan from this design"}
+              </button>
+              <p className="muted">
+                Uses AI planning without generating another image. Replaces the
+                material list and steps and resets step progress.
+              </p>
+              {!!project.planQuestions?.length && (
+                <div>
+                  <h4>Details to confirm before building</h4>
+                  <ul>
+                    {project.planQuestions.map((question) => (
+                      <li key={question}>{question}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </section>
+          )}
           <div className="tabs" role="tablist" aria-label="Project sections">
             {[
               "Overview",
@@ -1110,7 +1186,7 @@ export default function Home() {
                 </span>
                 <button
                   className="secondary"
-                  disabled={regenerating}
+                  disabled={regenerating || rebuilding}
                   onClick={regenerateDesign}
                 >
                   {regenerating
@@ -1126,9 +1202,15 @@ export default function Home() {
               </h2>
               <div className="stats">
                 <div>
-                  <span>Estimated materials</span>
+                  <span>
+                    {project.materials.some((m) => !m.quantity || !m.unitCost)
+                      ? "Materials — partial estimate"
+                      : "Estimated materials"}
+                  </span>
                   <strong>
-                    {project.materials.length
+                    {project.materials.some(
+                      (m) => m.quantity > 0 && m.unitCost > 0,
+                    )
                       ? `${money(project.estimatedCostLow)}–${money(project.estimatedCostHigh)}`
                       : "Scope review needed"}
                   </strong>
@@ -1157,14 +1239,6 @@ export default function Home() {
                   a.startsWith("Time is a planning allowance:"),
                 )}
               </p>
-              <button
-                className="button secondary"
-                onClick={() =>
-                  update({ ...project, ...estimateProject(project) })
-                }
-              >
-                Recalculate materials and time
-              </button>
               <div className="plan-links">
                 {["Materials", "Tools", "Build steps", "Project details"].map(
                   (s, i) => (
@@ -1208,32 +1282,50 @@ export default function Home() {
                         <td>
                           <strong>{m.item}</strong>
                           <small>{m.dimensions}</small>
+                          {m.purpose && <small>Used for: {m.purpose}</small>}
+                          {m.quantityBasis && (
+                            <small>Quantity basis: {m.quantityBasis}</small>
+                          )}
                         </td>
-                        <td>{m.quantity}</td>
-                        <td>{money(m.unitCost)}</td>
-                        <td>{money(m.unitCost * m.quantity)}</td>
+                        <td>{m.quantity || "Verify"}</td>
+                        <td>{m.unitCost ? money(m.unitCost) : "Verify"}</td>
+                        <td>
+                          {m.quantity && m.unitCost
+                            ? money(m.unitCost * m.quantity)
+                            : "Not priced"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <div className="total">
-                <span>Reference materials subtotal</span>
+                <span>
+                  Priced items subtotal{" "}
+                  {project.materials.some((m) => !m.quantity || !m.unitCost)
+                    ? "(incomplete)"
+                    : ""}
+                </span>
                 <strong>
-                  {money(
-                    project.materials.reduce(
-                      (s, m) => s + m.quantity * m.unitCost,
-                      0,
-                    ),
-                  )}
+                  {project.materials.some(
+                    (m) => m.quantity > 0 && m.unitCost > 0,
+                  )
+                    ? money(
+                        project.materials.reduce(
+                          (s, m) => s + m.quantity * m.unitCost,
+                          0,
+                        ),
+                      )
+                    : "Not priced"}
                 </strong>
               </div>
               <button className="primary" onClick={download}>
                 <Download size={18} /> Save shopping list
               </button>
               <p className="muted">
-                No retailer connection. Taxes, delivery, labor, permits, and
-                site-specific changes are excluded.
+                Items marked Verify are excluded from totals. No retailer
+                connection. Taxes, delivery, labor, permits, and site-specific
+                changes are excluded.
               </p>
             </section>
           )}
@@ -1298,6 +1390,47 @@ export default function Home() {
                   <p className="step-text">
                     {project.steps[project.completed].text}
                   </p>
+                  {(
+                    [
+                      ["What to do", project.steps[project.completed].actions],
+                      [
+                        "Materials for this step",
+                        project.steps[project.completed].materials,
+                      ],
+                      [
+                        "Tools for this step",
+                        project.steps[project.completed].tools,
+                      ],
+                      [
+                        "Check before moving on",
+                        project.steps[project.completed].checks,
+                      ],
+                      [
+                        "Stop and resolve first",
+                        project.steps[project.completed].stopConditions,
+                      ],
+                    ] as [string, string[] | undefined][]
+                  ).map(([heading, items]) =>
+                    items?.length ? (
+                      <div key={heading}>
+                        <h3>{heading}</h3>
+                        {heading === "What to do" ? (
+                          <ol>
+                            {items.map((item, i) => (
+                              <li key={i}>{item}</li>
+                            ))}
+                          </ol>
+                        ) : (
+                          <ul>
+                            {items.map((item, i) => (
+                              <li key={i}>{item}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ) : null,
+                  )}
+
                   <button
                     className="text-button"
                     onClick={() => {
@@ -1324,6 +1457,9 @@ export default function Home() {
                     </button>
                     <button
                       className="primary"
+                      disabled={
+                        project.planStatus === "unavailable" || rebuilding
+                      }
                       onClick={() =>
                         update({
                           ...project,

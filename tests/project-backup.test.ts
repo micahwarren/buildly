@@ -21,6 +21,8 @@ test("a backup preserves photos, plan details and completed progress", () => {
 test("malformed project structures are rejected before rendering", () => {
   for (const patch of [
     { steps: null },
+    { planQuestions: [null] },
+    { steps: [{ title: "Layout", text: "Measure", actions: "bad" }] },
     { steps: [] },
     { materials: [{}] },
     { projectType: null },

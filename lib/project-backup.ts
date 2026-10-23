@@ -90,5 +90,29 @@ export function parseProjectBackup(text: string): Project {
     })
   )
     return fail();
+  const optionalStrings = (value: unknown) =>
+    value === undefined ||
+    (Array.isArray(value) &&
+      value.every((item: unknown) => typeof item === "string"));
+  if (
+    (p.planStatus !== undefined &&
+      !["design-based", "unavailable"].includes(p.planStatus)) ||
+    (p.planSummary !== undefined && typeof p.planSummary !== "string") ||
+    !optionalStrings(p.planQuestions)
+  )
+    return fail();
+  for (const step of p.steps)
+    for (const key of [
+      "actions",
+      "materials",
+      "tools",
+      "checks",
+      "stopConditions",
+    ])
+      if (!optionalStrings(step[key])) return fail();
+  for (const material of p.materials)
+    for (const key of ["purpose", "quantityBasis"])
+      if (material[key] !== undefined && typeof material[key] !== "string")
+        return fail();
   return p as Project;
 }

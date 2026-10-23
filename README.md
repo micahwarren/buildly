@@ -149,6 +149,32 @@ The calculator does not infer height, spans, soil, gates, stairs, guards, roof l
 or custom features from an image or free text. These require a site-specific design
 and supplier takeoff before this can become a purchase-ready bill of materials.
 Custom project types show “Scope review needed” instead of an invented quote.
-Saved projects can use “Recalculate materials and time” without regenerating their
-image; this preserves project identity, images and progress and saves the updated
-estimate through the existing account/device persistence flow.
+This calculator now supplies explicitly labeled sample plans only. Live and saved
+AI designs use the photo-grounded planner described below.
+
+### Plans grounded in the generated design
+
+Live generation now sends the original site photo, generated concept, user description,
+dimensions and experience to a separate Gemini vision/text planning request. The default
+`GEMINI_PLANNING_MODEL` is `gemini-2.5-flash`; it uses the existing server-side
+`GEMINI_API_KEY` (also required for planning if image generation is switched to OpenAI).
+Each generation adds a paid text/vision request; no additional subscription is required,
+but the configured account must have model access and quota. The default can be overridden
+with a supported structured-output vision model and a redeploy.
+
+The planner returns material purposes and quantity bases, unresolved questions, and
+step-by-step actions, materials, tools, checks and stop conditions. Runtime validation
+requires materials/tools referenced by steps to exist and every listed material to be
+used in a step. It rejects malformed, truncated or incomplete plans. These checks enforce
+internal consistency, not construction accuracy or engineering certification. Quantity or
+price zero means unknown and displays as Verify/Not priced; unknown lines are excluded
+from totals and the partial estimate is labeled. Real model output must still be reviewed
+against site measurements, product specifications and structural requirements.
+
+Category-based estimates are now only sample/demo content. Live planning failures retain
+the generated image, clear generic materials/instructions and show a retry state. Existing
+projects can use **Rebuild plan from this design** to replace old estimates without buying
+another image; success resets step progress and persists the plan, while failure preserves
+the saved project. New image variants also receive a new associated plan. The endpoint
+`/api/plan` shares the existing per-instance request guard. Automated tests mock Gemini;
+production credentials are needed to verify actual model availability and output quality.

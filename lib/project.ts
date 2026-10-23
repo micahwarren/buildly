@@ -19,10 +19,21 @@ export type Project = {
   estimatedCostHigh: number;
   estimatedHours: string;
   recommendedCrew?: string;
+  planStatus?: "design-based" | "unavailable";
+  planSummary?: string;
+  planQuestions?: string[];
   difficulty: string;
   materials: Material[];
   tools: string[];
-  steps: { title: string; text: string }[];
+  steps: {
+    title: string;
+    text: string;
+    actions?: string[];
+    materials?: string[];
+    tools?: string[];
+    checks?: string[];
+    stopConditions?: string[];
+  }[];
   assumptions: string[];
   warnings: string[];
   completed: number;
@@ -37,6 +48,8 @@ export type Material = {
   quantity: number;
   dimensions: string;
   unitCost: number;
+  purpose?: string;
+  quantityBasis?: string;
 };
 export const photos = {
   hero: "/images/hero.svg",

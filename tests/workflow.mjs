@@ -230,6 +230,143 @@ console.log("Test artifacts: " + output);
   const backup = JSON.parse(fs.readFileSync(backupPath, "utf8"));
   assert.equal(backup.format, "buildly-project-v1");
   assert.equal(backup.project.completed, 1);
+
+  // Regression: a wooden patio + pergola must replace an old category-based paver plan.
+  const planningContext = await browser.newContext();
+  const oldPlan = {
+    ...backup.project,
+    projectType: "Patio",
+    description: "A wooden patio and a pergola",
+    materials: [
+      {
+        item: "Pavers",
+        quantity: 212,
+        dimensions: "1 sq ft equivalent",
+        unitCost: 4,
+      },
+    ],
+  };
+  await planningContext.addInitScript(
+    (project) =>
+      localStorage.setItem("buildly-projects", JSON.stringify([project])),
+    oldPlan,
+  );
+  const planningPage = await planningContext.newPage();
+  planningPage.on("pageerror", (e) => errors.push(e.message));
+  await planningPage.goto(BASE_URL);
+  await planningPage
+    .getByRole("button", { name: /My projects/ })
+    .first()
+    .click();
+  await planningPage.getByRole("button", { name: "Continue project" }).click();
+  await planningPage.route("**/api/plan", (route) =>
+    route.fulfill({
+      status: 502,
+      json: { error: "Planning temporarily unavailable" },
+    }),
+  );
+  await planningPage
+    .getByRole("button", { name: "Rebuild plan from this design" })
+    .click();
+  await planningPage
+    .getByRole("alert")
+    .filter({ hasText: "Planning temporarily unavailable" })
+    .waitFor();
+  await planningPage
+    .getByRole("tab", { name: "Materials", exact: true })
+    .click();
+  assert.match(await planningPage.locator("tbody").innerText(), /Pavers/);
+  await planningPage.getByRole("button", { name: "Dismiss error" }).click();
+  await planningPage.unroute("**/api/plan");
+  const detailedPlan = {
+    planStatus: "design-based",
+    planSummary: "A wooden platform and freestanding pergola; no pavers.",
+    planQuestions: ["What is the platform height above the ground?"],
+    materials: [
+      {
+        item: "Wood decking",
+        quantity: 462,
+        dimensions: "Linear feet",
+        unitCost: 2.2,
+        purpose: "Wooden patio surface",
+        quantityBasis: "Entered area divided by board coverage with waste",
+      },
+      {
+        item: "Pergola post anchors",
+        quantity: 0,
+        dimensions: "Approved uplift-rated sets",
+        unitCost: 0,
+        purpose: "Secure the pergola posts",
+        quantityBasis: "Verify independent footing and uplift design first",
+      },
+    ],
+    tools: ["Tape measure"],
+    steps: Array.from({ length: 8 }, (_, i) => ({
+      title: `Wood platform and pergola phase ${i + 1}`,
+      text: "Coordinate the pergola post locations with the wooden platform layout.",
+      actions: [
+        "Mark the wooden platform footprint.",
+        "Measure both diagonals and adjust the corners.",
+        "Mark proposed pergola supports for design review.",
+      ],
+      materials: ["Wood decking", "Pergola post anchors"],
+      tools: ["Tape measure"],
+      checks: ["Platform diagonals match."],
+      stopConditions: ["Resolve pergola footing design before excavation."],
+    })),
+    completed: 0,
+    estimatedCostLow: 813,
+    estimatedCostHigh: 1423,
+    estimatedHours: "100–160 person-hours",
+    difficulty: "Advanced",
+    recommendedCrew: "3 people total",
+    assumptions: ["Platform height needs confirmation"],
+    warnings: ["Resolve footing design"],
+  };
+  await planningPage.route("**/api/plan", (route) => {
+    const sent = route.request().postDataJSON();
+    assert.equal(sent.description, "A wooden patio and a pergola");
+    assert.equal(sent.projectType, "Patio");
+    assert.equal(sent.originalImage, oldPlan.originalImage);
+    assert.equal(sent.generatedImage, oldPlan.generatedImage);
+    return route.fulfill({ json: detailedPlan });
+  });
+  await planningPage
+    .getByRole("button", { name: "Rebuild plan from this design" })
+    .click();
+  await planningPage.getByText("Wood decking", { exact: true }).waitFor();
+  assert.doesNotMatch(
+    await planningPage.locator("tbody").innerText(),
+    /Pavers|Bedding sand/,
+  );
+  assert.match(await planningPage.locator("tbody").innerText(), /Verify/);
+  assert.match(await planningPage.locator(".total").innerText(), /incomplete/);
+  await planningPage
+    .getByRole("tab", { name: "Build steps", exact: true })
+    .click();
+  await planningPage.getByRole("heading", { name: "What to do" }).waitFor();
+  assert.match(
+    await planningPage.locator(".build-mode").innerText(),
+    /Resolve pergola footing design before excavation/,
+  );
+  assert.match(
+    await planningPage.locator(".build-mode").innerText(),
+    /0 \/ 8 complete/,
+  );
+  await planningPage.waitForFunction(() =>
+    document.body.innerText.includes("Saved automatically on this device"),
+  );
+  await planningPage.reload();
+  await planningPage
+    .getByRole("button", { name: /My projects/ })
+    .first()
+    .click();
+  await planningPage.getByRole("button", { name: "Continue project" }).click();
+  await planningPage
+    .getByRole("tab", { name: "Materials", exact: true })
+    .click();
+  assert.match(await planningPage.locator("tbody").innerText(), /Wood decking/);
+  await planningContext.close();
   const legacyContext = await browser.newContext();
   await legacyContext.addInitScript(
     (project) =>
