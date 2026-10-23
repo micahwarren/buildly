@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "Buildly — See it. Plan it. Build it.",
+  title: "Buildly — Your idea. A plan to build it.",
   description:
-    "Turn your backyard idea into a project you can picture and plan.",
+    "Upload a photo. Describe your idea. Get a DIY design, materials list, and step-by-step plan.",
 };
 export default function RootLayout({
   children,

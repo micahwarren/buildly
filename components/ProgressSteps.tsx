@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 export function ProgressSteps({ step }: { step: number }) {
   return (
     <div className="progress" aria-label="Project creation progress">
-      {["Photo", "Project", "Details", "Design", "Plan"].map((s, i) => (
+      {["Photo", "Idea", "Size"].map((s, i) => (
         <div
           className={i <= step ? "active" : ""}
           key={s}

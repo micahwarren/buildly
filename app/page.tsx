@@ -608,7 +608,7 @@ export default function Home() {
           aria-label="Buildly home"
         >
           <span className="logo-mark">
-            <House size={23} strokeWidth={2.5} />
+            <img src="/buildly-logo.png" alt="" width="40" height="40" />
           </span>
           {brand.name}
           <span className="logo-dot">.</span>
@@ -670,32 +670,23 @@ export default function Home() {
         </div>
       )}
       {view === "home" && (
-        <main>
+        <main className="home-simple">
           <section className="hero">
             <div className="hero-copy">
-              <div className="eyebrow">
-                <span /> BIG IDEAS. BUILT BY YOU.
-              </div>
+              <div className="eyebrow">YOUR DIY PROJECT STARTS HERE</div>
               <h1>
-                See it.
+                Your idea.
                 <br />
-                Plan it.
-                <br />
-                <em>Build it.</em>
+                <em>A plan to build it.</em>
               </h1>
               <p>
-                That backyard idea? Let’s make it real.
-                <br className="desktop" /> Take a photo, tell us your vision,
-                and get a clear path from{" "}
-                <strong>“what if” to “I built that.”</strong>
+                Upload a photo and tell us what you want to build. Get a design,
+                a materials list, and step-by-step instructions.
               </p>
               <button className="primary big" onClick={() => start()}>
                 Start my project <ArrowRight size={21} />
               </button>
-              <div className="hero-note">
-                <CheckCircle2 size={16} /> No experience needed <span>·</span>{" "}
-                Free to try
-              </div>
+              <div className="hero-note">Photo → Idea → Your plan</div>
             </div>
             <div className="hero-visual">
               <img
@@ -721,69 +712,43 @@ export default function Home() {
                 </button>
               </div>
               <div className="photo-label">
-                <span className="small-dot" /> YOUR NEXT CHAPTER STARTS OUTSIDE
+                <span className="small-dot" /> EXAMPLE: DECK + PERGOLA
               </div>
               <div className="project-float">
                 <div className="float-icon">
                   <House size={24} />
                 </div>
                 <div>
-                  <strong>A space to make memories.</strong>
-                  <span>You bring the idea. We’ll bring the plan.</span>
+                  <strong>See what you could build.</strong>
+                  <span>Design · Materials · Instructions</span>
                 </div>
                 <span className="float-arrow">
                   <ArrowUpRight size={25} />
                 </span>
               </div>
-              <div className="image-caption">
-                Illustrated concept · Imagine the possibilities.
-              </div>
-            </div>
-          </section>
-          <section className="trust-strip">
-            <span>More possibility. Less guesswork.</span>
-            <div>
-              <CheckCircle2 /> Made for real homeowners
-            </div>
-            <div>
-              <Leaf /> Your space. Your vision.
-            </div>
-            <div>
-              <Hammer /> A plan you can follow
+              <div className="image-caption">Illustrated example</div>
             </div>
           </section>
           <section className="section" id="how">
             <div className="section-heading">
-              <div>
-                <div className="eyebrow">FROM IDEA TO “LOOK WHAT I MADE”</div>
-                <h2>
-                  A big project.
-                  <br />
-                  Three simple steps.
-                </h2>
-              </div>
-              <p>
-                You don’t need to know where to start.
-                <br />
-                That’s what we’re here for.
-              </p>
+              <h2>From photo to plan.</h2>
             </div>
             <div className="how-grid">
               {[
                 {
                   icon: Camera,
                   title: "Take a photo",
-                  text: "Show us your backyard, patio, or that corner with potential.",
+                  text: "Upload a photo of your space.",
                 },
                 {
                   icon: MessageCircle,
                   title: "Tell us your idea",
-                  text: "A shady spot for Sunday lunch? Just tell us in your own words.",
+                  text: "Describe what you want to build.",
                 },
                 {
                   icon: Hammer,
                   title: "Get your project plan",
-                  text: "Explore a concept, estimated materials, and clear next steps.",
+                  text: "See the design, materials, costs, and steps.",
                 },
               ].map((c, i) => (
                 <article className="how-card" key={c.title}>
@@ -800,10 +765,8 @@ export default function Home() {
           <section className="ideas-section section" id="ideas">
             <div className="section-heading">
               <div>
-                <div className="eyebrow">A LITTLE INSPIRATION</div>
                 <h2>What will you build?</h2>
               </div>
-              <span className="hand-note">Make room for the good stuff. ↙</span>
             </div>
             <div className="category-grid">
               {categories.map((c) => (
@@ -822,12 +785,8 @@ export default function Home() {
           </section>
           <section className="bottom-cta">
             <TreePine size={38} />
-            <h2>
-              Your favorite place could be
-              <br />
-              right outside your door.
-            </h2>
-            <p>Let’s see what’s possible.</p>
+            <h2>What do you want to build?</h2>
+
             <button className="primary big" onClick={() => start()}>
               Start my project <ArrowRight size={20} />
             </button>
@@ -845,21 +804,14 @@ export default function Home() {
           )}
           <button
             className="back"
-            onClick={() =>
-              step === 0
-                ? go("home")
-                : step === 2 && detail > 0
-                  ? setDetail(detail - 1)
-                  : setStep(step - 1)
-            }
+            onClick={() => (step === 0 ? go("home") : setStep(step - 1))}
           >
             <ArrowLeft size={18} /> Back
           </button>
           {step === 0 && (
             <>
               <div className="center">
-                <div className="eyebrow">LET’S START WITH YOUR SPACE</div>
-                <h1>Where do you want to build?</h1>
+                <h1>Add a photo of your space</h1>
                 <p>Take a picture or choose one from your device.</p>
               </div>
               <div
@@ -877,8 +829,8 @@ export default function Home() {
                     <div className="upload-icon">
                       <Camera size={40} />
                     </div>
-                    <h3>A little potential starts here.</h3>
-                    <p>Drag your photo here, or choose an option below.</p>
+                    <h3>Upload your photo</h3>
+                    <p>Drop a photo here.</p>
                   </>
                 )}
               </div>
@@ -927,17 +879,14 @@ export default function Home() {
                   </>
                 )}
               </div>
-              <p className="muted center">
-                JPG, PNG, or WebP · Up to 15 MB · Your photo stays part of your
-                project.
-              </p>
+              <p className="muted center">JPG, PNG, or WebP · Up to 15 MB</p>
             </>
           )}
           {step === 1 && (
             <>
               <div className="center">
                 <h1>What would you like to build?</h1>
-                <p>Pick a project. Then tell us what you’re imagining.</p>
+                <p>Choose a type and describe your idea.</p>
               </div>
               <div className="type-grid">
                 {[...categories, { name: "Something else", icon: Plus }].map(
@@ -966,8 +915,7 @@ export default function Home() {
                 />
               </label>
               <p className="muted">
-                Just describe it like you would to a friend. There’s no wrong
-                way.
+                Include the materials and features you want.
               </p>
               <button
                 className="primary next"
@@ -984,103 +932,88 @@ export default function Home() {
           {step === 2 && (
             <>
               <div className="center">
-                <div className="eyebrow">A FEW DETAILS · {detail + 1} OF 3</div>
-                <h1>
-                  {
-                    [
-                      "About how big should it be?",
-                      "What’s your budget?",
-                      "How comfortable are you building things?",
-                    ][detail]
-                  }
-                </h1>
-                <p>
-                  {
-                    [
-                      "Enter your best measurements. Unverified dimensions remain estimates.",
-                      "We’ll share this with the planner; it does not guarantee the design will fit your budget.",
-                      "Your experience level adjusts the estimated labor hours.",
-                    ][detail]
-                  }
-                </p>
+                <h1>How big is your project?</h1>
+                <p>Enter approximate dimensions in feet.</p>
               </div>
-              {detail === 0 ? (
-                <>
-                  <div className="dimensions">
-                    <label>
-                      Width (feet)
-                      <input
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={width}
-                        onChange={(e) => setWidth(e.target.value)}
-                      />
-                    </label>
-                    <span>×</span>
-                    <label>
-                      {type === "Fence" ? "Fence length" : "Length"} (feet)
-                      <input
-                        type="number"
-                        min="1"
-                        max="200"
-                        value={length}
-                        onChange={(e) => setLength(e.target.value)}
-                      />
-                    </label>
-                  </div>
-                  <button
-                    className="text-button"
-                    onClick={() => {
-                      setWidth("12");
-                      setLength("16");
-                      notify(
-                        "Using 12 × 16 ft as a sample. Verify measurements before building.",
-                      );
-                    }}
-                  >
-                    I’m not sure — use sample dimensions
-                  </button>
-                </>
-              ) : (
-                <div className="options">
-                  {(detail === 1
-                    ? [
+              <div className="dimensions">
+                <label>
+                  Width (feet)
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={width}
+                    onChange={(e) => setWidth(e.target.value)}
+                  />
+                </label>
+                <span>×</span>
+                <label>
+                  {type === "Fence" ? "Fence length" : "Length"} (feet)
+                  <input
+                    type="number"
+                    min="1"
+                    max="200"
+                    value={length}
+                    onChange={(e) => setLength(e.target.value)}
+                  />
+                </label>
+              </div>
+              <button
+                className="text-button"
+                onClick={() => {
+                  setWidth("12");
+                  setLength("16");
+                  notify(
+                    "Using 12 × 16 ft as a sample. Verify measurements before building.",
+                  );
+                }}
+              >
+                I’m not sure — use sample dimensions
+              </button>
+              <details className="optional-settings">
+                <summary>
+                  Budget, experience & site details <span>Optional</span>
+                </summary>
+                <div className="optional-fields">
+                  <label className="field">
+                    Budget
+                    <select
+                      aria-label="Budget"
+                      value={budget}
+                      onChange={(e) => setBudget(e.target.value)}
+                    >
+                      {[
                         "Under $1,000",
                         "$1,000–$2,500",
                         "$2,500–$5,000",
                         "$5,000+",
                         "I'm not sure",
-                      ]
-                    : ["Beginner", "Some experience", "Experienced"]
-                  ).map((s) => (
-                    <button
-                      className={
-                        "choice " +
-                        ((detail === 1 ? budget : experience) === s
-                          ? "selected"
-                          : "")
-                      }
-                      key={s}
-                      onClick={() =>
-                        detail === 1 ? setBudget(s) : setExperience(s)
-                      }
+                      ].map((v) => (
+                        <option key={v}>{v}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field">
+                    Building experience
+                    <select
+                      aria-label="Building experience"
+                      value={experience}
+                      onChange={(e) => setExperience(e.target.value)}
                     >
-                      {s}
-                      {(detail === 1 ? budget : experience) === s && (
-                        <Check size={20} />
+                      {["Beginner", "Some experience", "Experienced"].map(
+                        (v) => (
+                          <option key={v}>{v}</option>
+                        ),
                       )}
-                    </button>
-                  ))}
+                    </select>
+                  </label>
+                  <ProjectDetailsForm
+                    value={details}
+                    onChange={setDetails}
+                    prefix="wizard"
+                  />
                 </div>
-              )}
-              {detail === 2 && (
-                <ProjectDetailsForm
-                  value={details}
-                  onChange={setDetails}
-                  prefix="wizard"
-                />
-              )}
+              </details>
               <button
                 className="primary next"
                 disabled={
@@ -1091,23 +1024,20 @@ export default function Home() {
                   +length < 1 ||
                   +length > 200
                 }
-                onClick={() =>
-                  detail < 2 ? setDetail(detail + 1) : generate(false)
-                }
+                onClick={() => generate(false)}
               >
-                {detail < 2 ? "Continue" : "Show my project in my photo"}{" "}
-                <ArrowRight size={20} />
+                Get my design & plan <ArrowRight size={20} />
               </button>
               <p className="muted center">
                 {imageAvailable === false
                   ? "Photo previews aren’t available on this site yet. A sample plan will not show your project in your yard."
-                  : "Your photo will be sent to our AI image provider to create a design concept. This can take a few minutes."}
+                  : "AI uses your photo to create your design and plan. Allow a few minutes."}
               </p>
-              {detail === 2 && (
+              {
                 <button className="text-button" onClick={() => generate(true)}>
                   Explore a sample plan instead (no photo edit)
                 </button>
-              )}
+              }
             </>
           )}
         </main>
@@ -1157,7 +1087,6 @@ export default function Home() {
           </button>
           <div className="result-heading">
             <div>
-              <span className="eyebrow">YOUR IDEA, ONE STEP CLOSER</span>
               <h1>Here’s your project.</h1>
               <p>
                 {project.width} × {project.length} ft{" "}
@@ -1199,13 +1128,22 @@ export default function Home() {
               </strong>
               <span>
                 {project.visualizationMode === "ai"
-                  ? "The image is a visual concept. A design-based plan, when available, uses both photos and your description. Confirm unresolved details before buying or building."
+                  ? "AI concept. Confirm measurements and plan details before building."
                   : "This is a separate generic illustration, not a preview of your property. Use Create a photo preview to visualize the project in your yard."}
               </span>
             </div>
           </div>
           {project.visualizationMode === "ai" && (
-            <section className="panel" aria-label="Design-based plan">
+            <details
+              className="panel plan-status"
+              open={project.planStatus !== "design-based"}
+              aria-label="Design-based plan"
+            >
+              <summary>
+                {project.planStatus === "design-based"
+                  ? "Plan ready · Review details"
+                  : "Your plan needs another try"}
+              </summary>
               <h3>
                 {project.planStatus === "design-based"
                   ? "Plan for this design"
@@ -1225,8 +1163,7 @@ export default function Home() {
                   : "Rebuild plan from this design"}
               </button>
               <p className="muted">
-                Uses AI planning without generating another image. Replaces the
-                material list and steps and resets step progress.
+                Keeps your image. Replaces materials and steps; resets progress.
               </p>
               {!!project.planQuestions?.length && (
                 <div>
@@ -1238,7 +1175,7 @@ export default function Home() {
                   </ul>
                 </div>
               )}
-            </section>
+            </details>
           )}
           {project.visualizationMode === "ai" && (
             <RefineProject
@@ -1829,7 +1766,7 @@ export default function Home() {
       <footer>
         <button className="logo" onClick={() => go("home")}>
           <span className="logo-mark">
-            <House size={20} />
+            <img src="/buildly-logo.png" alt="" width="28" height="28" />
           </span>
           {brand.name}.
         </button>

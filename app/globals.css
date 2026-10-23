@@ -1930,3 +1930,142 @@ progress {
     padding: 14px;
   }
 }
+
+/* A short, direct introduction and three-step project flow. */
+.logo-mark {
+  background: transparent;
+  width: 40px;
+  height: 40px;
+  border: 0;
+}
+.logo-mark img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+.home-simple .hero {
+  padding-top: 64px;
+  padding-bottom: 72px;
+  gap: 48px;
+  align-items: center;
+}
+.home-simple .hero h1 {
+  font-size: clamp(48px, 5.5vw, 78px);
+  line-height: 1.08;
+  letter-spacing: -3px;
+  margin: 20px 0 24px;
+}
+.home-simple .hero-copy p {
+  font-size: 20px;
+  line-height: 1.6;
+  max-width: 490px;
+  margin-bottom: 28px;
+}
+.home-simple .hero-visual {
+  min-height: 480px;
+}
+.home-simple .hero-visual > img {
+  border-radius: 24px;
+}
+.home-simple .hero-note {
+  font-size: 15px;
+  margin-top: 18px;
+}
+.home-simple .photo-label {
+  display: none;
+}
+.home-simple .project-float {
+  border-radius: 12px;
+}
+.home-simple .section {
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+.home-simple .section-heading {
+  margin-bottom: 28px;
+}
+.home-simple .how-card {
+  padding: 28px;
+}
+.home-simple .how-card p {
+  font-size: 17px;
+}
+.home-simple .bottom-cta {
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+.optional-settings {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin: 28px 0;
+  background: white;
+}
+.optional-settings summary {
+  padding: 20px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.optional-settings summary span {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 14px;
+  margin-left: 10px;
+}
+.optional-fields {
+  padding: 0 20px 20px;
+}
+.optional-fields select {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--ink);
+  background: white;
+}
+.plan-status summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.plan-status:not([open]) {
+  padding: 18px 24px;
+}
+.result .demo-banner {
+  padding: 16px 20px;
+  margin-top: 24px;
+  margin-bottom: 20px;
+}
+.result .demo-banner strong {
+  display: none;
+}
+.result .panel {
+  margin-bottom: 16px;
+}
+@media (max-width: 700px) {
+  .home-simple .hero {
+    padding: 36px 22px 40px;
+    gap: 30px;
+  }
+  .home-simple .hero h1 {
+    font-size: 48px;
+    letter-spacing: -2px;
+  }
+  .home-simple .hero-copy p {
+    font-size: 18px;
+  }
+  .home-simple .hero-visual {
+    min-height: 350px;
+  }
+  .home-simple .section {
+    padding: 36px 22px;
+  }
+  .home-simple .hero .primary {
+    width: 100%;
+    justify-content: center;
+  }
+  .optional-settings summary span {
+    display: block;
+    margin: 6px 0 0 18px;
+  }
+}

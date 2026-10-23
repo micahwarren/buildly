@@ -10,11 +10,8 @@ export function ProjectDetailsForm({
 }) {
   return (
     <div className="project-details-form">
-      <h3>A few things that change your plan</h3>
-      <p>
-        Answer what you know. Blank answers stay unresolved—the planner should
-        not invent them.
-      </p>
+      <h3>Site details</h3>
+      <p>Fill in what you know. You can add more later.</p>
       {detailFields.map(({ key, label, hint, options }) => (
         <label className="field" key={key} htmlFor={`${prefix}-${key}`}>
           {label}

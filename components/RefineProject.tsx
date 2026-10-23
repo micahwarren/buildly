@@ -19,9 +19,7 @@ export function RefineProject({
       <details>
         <summary>Refine this project</summary>
         <p>
-          Ask for changes in plain language. The revised image, materials and
-          instructions are saved as a new project version; your previous version
-          stays in My projects.
+          Describe your changes. We’ll save a new version and keep the original.
         </p>
         <label className="field">
           What would you like to change?
@@ -47,9 +45,8 @@ export function RefineProject({
             Update details and rebuild plan only
           </button>
           <p className="muted">
-            Keeps the image. Updates this project’s materials and steps, resets
-            step progress, and clears old quotes and review notes. Uses AI
-            planning.
+            Keeps your image. Replaces the plan and clears progress, quotes, and
+            review notes.
           </p>
         </details>
         <button

@@ -41,7 +41,7 @@ console.log("Test artifacts: " + output);
   });
   await page.goto(BASE_URL);
   await page
-    .getByRole("heading", { name: "See it. Plan it. Build it." })
+    .getByRole("heading", { name: /Your idea.*A plan to build it/ })
     .waitFor();
   await page.screenshot({
     path: path.join(output, "home-desktop.png"),
@@ -78,14 +78,15 @@ console.log("Test artifacts: " + output);
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByLabel("Width (feet)").fill("14");
   await page.getByLabel("Length (feet)").fill("18");
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
-    .getByRole("button", { name: "$2,500–$5,000", exact: true })
+    .getByText("Budget, experience & site details", { exact: false })
     .click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
-    .getByRole("button", { name: "Some experience", exact: true })
-    .click();
+    .getByLabel("Budget", { exact: true })
+    .selectOption("$2,500–$5,000");
+  await page
+    .getByLabel("Building experience", { exact: true })
+    .selectOption("Some experience");
   await page
     .getByRole("button", {
       name: "Explore a sample plan instead (no photo edit)",
