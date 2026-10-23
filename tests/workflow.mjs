@@ -27,6 +27,18 @@ console.log("Test artifacts: " + output);
       json: { error: "Photo previews are not connected yet." },
     }),
   );
+  await page.route("**/api/ask", (route) => {
+    const data = route.request().postDataJSON();
+    assert.equal(data.project.originalImage, "");
+    assert.ok(data.project.materials.length);
+    return route.fulfill({
+      json: {
+        answer:
+          "Cedar may suit this project; confirm species, grade and connection design before substituting it. Use Refine this project to apply the change.",
+        demo: false,
+      },
+    });
+  });
   await page.goto(BASE_URL);
   await page
     .getByRole("heading", { name: "See it. Plan it. Build it." })
@@ -334,7 +346,10 @@ console.log("Test artifacts: " + output);
   await planningPage
     .getByRole("button", { name: "Rebuild plan from this design" })
     .click();
-  await planningPage.getByText("Wood decking", { exact: true }).waitFor();
+  await planningPage
+    .locator("tbody")
+    .getByText("Wood decking", { exact: true })
+    .waitFor();
   assert.doesNotMatch(
     await planningPage.locator("tbody").innerText(),
     /Pavers|Bedding sand/,

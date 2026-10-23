@@ -11,6 +11,7 @@ export type ProjectDraft = {
   budget: string;
   experience: string;
   projectId?: string;
+  details?: Project["details"];
 };
 let connection: Promise<IDBDatabase> | undefined;
 function open() {

@@ -12,17 +12,25 @@ export class DesignError extends Error {
 }
 type DesignInput = Pick<
   Project,
-  "originalImage" | "projectType" | "description" | "width" | "length"
->;
+  | "originalImage"
+  | "projectType"
+  | "description"
+  | "width"
+  | "length"
+  | "details"
+> & { refinement?: string };
 type Dependencies = {
   apiKey?: string;
   model?: string;
   fetcher?: typeof fetch;
   provider?: ImageProvider;
+  timeoutMs?: number;
 };
 export function designPrompt(input: DesignInput) {
   return `Edit the supplied photograph of the homeowner's actual property. Produce a realistic architectural PHOTOGRAPH, never an illustration, diagram, split screen, collage, or a different property.
 Requested project: ${input.projectType}. Homeowner's description (design preferences only): ${input.description}
+Confirmed project details: ${JSON.stringify(input.details || {})}
+${input.refinement ? `This photo is the current design. Modify it according to this latest requested change: ${input.refinement}. Preserve the current design except where the updated request requires a change.` : ""}
 Approximate user-provided dimensions: ${input.width} feet wide by ${input.length} feet long. These are unverified; do not add measurement labels.
 Add the requested project only in the relevant yard/patio area, following the homeowner's description. Keep the original house and all its windows, doors, roof, brick/siding, trees, fence, neighboring structures, camera angle, perspective, framing, and lighting intact. Do not redesign the house or move existing features. Preserve the source composition and aspect ratio. Match scale, perspective, material textures, shadows, and contact with the ground. Show a believable finished outdoor project in THIS yard. No text, watermarks, people, or before/after panels. This is a visual concept, not a structural specification.`;
 }
@@ -178,7 +186,7 @@ export async function createDesign(
       method: "POST",
       headers,
       body,
-      signal: AbortSignal.timeout(240_000),
+      signal: AbortSignal.timeout(dependencies.timeoutMs ?? 240_000),
     });
   } catch {
     throw new DesignError(

@@ -35,6 +35,12 @@ import { parseProjectBackup } from "@/lib/project-backup";
 import { useAccount } from "@/lib/accounts/use-account";
 import { useProjectLibrary } from "@/lib/accounts/use-project-library";
 import { readDraft, writeDraft, readLocalProjects } from "@/lib/local-projects";
+import { ProjectDetailsForm } from "@/components/ProjectDetailsForm";
+import { RefineProject } from "@/components/RefineProject";
+import { ShoppingList } from "@/components/ShoppingList";
+import { PlanReview } from "@/components/PlanReview";
+import { shoppingText } from "@/lib/shopping";
+import type { ProjectDetails } from "@/lib/project-details";
 import { AccountDialog } from "@/components/AccountDialog";
 const categories = [
   { name: "Deck", image: photos.deck, icon: Layers },
@@ -56,6 +62,7 @@ export default function Home() {
     [photo, setPhoto] = useState(""),
     [type, setType] = useState("Pergola"),
     [description, setDescription] = useState(""),
+    [details, setDetails] = useState<ProjectDetails>({}),
     [width, setWidth] = useState("12"),
     [length, setLength] = useState("16"),
     [budget, setBudget] = useState("I'm not sure"),
@@ -74,6 +81,7 @@ export default function Home() {
     [generatingDemo, setGeneratingDemo] = useState(false),
     [regenerating, setRegenerating] = useState(false),
     [rebuilding, setRebuilding] = useState(false),
+    [refining, setRefining] = useState(false),
     [showAccount, setShowAccount] = useState(false),
     [draftStatus, setDraftStatus] = useState("");
   const account = useAccount();
@@ -133,12 +141,14 @@ export default function Home() {
           setView("home");
           setPhoto("");
           setDescription("");
+          setDetails({});
           if (draft) {
             setStep(draft.step);
             setDetail(draft.detail);
             setPhoto(draft.photo);
             setType(draft.type);
             setDescription(draft.description);
+            setDetails(draft.details || {});
             setWidth(draft.width);
             setLength(draft.length);
             setBudget(draft.budget);
@@ -202,6 +212,7 @@ export default function Home() {
       length,
       budget,
       experience,
+      details,
       projectId: view === "result" ? project?.id : undefined,
     })
       .then(() => {
@@ -232,6 +243,7 @@ export default function Home() {
     length,
     budget,
     experience,
+    details,
     project?.id,
   ]);
   useEffect(() => {
@@ -240,6 +252,7 @@ export default function Home() {
         view === "generating" ||
         regenerating ||
         rebuilding ||
+        refining ||
         library.saving ||
         draftStatus === "Saving draft…"
       ) {
@@ -249,7 +262,7 @@ export default function Home() {
     };
     window.addEventListener("beforeunload", beforeUnload);
     return () => window.removeEventListener("beforeunload", beforeUnload);
-  }, [view, regenerating, rebuilding, library.saving, draftStatus]);
+  }, [view, regenerating, rebuilding, refining, library.saving, draftStatus]);
   useEffect(() => {
     if (view !== "generating") return;
     const timer = setInterval(
@@ -380,6 +393,7 @@ export default function Home() {
           length: Number(length),
           budget,
           experienceLevel: experience,
+          details,
         }),
       });
       const data = await res.json();
@@ -395,7 +409,7 @@ export default function Home() {
     }
   }
   async function regenerateDesign() {
-    if (!project || regenerating || rebuilding) return;
+    if (!project || regenerating || rebuilding || refining || asking) return;
     setRegenerating(true);
     setError("");
     try {
@@ -410,6 +424,7 @@ export default function Home() {
           length: project.length,
           budget: project.budget,
           experienceLevel: project.experienceLevel,
+          details: project.details,
         }),
       });
       const data = await res.json();
@@ -422,6 +437,8 @@ export default function Home() {
         createdAt: project.createdAt,
         conversation: project.conversation,
         completed: 0,
+        shopping: [],
+        review: undefined,
         updatedAt: new Date().toISOString(),
       });
       notify("Your new photo preview is ready.");
@@ -435,8 +452,8 @@ export default function Home() {
       setRegenerating(false);
     }
   }
-  async function rebuildPlan() {
-    if (!project || rebuilding || regenerating) return;
+  async function rebuildPlan(updatedDetails?: ProjectDetails) {
+    if (!project || rebuilding || regenerating || refining || asking) return;
     setRebuilding(true);
     setError("");
     try {
@@ -452,11 +469,19 @@ export default function Home() {
           length: project.length,
           budget: project.budget,
           experienceLevel: project.experienceLevel,
+          details: updatedDetails || project.details,
         }),
       });
       const data = await response.json();
       if (!response.ok) throw Error(data.error);
-      update({ ...project, ...data, completed: 0 });
+      update({
+        ...project,
+        ...data,
+        details: updatedDetails || project.details,
+        completed: 0,
+        shopping: [],
+        review: undefined,
+      });
       notify(
         "Materials and steps rebuilt from this design. Step progress starts fresh.",
       );
@@ -471,7 +496,15 @@ export default function Home() {
     }
   }
   async function ask() {
-    if (!question.trim() || !project || asking) return;
+    if (
+      !question.trim() ||
+      !project ||
+      asking ||
+      rebuilding ||
+      regenerating ||
+      refining
+    )
+      return;
     setAsking(true);
     const q = question;
     setQuestion("");
@@ -479,7 +512,15 @@ export default function Home() {
       const res = await fetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q, project }),
+        body: JSON.stringify({
+          question: q,
+          project: {
+            ...project,
+            originalImage: "",
+            generatedImage: "",
+            conversation: project.conversation.slice(-12),
+          },
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw Error(data.error);
@@ -488,35 +529,75 @@ export default function Home() {
         conversation: [
           ...project.conversation,
           { role: "You", text: q },
-          { role: "Buildly sample guide", text: data.answer },
+          { role: "Buildly AI", text: data.answer },
         ],
       });
-    } catch {
-      setError("Your question could not be answered. Please try again.");
+    } catch (error) {
+      setQuestion(q);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Your question could not be answered. Please try again.",
+      );
     } finally {
       setAsking(false);
+    }
+  }
+  async function refine(change: string, updatedDetails: Project["details"]) {
+    if (!project || refining || rebuilding || regenerating || asking) return;
+    setRefining(true);
+    setError("");
+    try {
+      const response = await fetch("/api/refine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: project.id,
+          title: project.title,
+          originalImage: project.originalImage,
+          generatedImage: project.generatedImage,
+          projectType: project.projectType,
+          description: project.description,
+          width: project.width,
+          length: project.length,
+          budget: project.budget,
+          experienceLevel: project.experienceLevel,
+          details: updatedDetails,
+          change,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw Error(data.error);
+      const savedTo = await library.save(data);
+      setProject(data);
+      setTab("Overview");
+      if (savedTo === "failed")
+        setError(
+          "Your revision is ready but could not be saved. Download its project backup before leaving.",
+        );
+      else
+        notify(
+          "Revised version saved. Your previous version is still in My projects.",
+        );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Revision failed. Your previous version is unchanged.",
+      );
+    } finally {
+      setRefining(false);
     }
   }
   function download() {
     if (!project) return;
     const a = document.createElement("a");
     a.href = URL.createObjectURL(
-      new Blob(
-        [
-          `${project.title}\nIllustrative prices only\n\n` +
-            project.materials
-              .map(
-                (m) =>
-                  `${m.quantity || "Verify quantity"} × ${m.item} (${m.dimensions}) — ${m.quantity && m.unitCost ? money(m.quantity * m.unitCost) : "Not priced"}\n${m.purpose || ""}\n${m.quantityBasis || ""}`,
-              )
-              .join("\n"),
-        ],
-        { type: "text/plain" },
-      ),
+      new Blob([shoppingText(project)], { type: "text/plain" }),
     );
     a.download = "buildly-shopping-list.txt";
     a.click();
-    URL.revokeObjectURL(a.href);
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
   return (
     <>
@@ -916,8 +997,8 @@ export default function Home() {
                 <p>
                   {
                     [
-                      "A rough idea is all we need for this sample concept.",
-                      "We’ll keep your budget with your project. Sample estimates may differ.",
+                      "Enter your best measurements. Unverified dimensions remain estimates.",
+                      "We’ll share this with the planner; it does not guarantee the design will fit your budget.",
                       "Your experience level adjusts the estimated labor hours.",
                     ][detail]
                   }
@@ -992,6 +1073,13 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
+              )}
+              {detail === 2 && (
+                <ProjectDetailsForm
+                  value={details}
+                  onChange={setDetails}
+                  prefix="wizard"
+                />
               )}
               <button
                 className="primary next"
@@ -1129,8 +1217,8 @@ export default function Home() {
               </p>
               <button
                 className="secondary"
-                disabled={rebuilding || regenerating}
-                onClick={rebuildPlan}
+                disabled={rebuilding || regenerating || refining || asking}
+                onClick={() => rebuildPlan()}
               >
                 {rebuilding
                   ? "Reviewing photos and building your plan…"
@@ -1151,6 +1239,15 @@ export default function Home() {
                 </div>
               )}
             </section>
+          )}
+          {project.visualizationMode === "ai" && (
+            <RefineProject
+              key={project.id}
+              project={project}
+              busy={refining || rebuilding || regenerating || asking}
+              onRefine={refine}
+              onReplan={rebuildPlan}
+            />
           )}
           <div className="tabs" role="tablist" aria-label="Project sections">
             {[
@@ -1186,7 +1283,7 @@ export default function Home() {
                 </span>
                 <button
                   className="secondary"
-                  disabled={regenerating || rebuilding}
+                  disabled={regenerating || rebuilding || refining || asking}
                   onClick={regenerateDesign}
                 >
                   {regenerating
@@ -1258,8 +1355,8 @@ export default function Home() {
                 <div>
                   <h2>Your shopping list</h2>
                   <p>
-                    Sample quantities and US prices. Verify against your
-                    approved design.
+                    Planning quantities and reference US prices. Confirm product
+                    specifications and measurements before purchasing.
                   </p>
                 </div>
                 <button className="secondary" onClick={() => window.print()}>
@@ -1327,6 +1424,11 @@ export default function Home() {
                 connection. Taxes, delivery, labor, permits, and site-specific
                 changes are excluded.
               </p>
+              <ShoppingList
+                key={project.id}
+                project={project}
+                onChange={update}
+              />
             </section>
           )}
           {tab === "Tools" && (
@@ -1354,7 +1456,7 @@ export default function Home() {
           {tab === "Build steps" && (
             <section className="panel build-mode">
               <div className="section-heading">
-                <span className="badge">BUILD MODE · PREPARATION GUIDE</span>
+                <span className="badge">BUILD MODE · PROJECT GUIDE</span>
                 <strong>
                   {project.completed} / {project.steps.length} complete
                 </strong>
@@ -1363,7 +1465,7 @@ export default function Home() {
               {project.completed === project.steps.length ? (
                 <div className="center">
                   <CheckCircle2 size={48} />
-                  <h2>Your preparation guide is complete.</h2>
+                  <h2>Your project guide is complete.</h2>
                   <p>
                     Keep your approved site-specific design and inspection
                     requirements with your project.
@@ -1507,20 +1609,33 @@ export default function Home() {
               {project.warnings.map((w) => (
                 <p key={w}>{w}</p>
               ))}
+              <h3>Site information supplied by you</h3>
+              <ul>
+                {Object.entries(project.details || {}).map(([key, value]) => (
+                  <li key={key}>
+                    {key}: {value}
+                  </li>
+                ))}
+              </ul>
               <p>
-                AI-generated plans may contain errors. This demo is not an
-                AI-generated or certified plan. Consult a qualified professional
-                for structural, electrical, plumbing, gas, excavation, and other
-                permit-sensitive work.
+                Plans may contain errors and are not certified construction
+                drawings. Resolve structural specifications and local
+                requirements before building.
               </p>
+              <PlanReview
+                key={project.id}
+                project={project}
+                onChange={update}
+              />
             </section>
           )}
           {tab === "Ask about my project" && (
             <section className="panel assistant">
               <h2>A little help along the way.</h2>
               <p>
-                Ask about your project. Demo mode uses sample responses, not a
-                live AI assistant.
+                The AI assistant uses your saved request, site details,
+                materials, instructions and recent conversation. To apply
+                changes, use Refine this project.
               </p>
               <div className="suggestions">
                 {[
@@ -1565,7 +1680,13 @@ export default function Home() {
                 </label>
                 <button
                   className="primary"
-                  disabled={asking || !question.trim()}
+                  disabled={
+                    asking ||
+                    rebuilding ||
+                    regenerating ||
+                    refining ||
+                    !question.trim()
+                  }
                 >
                   {asking ? "Preparing response…" : "Ask about my project"}{" "}
                   <ArrowRight size={18} />

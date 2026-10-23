@@ -25,11 +25,11 @@ In the cloud workspace, use `npm ci --cache /workspace/.npm-cache` if your defau
 
 - Responsive landing page, illustrated before/after example, five project categories.
 - Photo selection, camera capture on supported devices, desktop drag-and-drop, file validation, and client-side resizing. JPG, PNG, WebP up to 15 MB.
-- Guided Photo → Project → Details workflow with dimensions, budget, and experience; one details question per screen.
+- Guided Photo → Project → Details workflow with dimensions, budget, and experience; follow-up site details and explicit unknowns.
 - Real photo edits through Gemini by default (or OpenAI Images Edits when selected): the original upload and project description are sent together, with instructions to preserve the property. The returned design displays at full size, with Original/Design/Compare views and real regeneration. Source and generated images retain the same dimensions. Requires an API key with image-model access.
-- Category-specific illustrative materials, quantities, dimensions, price totals, printable list, downloadable text shopping list.
+- Request-driven AI materials and detailed instructions for live designs; category-based estimates only for explicit samples. Package quantities, manual supplier quotes, purchase tracking and a downloadable shopping worksheet.
 - Tools checklist, guided preparation/build steps, completed-step tracking.
-- Project questions with context and conversation persistence.
+- Real Gemini project chat using scope, site details, materials, current step and conversation history. Saved design revisions preserve the previous version.
 - Automatic project/progress saves and wizard drafts in IndexedDB; refresh recovery no longer depends on a manual Save button. Prior localStorage saves migrate without deleting the recovery copy. Clearing browser storage removes device-only copies.
 - Email/password account creation, confirmation, sign-in, password reset, sign-out, and private cross-device project/photo sync through Supabase once configured.
 - Downloadable/importable project backups and an explicit guest-project import into your account.
@@ -39,9 +39,9 @@ In the cloud workspace, use `npm ci --cache /workspace/.npm-cache` if your defau
 
 Image editing uses Gemini by default when `GEMINI_API_KEY` is set. The default image-editing model is `gemini-3.1-flash-image`. Set `IMAGE_PROVIDER=openai` and provide `OPENAI_API_KEY` to switch back to OpenAI. No fallback silently uses a different provider or billing account. The app never silently replaces failed AI edits with sample images. Without credentials, the normal photo-preview action displays a configuration error. A separate **Explore a sample plan instead (no photo edit)** action lets visitors test sample planning without using the API. Sample images appear separately, never in a misleading before/after slider.
 
-Materials, costs, time estimates, tools, build steps, and Q&A are still **illustrative/demo**. Budget and experience are retained but do not drive an engineered design. Prices are not live retailer quotes. A real photo visualization does not turn these sample allowances into a construction-ready plan. Dedicated image analysis is still a stub; the image editing model itself sees the attached photo.
+Live plans use the homeowner request, site details, dimensions and both photos through Gemini. Chat is model-backed and never falls back to canned answers. Explicit sample plans still use illustrative estimates. Neither path supplies certified construction drawings. Prices are reference allowances or quotes entered by the user, not live retailer API prices.
 
-Build Mode is a seven-step preparation guide, not project-specific construction engineering. Site-specific instructions, footings, spans, loads, fasteners, permits, and inspections need qualified verification.
+Live Build Mode contains project-specific actions, material/tool references, checks and stop conditions; sample mode retains its preparation guide. Site-specific instructions, footings, spans, loads, fasteners, permits, and inspections need qualified verification.
 
 Supabase email authentication and private cloud persistence are implemented in `lib/accounts/`, with an accessible account dialog in `components/AccountDialog.tsx`. They require your Supabase project settings, the SQL setup, and public connection variables. Follow [supabase/README.md](supabase/README.md). Without configuration the app clearly reports that account services are unavailable and keeps local saves working. Google/Apple sign-in and retailer connections remain future integrations. `prisma/schema.prisma` is an unused legacy reference; the active database setup is `supabase/setup.sql`.
 
@@ -50,8 +50,9 @@ Supabase email authentication and private cloud persistence are implemented in `
 Create `.env.local` in the repository root using `.env.example` as a reference. Never commit credentials or use `NEXT_PUBLIC_` for secrets.
 
 - `IMAGE_PROVIDER`: `gemini` (default) or `openai`. Switching this value and redeploying changes provider; saved projects stay intact.
-- `GEMINI_API_KEY`: consumed server-side for Gemini photo edits. Requires Gemini API billing and image-model access. Never prefix this with `NEXT_PUBLIC_`.
+- `GEMINI_API_KEY`: consumed server-side for Gemini photo edits, planning, revisions and chat. Requires Gemini API billing and access to the selected models. Never prefix this with `NEXT_PUBLIC_`.
 - `GEMINI_IMAGE_MODEL`: optional; defaults to `gemini-3.1-flash-image`. Choose an available model supporting image output and uploaded-image editing. A text-only model cannot produce a preview.
+- `GEMINI_PLANNING_MODEL`: optional explicit pin for the text/vision planner and chat. When unset, starts with `gemini-2.5-flash` and discovers an available non-image Flash model if the default returns 404. A pin is honored without discovery.
 - `OPENAI_API_KEY`: only used when `IMAGE_PROVIDER=openai`. Requires OpenAI API billing and image-model access. A ChatGPT subscription does not supply API billing.
 - `OPENAI_IMAGE_MODEL`: optional; defaults to `gpt-image-1.5`. Use an image-editing model available to your OpenAI project.
 - `NEXT_PUBLIC_SUPABASE_URL`: your Supabase project URL.
@@ -66,7 +67,7 @@ The server boundaries are separate in `lib/services/`: `image-analysis.ts`, `pro
 
 1. Implement a server-side vision adapter with structured, validated output. Preserve the original photo; never treat pixel-derived dimensions as verified measurements.
 2. Image editing is implemented. Validate actual output quality with a real API key and homeowner photos; model edits can still alter details, scale, and framing. Private object storage is implemented for signed-in Supabase accounts; confirm storage policies and cross-device behavior against the configured project.
-3. Replace sample planning and Q&A with model-backed adapters, passing the project and conversation. Validate structured responses, keep safety constraints, handle failures, rate-limit requests, and only remove demo labels for actual live output.
+3. Planning, revisions and Q&A are model-backed with validated output. Verify their actual output using production model access and the review cases in `docs/BUILDER_REVIEW.md`.
 4. Apply `supabase/setup.sql`, configure URL/publishable key and Auth redirects, and verify live private storage and row level security. See the Supabase setup guide.
 5. Verify real email confirmation/password reset delivery with production SMTP. Supabase email auth is implemented; Google/Apple OAuth remain future additions. Cloud operations verify the signed-in user and rely on per-user database/storage policies; no service-role key is used in the browser.
 6. Connect real retailer APIs through `RetailerAdapter`, showing store, timestamp, actual prices, and availability. No approximate allowance should be presented as a retailer quote.
@@ -176,5 +177,15 @@ the generated image, clear generic materials/instructions and show a retry state
 projects can use **Rebuild plan from this design** to replace old estimates without buying
 another image; success resets step progress and persists the plan, while failure preserves
 the saved project. New image variants also receive a new associated plan. The endpoint
-`/api/plan` shares the existing per-instance request guard. Automated tests mock Gemini;
+`/api/plan` and `/api/ask` share a separate per-instance 20-request/15-minute guard; image generation and revisions retain the 3-request image guard. Automated tests mock Gemini;
 production credentials are needed to verify actual model availability and output quality.
+
+### Refinement, shopping and review
+
+- Site answers persist in drafts, account projects and backups and are sent to image generation, planning and chat. Unknown answers remain unresolved.
+- **Refine this project** interprets an explicit change, edits the current concept, then rebuilds its plan. It saves a separate project ID with `parentProjectId`, keeping the old version. Quotes, chat, completion progress and review notes do not carry into the new version. Ambiguous requests ask for clarification before buying another image.
+- **Update details and rebuild plan only** keeps the image, replaces the plan and clears obsolete quotes/review notes on success. Failure leaves the old project unchanged.
+- Package counts use `ceil(required quantity / package coverage)` in matching units, not an optimized cutting plan. Unknown coverage/quantities are not converted. Supplier links are searches, not confirmed products; quote totals use user-entered package prices and are labeled incomplete where needed. No live inventory/pricing integration is configured.
+- The builder review packet is a standalone HTML download containing both photos and the complete plan; open it to print. Automated findings and user-recorded reviewer notes do not certify a plan or verify the reviewer's credentials. See `docs/BUILDER_REVIEW.md` for the pending human review procedure.
+- Google failure messages include status/code and model without exposing raw provider text, credentials or photos. An unavailable unpinned default model can trigger discovery; a schema-specific 400 can retry JSON mode once with the same specification and runtime validation. All attempts share one deadline. Other errors remain explicit; billing or permissions failures still require account configuration.
+- Run `BROWSER_PATH=/usr/bin/chromium BASE_URL=http://127.0.0.1:3000 node tests/upgrades.mjs` against the app for revision preservation, package quotes, review export, chat UI and mobile checks. Paid services are mocked in automated tests. No claim of live model or professional review is made from those tests.

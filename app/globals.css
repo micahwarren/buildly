@@ -1866,3 +1866,67 @@ progress {
     font-size: 12px;
   }
 }
+
+.project-details-form {
+  margin: 24px 0;
+  padding: 24px;
+  background: var(--cream, #f6f4ed);
+  border-radius: 16px;
+}
+.project-details-form small {
+  font-weight: 400;
+  color: #59655d;
+}
+.project-details-form select {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px;
+  font: inherit;
+  border: 1px solid #cbd2cb;
+  border-radius: 8px;
+  background: white;
+}
+.shopping-list,
+.plan-review {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #d9ded8;
+}
+.shopping-item {
+  border: 1px solid #d9ded8;
+  border-radius: 12px;
+  margin: 20px 0;
+  padding: 20px;
+  overflow-wrap: anywhere;
+}
+.shopping-item form {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.shopping-item a {
+  color: #2d503d;
+  text-decoration: underline;
+}
+.panel details {
+  margin: 18px 0;
+}
+.panel summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 10px 0;
+}
+.message p {
+  white-space: pre-wrap;
+}
+.plan-review form {
+  margin-top: 24px;
+}
+@media (max-width: 600px) {
+  .project-details-form {
+    padding: 16px;
+  }
+  .shopping-item {
+    padding: 14px;
+  }
+}

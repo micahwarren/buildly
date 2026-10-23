@@ -1,3 +1,5 @@
+import { parseDetails } from "./project-details";
+import { validShopping } from "./shopping";
 import type { Project } from "./project";
 export function parseProjectBackup(text: string): Project {
   const backup = JSON.parse(text);
@@ -114,5 +116,46 @@ export function parseProjectBackup(text: string): Project {
     for (const key of ["purpose", "quantityBasis"])
       if (material[key] !== undefined && typeof material[key] !== "string")
         return fail();
+  try {
+    parseDetails(p.details);
+  } catch {
+    return fail();
+  }
+  if (p.shopping !== undefined && !validShopping(p.shopping)) return fail();
+  if (
+    p.parentProjectId !== undefined &&
+    (typeof p.parentProjectId !== "string" ||
+      !/^[a-zA-Z0-9-]{1,80}$/.test(p.parentProjectId))
+  )
+    return fail();
+  if (
+    p.review !== undefined &&
+    (!p.review ||
+      typeof p.review.reviewer !== "string" ||
+      p.review.reviewer.length > 200 ||
+      typeof p.review.notes !== "string" ||
+      p.review.notes.length > 3000 ||
+      typeof p.review.recordedAt !== "string" ||
+      !Number.isFinite(Date.parse(p.review.recordedAt)) ||
+      !Array.isArray(p.review.checks) ||
+      !p.review.checks.every((x: unknown) => typeof x === "string"))
+  )
+    return fail();
+  for (const material of p.materials) {
+    if (
+      material.quantityUnit !== undefined &&
+      typeof material.quantityUnit !== "string"
+    )
+      return fail();
+    if (
+      material.purchase !== undefined &&
+      (!material.purchase ||
+        typeof material.purchase.label !== "string" ||
+        typeof material.purchase.notes !== "string" ||
+        !Number.isFinite(material.purchase.coverage) ||
+        material.purchase.coverage < 0)
+    )
+      return fail();
+  }
   return p as Project;
 }

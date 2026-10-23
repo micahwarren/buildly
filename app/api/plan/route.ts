@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { readProjectRequest } from "@/lib/project-request";
 import { makeDemo } from "@/lib/project";
-import { checkImageLimit } from "@/lib/image-rate-limit";
+import { checkChatLimit } from "@/lib/chat-rate-limit";
 import { DesignError } from "@/lib/services/image-design";
 import { createDesignPlan } from "@/lib/services/design-plan";
 export const runtime = "nodejs";
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       data.generatedImage.length > 4_000_000
     )
       throw new DesignError("A saved design image is required.", 400);
-    checkImageLimit(req, false);
+    checkChatLimit(req);
     return NextResponse.json(
       await createDesignPlan({
         ...makeDemo(input),

@@ -66,6 +66,7 @@ test("planner sends both actual photos, description and structured response sche
     generatedImage: `data:image/jpeg;base64,${jpeg.toString("base64")}`,
     description: "Build pavers, preserve the existing fence",
     projectType: "Deck",
+    details: { height: "18 inches", location: "Wisconsin" },
   });
   const result = await createDesignPlan(project, {
     apiKey: "test",
@@ -82,6 +83,7 @@ test("planner sends both actual photos, description and structured response sche
         /Build pavers, preserve the existing fence/,
       );
       assert.ok(body.generationConfig.responseSchema.properties.steps);
+      assert.match(body.contents[0].parts.at(-1).text, /18 inches/);
       return Response.json({
         candidates: [
           {

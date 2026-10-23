@@ -1,3 +1,4 @@
+import { parseDetails } from "./project-details";
 import type { Project } from "./project";
 import { DesignError } from "./services/image-design";
 export async function readProjectRequest(
@@ -40,10 +41,20 @@ export async function readProjectRequest(
       "Please enter width from 1–100 feet and length from 1–200 feet.",
       400,
     );
+  let details;
+  try {
+    details = parseDetails(data.details);
+  } catch (error) {
+    throw new DesignError(
+      error instanceof Error ? error.message : "Invalid project details.",
+      400,
+    );
+  }
   return {
     input: {
       projectType: data.projectType,
       description: data.description.trim(),
+      details,
       originalImage: data.originalImage,
       width: data.width,
       length: data.length,

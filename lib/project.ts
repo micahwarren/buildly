@@ -1,3 +1,5 @@
+import type { ProjectDetails } from "./project-details";
+import type { ShoppingEntry } from "./shopping";
 import { estimateProject } from "./estimates";
 export const brand = {
   name: "Buildly",
@@ -8,6 +10,15 @@ export type Project = {
   title: string;
   projectType: string;
   description: string;
+  details?: ProjectDetails;
+  shopping?: ShoppingEntry[];
+  parentProjectId?: string;
+  review?: {
+    reviewer: string;
+    notes: string;
+    recordedAt: string;
+    checks: string[];
+  };
   originalImage: string;
   generatedImage: string;
   visualizationMode?: "ai" | "demo";
@@ -50,6 +61,8 @@ export type Material = {
   unitCost: number;
   purpose?: string;
   quantityBasis?: string;
+  quantityUnit?: string;
+  purchase?: { label: string; coverage: number; notes: string };
 };
 export const photos = {
   hero: "/images/hero.svg",
