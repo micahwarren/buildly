@@ -56,6 +56,13 @@ console.log("Test artifacts: " + output);
   await page
     .getByLabel("Tell us what you’re imagining")
     .fill("A cedar pergola for family dinners in our backyard.");
+  await page.getByText("Draft saved on this device", { exact: true }).waitFor();
+  await page.reload();
+  await page.getByLabel("Tell us what you’re imagining").waitFor();
+  assert.equal(
+    await page.getByLabel("Tell us what you’re imagining").inputValue(),
+    "A cedar pergola for family dinners in our backyard.",
+  );
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByLabel("Width (feet)").fill("14");
   await page.getByLabel("Length (feet)").fill("18");
@@ -74,6 +81,27 @@ console.log("Test artifacts: " + output);
     .click();
   await page.getByRole("heading", { name: "Here’s your project." }).waitFor();
   assert.match(await page.locator(".result-heading").innerText(), /14 × 18/);
+  // The result must survive a refresh without the old manual Save action.
+  await page.waitForFunction(
+    () =>
+      new Promise((resolve) => {
+        const open = indexedDB.open("buildly", 1);
+        open.onsuccess = () => {
+          const req = open.result
+            .transaction("drafts", "readonly")
+            .objectStore("drafts")
+            .get("guest");
+          req.onsuccess = () => {
+            resolve(req.result?.view === "result");
+            open.result.close();
+          };
+        };
+      }),
+  );
+  await page.reload();
+  await page.getByRole("heading", { name: "Here’s your project." }).waitFor();
+  assert.match(await page.locator(".result-heading").innerText(), /14 × 18/);
+
   assert.equal(await page.getByRole("slider").count(), 0);
   await page
     .getByRole("button", { name: "Create a photo preview", exact: true })
@@ -111,12 +139,10 @@ console.log("Test artifacts: " + output);
     await page.locator(".before-image").getAttribute("style"),
     /70%/,
   );
-  const sizes = await page
-    .locator(".comparison")
-    .evaluate((el) => ({
-      width: el.clientWidth,
-      originalWidth: el.querySelector(".before-image img").clientWidth,
-    }));
+  const sizes = await page.locator(".comparison").evaluate((el) => ({
+    width: el.clientWidth,
+    originalWidth: el.querySelector(".before-image img").clientWidth,
+  }));
   assert.ok(Math.abs(sizes.width - sizes.originalWidth) < 2);
   await page.getByRole("button", { name: "Your design", exact: true }).click();
 
@@ -124,6 +150,9 @@ console.log("Test artifacts: " + output);
     .getByRole("button", { name: "Save my project", exact: true })
     .click();
   await page.getByRole("status").waitFor();
+  await page
+    .getByRole("button", { name: "Keep on this device", exact: true })
+    .click();
   await page.getByRole("tab", { name: "Materials", exact: true }).click();
   assert.ok((await page.locator("tbody tr").count()) > 0);
   const download = page.waitForEvent("download");
@@ -190,13 +219,57 @@ console.log("Test artifacts: " + output);
     ),
     false,
   );
+
+  const exported = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Download project backup", exact: true })
+    .click();
+  const backupDownload = await exported;
+  const backupPath = path.join(output, "project-backup.json");
+  await backupDownload.saveAs(backupPath);
+  const backup = JSON.parse(fs.readFileSync(backupPath, "utf8"));
+  assert.equal(backup.format, "buildly-project-v1");
+  assert.equal(backup.project.completed, 1);
+  const legacyContext = await browser.newContext();
+  await legacyContext.addInitScript(
+    (project) =>
+      localStorage.setItem("buildly-projects", JSON.stringify([project])),
+    backup.project,
+  );
+  const legacyPage = await legacyContext.newPage();
+  await legacyPage.goto(BASE_URL);
+  await legacyPage
+    .getByRole("button", { name: /My projects/ })
+    .first()
+    .click();
+  await legacyPage.getByRole("button", { name: "Continue project" }).waitFor();
+  legacyPage.on("dialog", (dialog) => dialog.accept());
+  await legacyPage
+    .getByRole("button", { name: "Remove project", exact: true })
+    .click();
+  await legacyPage
+    .getByRole("heading", { name: "Every great project starts with an idea." })
+    .waitFor();
+  await legacyPage.reload();
+  await legacyPage
+    .getByRole("button", { name: /My projects/ })
+    .first()
+    .click();
+  await legacyPage
+    .getByRole("heading", { name: "Every great project starts with an idea." })
+    .waitFor();
+  assert.equal(
+    await legacyPage.getByRole("button", { name: "Continue project" }).count(),
+    0,
+  );
+  await legacyContext.close();
   const bad = await page.request.post(BASE_URL + "/api/projects", {
     data: { description: "x" },
   });
   assert.equal(bad.status(), 400);
   assert.deepEqual(errors, []);
   console.log(
-    "PASS: upload, wizard, dimensions, explicit demo, missing-key error UI, live-result UI and comparison (mocked provider), materials download, tools, build progress, Q&A, persistence after reload, desktop/mobile layouts, invalid request validation; no browser exceptions.",
+    "PASS: upload, wizard, dimensions, draft recovery, automatic result recovery before manual save, backup export, legacy migration and deletion, explicit demo, missing-key error UI, live-result UI and comparison (mocked provider), materials download, tools, build progress, Q&A, persistence after reload, desktop/mobile layouts, invalid request validation; no browser exceptions.",
   );
   await browser.close();
 })().catch((e) => {

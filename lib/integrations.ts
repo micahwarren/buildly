@@ -1,4 +1,4 @@
-/** Contracts for future integrations. No fake authentication, prices, or checkout. */
+/** Future OAuth/retailer contracts. Email authentication is implemented in lib/accounts. */
 export type AuthProvider = "email" | "google" | "apple";
 export interface AccountSession {
   userId: string;

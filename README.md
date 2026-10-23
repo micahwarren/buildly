@@ -30,7 +30,9 @@ In the cloud workspace, use `npm ci --cache /workspace/.npm-cache` if your defau
 - Category-specific illustrative materials, quantities, dimensions, price totals, printable list, downloadable text shopping list.
 - Tools checklist, guided preparation/build steps, completed-step tracking.
 - Project questions with context and conversation persistence.
-- Saved projects and progress in localStorage on the current browser/device; no account required. Save explicitly before leaving a new project. Clearing browser storage removes projects. Storage failures display an error.
+- Automatic project/progress saves and wizard drafts in IndexedDB; refresh recovery no longer depends on a manual Save button. Prior localStorage saves migrate without deleting the recovery copy. Clearing browser storage removes device-only copies.
+- Email/password account creation, confirmation, sign-in, password reset, sign-out, and private cross-device project/photo sync through Supabase once configured.
+- Downloadable/importable project backups and an explicit guest-project import into your account.
 - Clear demo labels, assumptions, and understandable safety notes.
 
 ## What is demo or not connected
@@ -41,7 +43,7 @@ Materials, costs, time estimates, tools, build steps, and Q&A are still **illust
 
 Build Mode is a seven-step preparation guide, not project-specific construction engineering. Site-specific instructions, footings, spans, loads, fasteners, permits, and inspections need qualified verification.
 
-Authentication and cross-device database persistence are **not implemented**. The save flow honestly saves to this device rather than simulating an account. `lib/integrations.ts` defines email/Google/Apple authentication and Home Depot/Lowe's/Menards retailer adapter contracts. `prisma/schema.prisma` describes the future PostgreSQL user/project model; Prisma is not installed or connected and no migrations run.
+Supabase email authentication and private cloud persistence are implemented in `lib/accounts/`, with an accessible account dialog in `components/AccountDialog.tsx`. They require your Supabase project settings, the SQL setup, and public connection variables. Follow [supabase/README.md](supabase/README.md). Without configuration the app clearly reports that account services are unavailable and keeps local saves working. Google/Apple sign-in and retailer connections remain future integrations. `prisma/schema.prisma` is an unused legacy reference; the active database setup is `supabase/setup.sql`.
 
 ## Environment variables
 
@@ -52,7 +54,9 @@ Create `.env.local` in the repository root using `.env.example` as a reference. 
 - `GEMINI_IMAGE_MODEL`: optional; defaults to `gemini-3.1-flash-image`. Choose an available model supporting image output and uploaded-image editing. A text-only model cannot produce a preview.
 - `OPENAI_API_KEY`: only used when `IMAGE_PROVIDER=openai`. Requires OpenAI API billing and image-model access. A ChatGPT subscription does not supply API billing.
 - `OPENAI_IMAGE_MODEL`: optional; defaults to `gpt-image-1.5`. Use an image-editing model available to your OpenAI project.
-- `DATABASE_URL`: reserved for PostgreSQL/Prisma persistence. Not currently consumed.
+- `NEXT_PUBLIC_SUPABASE_URL`: your Supabase project URL.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: public/publishable key; legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` is also supported. These public keys depend on the supplied row level security policies. Never use a service-role/secret key in a public variable.
+- `DATABASE_URL`: unused legacy placeholder; Supabase browser persistence does not require it.
 
 Only the explicit sample-plan mode works without the API key. The database variable may remain unset. Never paste API keys into chat, browser forms, or source code.
 
@@ -61,10 +65,10 @@ Only the explicit sample-plan mode works without the API key. The database varia
 The server boundaries are separate in `lib/services/`: `image-analysis.ts`, `project-planning.ts`, `image-design.ts`, and `project-qa.ts`. API routes include `app/api/projects/route.ts`, `app/api/design/route.ts`, `app/api/config/route.ts`, and `app/api/ask/route.ts`.
 
 1. Implement a server-side vision adapter with structured, validated output. Preserve the original photo; never treat pixel-derived dimensions as verified measurements.
-2. Image editing is implemented. Validate actual output quality with a real API key and homeowner photos; model edits can still alter details, scale, and framing. Move image persistence from browser storage to private object storage when adding accounts.
+2. Image editing is implemented. Validate actual output quality with a real API key and homeowner photos; model edits can still alter details, scale, and framing. Private object storage is implemented for signed-in Supabase accounts; confirm storage policies and cross-device behavior against the configured project.
 3. Replace sample planning and Q&A with model-backed adapters, passing the project and conversation. Validate structured responses, keep safety constraints, handle failures, rate-limit requests, and only remove demo labels for actual live output.
-4. Install Prisma, create and review migrations, provision PostgreSQL, and add secure object storage rather than storing photos in the database. Connect the model to server routes and enforce ownership.
-5. Connect an authentication provider using `AuthAdapter`, secure cookies, and server-side session checks. Add email/Google/Apple only when real credentials and callback URLs are configured. Request sign-in on cloud save after showing the concept.
+4. Apply `supabase/setup.sql`, configure URL/publishable key and Auth redirects, and verify live private storage and row level security. See the Supabase setup guide.
+5. Verify real email confirmation/password reset delivery with production SMTP. Supabase email auth is implemented; Google/Apple OAuth remain future additions. Cloud operations verify the signed-in user and rely on per-user database/storage policies; no service-role key is used in the browser.
 6. Connect real retailer APIs through `RetailerAdapter`, showing store, timestamp, actual prices, and availability. No approximate allowance should be presented as a retailer quote.
 
 ## Validation
@@ -112,3 +116,17 @@ Provider contract tests use mocked HTTP responses and validate attached source i
 Keep `IMAGE_PROVIDER=gemini` and `GEMINI_API_KEY` for Google. To use OpenAI later, set `IMAGE_PROVIDER=openai`, add `OPENAI_API_KEY`, and redeploy. You can retain both keys securely in Vercel; only the selected provider is used. No source change is needed for this switch. Existing photos and saved projects are unaffected.
 
 Gemini implementation follows the official [Google image-generation cookbook](https://github.com/google-gemini/cookbook/blob/main/quickstarts/Get_Started_Nano_Banana.ipynb). It sends inline photo bytes and the project prompt to the `generateContent` endpoint, requests image output, and rejects text-only or safety-blocked responses. `app/api/config` exposes only credential presence, never a key or proof of working model access.
+
+## Account and recovery validation
+
+`npm run test:e2e` also checks unfinished-wizard recovery, automatic result recovery before a manual Save, project backup export, and migration of old saves. It must run against a build without Supabase public variables for the unconfigured-account fallback check.
+
+`tests/accounts.mjs` exercises the real Supabase browser SDK with isolated intercepted HTTP responses. To run it, start a separate development server with **test-only** public settings:
+
+```sh
+NEXT_PUBLIC_SUPABASE_URL=https://buildly-auth-test.supabase.co NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_testonly npm run dev -- --port 3001
+# another terminal
+BROWSER_PATH=/usr/bin/chromium BASE_URL=http://127.0.0.1:3001 node tests/accounts.mjs
+```
+
+The test intercepts all auth requests and never creates real accounts. It verifies signup/confirmation messaging, login, private image uploads, metadata saving, progress sync, restoration in a fresh browser context, local preservation when cloud saving fails, and isolation after sign-out. Restart/rebuild without test settings afterward. Mock success does not validate your actual Supabase policies, email delivery, or cross-device access; these require live configuration.

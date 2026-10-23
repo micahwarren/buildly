@@ -31,6 +31,11 @@ import {
 import { brand, photos, type Project } from "@/lib/project";
 import { ProjectComparison } from "@/components/ProjectComparison";
 import { ProgressSteps } from "@/components/ProgressSteps";
+import { parseProjectBackup } from "@/lib/project-backup";
+import { useAccount } from "@/lib/accounts/use-account";
+import { useProjectLibrary } from "@/lib/accounts/use-project-library";
+import { readDraft, writeDraft, readLocalProjects } from "@/lib/local-projects";
+import { AccountDialog } from "@/components/AccountDialog";
 const categories = [
   { name: "Deck", image: photos.deck, icon: Layers },
   { name: "Pergola", image: photos.pergola, icon: Sun },
@@ -58,7 +63,6 @@ export default function Home() {
     [error, setError] = useState(""),
     [loading, setLoading] = useState(0),
     [project, setProject] = useState<Project | null>(null),
-    [saved, setSaved] = useState<Project[]>([]),
     [tab, setTab] = useState("Overview"),
     [question, setQuestion] = useState(""),
     [asking, setAsking] = useState(false),
@@ -68,22 +72,182 @@ export default function Home() {
     [homeBefore, setHomeBefore] = useState(false),
     [imageAvailable, setImageAvailable] = useState<boolean | null>(null),
     [generatingDemo, setGeneratingDemo] = useState(false),
-    [regenerating, setRegenerating] = useState(false);
+    [regenerating, setRegenerating] = useState(false),
+    [showAccount, setShowAccount] = useState(false),
+    [draftStatus, setDraftStatus] = useState("");
+  const account = useAccount();
+  const library = useProjectLibrary(account);
+  const {
+    saved,
+    scope: libraryScope,
+    ready: libraryReady,
+    save: saveProject,
+  } = library;
+  const accountUserId = account.user?.id;
+  const restoredScope = useRef("");
+  const navigationRevision = useRef(0);
+  const pendingAccountProject = useRef<Project | null>(null);
+  const backupFile = useRef<HTMLInputElement>(null);
+
   const file = useRef<HTMLInputElement>(null),
     camera = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("buildly-projects");
-      if (stored) setSaved(JSON.parse(stored));
-    } catch {
-      setError("Saved projects could not be opened in this browser.");
-    }
-    setReady(true);
     fetch("/api/config")
       .then((r) => r.json())
       .then((data) => setImageAvailable(data.imageGenerationAvailable === true))
       .catch(() => setImageAvailable(false));
   }, []);
+  useEffect(() => {
+    if (account.recovery) setShowAccount(true);
+  }, [account.recovery]);
+  useEffect(() => {
+    if (library.warning) setError(library.warning);
+  }, [library.warning]);
+  useEffect(() => {
+    if (account.error) setError(account.error);
+  }, [account.error]);
+  useEffect(() => {
+    if (!libraryReady || restoredScope.current === libraryScope) return;
+    let cancelled = false;
+    const initialRestore = !restoredScope.current;
+    const navigationAtStart = navigationRevision.current;
+    setReady(false);
+    async function restore() {
+      try {
+        if (initialRestore && navigationRevision.current > 0) return;
+        if (pendingAccountProject.current && accountUserId) {
+          const p = pendingAccountProject.current;
+          pendingAccountProject.current = null;
+          setProject(p);
+          setView("result");
+          await saveProject(p);
+        } else {
+          const draft = await readDraft(libraryScope);
+          if (
+            cancelled ||
+            (initialRestore && navigationRevision.current !== navigationAtStart)
+          )
+            return;
+          setProject(null);
+          setView("home");
+          setPhoto("");
+          setDescription("");
+          if (draft) {
+            setStep(draft.step);
+            setDetail(draft.detail);
+            setPhoto(draft.photo);
+            setType(draft.type);
+            setDescription(draft.description);
+            setWidth(draft.width);
+            setLength(draft.length);
+            setBudget(draft.budget);
+            setExperience(draft.experience);
+            const recovered = draft.projectId
+              ? (await readLocalProjects(libraryScope)).find(
+                  (p) => p.id === draft.projectId,
+                )
+              : undefined;
+            if (
+              cancelled ||
+              (initialRestore &&
+                navigationRevision.current !== navigationAtStart)
+            )
+              return;
+            if (recovered) {
+              setProject(recovered);
+              setView("result");
+              setToast("Your project was restored.");
+            } else if (draft.photo) {
+              setView("wizard");
+              setToast("Your unfinished project was restored.");
+            }
+          }
+        }
+      } catch {
+        if (!cancelled)
+          setError(
+            "Draft recovery could not open. Your saved projects may still be available under My projects.",
+          );
+      } finally {
+        if (!cancelled) {
+          restoredScope.current = libraryScope;
+          setReady(true);
+        }
+      }
+    }
+    void restore();
+    return () => {
+      cancelled = true;
+    };
+  }, [libraryReady, libraryScope, accountUserId, saveProject]);
+  useEffect(() => {
+    if (
+      !ready ||
+      !library.ready ||
+      restoredScope.current !== library.scope ||
+      !["wizard", "generating", "result"].includes(view)
+    )
+      return;
+    let current = true;
+    setDraftStatus("Saving draft…");
+    writeDraft(library.scope, {
+      view: view === "generating" ? "wizard" : view,
+      step,
+      detail,
+      photo,
+      type,
+      description,
+      width,
+      length,
+      budget,
+      experience,
+      projectId: view === "result" ? project?.id : undefined,
+    })
+      .then(() => {
+        if (current) setDraftStatus("Draft saved on this device");
+      })
+      .catch(() => {
+        if (current) {
+          setDraftStatus("Draft could not be saved");
+          setError(
+            "Your browser could not save this draft. Keep this tab open and download a backup of any completed project.",
+          );
+        }
+      });
+    return () => {
+      current = false;
+    };
+  }, [
+    ready,
+    library.ready,
+    library.scope,
+    view,
+    step,
+    detail,
+    photo,
+    type,
+    description,
+    width,
+    length,
+    budget,
+    experience,
+    project?.id,
+  ]);
+  useEffect(() => {
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (
+        view === "generating" ||
+        regenerating ||
+        library.saving ||
+        draftStatus === "Saving draft…"
+      ) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", beforeUnload);
+    return () => window.removeEventListener("beforeunload", beforeUnload);
+  }, [view, regenerating, library.saving, draftStatus]);
   useEffect(() => {
     if (view !== "generating") return;
     const timer = setInterval(
@@ -98,6 +262,7 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [toast]);
   function go(v: string) {
+    navigationRevision.current++;
     setView(v);
     setMobile(false);
     setError("");
@@ -112,28 +277,54 @@ export default function Home() {
   function notify(s: string) {
     setToast(s);
   }
-  function store(p: Project) {
-    const next = [p, ...saved.filter((s) => s.id !== p.id)];
-    try {
-      localStorage.setItem("buildly-projects", JSON.stringify(next));
-      setSaved(next);
-      notify("Project saved on this device.");
-    } catch {
-      setError(
-        "Your device storage is full. Try a smaller photo or remove an older project.",
+  async function store(p: Project) {
+    const where = await library.save(p);
+    if (where !== "failed")
+      notify(
+        where === "cloud"
+          ? "Project saved to your account."
+          : "Project saved on this device.",
       );
+    if (!account.user) {
+      pendingAccountProject.current = p;
+      setShowAccount(true);
     }
   }
   function update(p: Project) {
-    setProject(p);
-    if (saved.some((s) => s.id === p.id)) {
-      const next = saved.map((s) => (s.id === p.id ? p : s));
-      try {
-        localStorage.setItem("buildly-projects", JSON.stringify(next));
-        setSaved(next);
-      } catch {
-        setError("Progress could not be saved. Device storage may be full.");
-      }
+    const next = { ...p, updatedAt: new Date().toISOString() };
+    setProject(next);
+    void library.save(next);
+  }
+  function downloadBackup() {
+    if (!project) return;
+    const url = URL.createObjectURL(
+      new Blob(
+        [JSON.stringify({ format: "buildly-project-v1", project }, null, 2)],
+        { type: "application/json" },
+      ),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "buildly-project-backup.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  async function importBackup(file?: File) {
+    if (!file) return;
+    try {
+      if (file.size > 20 * 1024 * 1024)
+        throw new Error("Please choose a backup smaller than 20 MB.");
+      const p = parseProjectBackup(await file.text());
+      p.updatedAt = new Date().toISOString();
+      setProject(p);
+      await library.save(p);
+      go("result");
+      setTab("Overview");
+      notify("Project backup opened.");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "That backup could not be opened.",
+      );
     }
   }
   async function upload(f?: File) {
@@ -193,6 +384,7 @@ export default function Home() {
       if (!res.ok) throw Error(data.error);
       if (demo) await new Promise((r) => setTimeout(r, 1000));
       setProject(data);
+      await library.save(data);
       setTab("Overview");
       go("result");
     } catch (e) {
@@ -331,6 +523,9 @@ export default function Home() {
           <button onClick={() => go("saved")}>
             <Bookmark size={17} /> My projects
             {saved.length > 0 && <span className="count">{saved.length}</span>}
+          </button>
+          <button onClick={() => setShowAccount(true)}>
+            {account.user ? "My account" : "Sign in / Create account"}
           </button>
         </nav>
         <button className="primary header-cta" onClick={() => start()}>
@@ -521,6 +716,11 @@ export default function Home() {
       {view === "wizard" && (
         <main className="wizard">
           <ProgressSteps step={step} />
+          {photo && (
+            <p className="save-status" aria-live="polite">
+              {draftStatus}
+            </p>
+          )}
           <button
             className="back"
             onClick={() =>
@@ -840,6 +1040,24 @@ export default function Home() {
             </div>
             <button className="primary" onClick={() => store(project)}>
               <Bookmark size={20} /> Save my project
+            </button>
+          </div>
+          <div className="project-save-bar">
+            <span aria-live="polite">
+              {library.saving
+                ? "Saving your project…"
+                : library.synced.has(project.id)
+                  ? "Saved to your account"
+                  : saved.some(
+                        (p) =>
+                          p.id === project.id &&
+                          p.updatedAt === project.updatedAt,
+                      )
+                    ? "Saved automatically on this device"
+                    : "Not saved yet — keep this tab open"}
+            </span>
+            <button className="text-button" onClick={downloadBackup}>
+              <Download size={17} /> Download project backup
             </button>
           </div>
           <div className="demo-banner">
@@ -1218,11 +1436,48 @@ export default function Home() {
             <div>
               <span className="eyebrow">YOUR NEXT “I BUILT THAT”</span>
               <h1>My projects</h1>
-              <p>Saved in this browser, on this device. No account required.</p>
+              <p>
+                {account.user
+                  ? "Your account projects and local copies. Cloud-save status appears on each project."
+                  : "Projects are saved automatically on this device. Create an account to keep them across devices."}
+              </p>
+              {!account.user && (
+                <button
+                  className="text-button"
+                  onClick={() => setShowAccount(true)}
+                >
+                  Create an account or sign in
+                </button>
+              )}
+              {account.user && library.guestCount > 0 && (
+                <button
+                  className="text-button"
+                  disabled={library.saving}
+                  onClick={() => void library.importGuests()}
+                >
+                  Copy this device’s guest projects to my account (
+                  {library.guestCount})
+                </button>
+              )}
             </div>
             <button className="primary" onClick={() => start()}>
               <Plus size={20} /> New project
             </button>
+          </div>
+          <div className="backup-actions">
+            <button
+              className="secondary"
+              onClick={() => backupFile.current?.click()}
+            >
+              Import project backup
+            </button>
+            <input
+              ref={backupFile}
+              type="file"
+              hidden
+              accept="application/json,.json"
+              onChange={(e) => void importBackup(e.target.files?.[0])}
+            />
           </div>
           {ready && saved.length === 0 ? (
             <div className="empty-state">
@@ -1252,6 +1507,11 @@ export default function Home() {
                     <p>
                       {money(p.estimatedCostLow)}–{money(p.estimatedCostHigh)}
                     </p>
+                    <p className="save-status">
+                      {library.synced.has(p.id)
+                        ? "Saved to your account"
+                        : "Saved on this device"}
+                    </p>
                     <small>
                       {new Date(p.createdAt).toLocaleDateString()} ·{" "}
                       {p.completed} of {p.steps.length} steps complete
@@ -1269,19 +1529,15 @@ export default function Home() {
                     </button>
                     <button
                       className="delete-button"
-                      onClick={() => {
+                      onClick={async () => {
                         if (
                           window.confirm(
-                            "Remove this project from this device?",
+                            account.user
+                              ? "Remove this project from your account and this device?"
+                              : "Remove this project from this device?",
                           )
-                        ) {
-                          const next = saved.filter((s) => s.id !== p.id);
-                          localStorage.setItem(
-                            "buildly-projects",
-                            JSON.stringify(next),
-                          );
-                          setSaved(next);
-                        }
+                        )
+                          await library.remove(p.id);
                       }}
                     >
                       Remove project
@@ -1292,6 +1548,9 @@ export default function Home() {
             </div>
           )}
         </main>
+      )}
+      {showAccount && (
+        <AccountDialog account={account} close={() => setShowAccount(false)} />
       )}
       <footer>
         <button className="logo" onClick={() => go("home")}>

@@ -1,4 +1,5 @@
-// Future cloud storage contract. Browser demo uses localStorage, not this database.
+// Legacy reference only; do not migrate this schema.
+// Active account storage uses Supabase Auth and supabase/setup.sql.
 generator client {
   provider = "prisma-client-js"
 }
