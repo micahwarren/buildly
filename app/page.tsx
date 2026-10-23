@@ -42,6 +42,7 @@ import { shoppingText } from "@/lib/shopping";
 import type { ProjectDetails } from "@/lib/project-details";
 import { RotatingHeadline } from "@/components/RotatingHeadline";
 import { DeckAnimation } from "@/components/DeckAnimation";
+import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { AccountDialog } from "@/components/AccountDialog";
 const categories = [
   { name: "Deck", image: photos.deck, icon: Layers },
@@ -83,6 +84,7 @@ export default function Home() {
     [regenerating, setRegenerating] = useState(false),
     [rebuilding, setRebuilding] = useState(false),
     [refining, setRefining] = useState(false),
+    [projectToDelete, setProjectToDelete] = useState<Project | null>(null),
     [showAccount, setShowAccount] = useState(false),
     [accountMode, setAccountMode] = useState<"signup" | "signin">("signup"),
     [draftStatus, setDraftStatus] = useState("");
@@ -1727,16 +1729,7 @@ export default function Home() {
                     </button>
                     <button
                       className="delete-button"
-                      onClick={async () => {
-                        if (
-                          window.confirm(
-                            account.user
-                              ? "Remove this project from your account and this device?"
-                              : "Remove this project from this device?",
-                          )
-                        )
-                          await library.remove(p.id);
-                      }}
+                      onClick={() => setProjectToDelete(p)}
                     >
                       Remove project
                     </button>
@@ -1746,6 +1739,14 @@ export default function Home() {
             </div>
           )}
         </main>
+      )}
+      {projectToDelete && (
+        <DeleteProjectDialog
+          title={projectToDelete.title}
+          cloud={!!account.user}
+          onDelete={() => library.remove(projectToDelete.id)}
+          onClose={() => setProjectToDelete(null)}
+        />
       )}
       {showAccount && (
         <AccountDialog

@@ -394,9 +394,20 @@ console.log("Test artifacts: " + output);
     .first()
     .click();
   await legacyPage.getByRole("button", { name: "Continue project" }).waitFor();
-  legacyPage.on("dialog", (dialog) => dialog.accept());
+
   await legacyPage
     .getByRole("button", { name: "Remove project", exact: true })
+    .click();
+  await legacyPage
+    .getByRole("dialog", { name: "Delete this project?" })
+    .waitFor();
+  await legacyPage.getByRole("button", { name: "Cancel", exact: true }).click();
+  await legacyPage.getByRole("button", { name: "Continue project" }).waitFor();
+  await legacyPage
+    .getByRole("button", { name: "Remove project", exact: true })
+    .click();
+  await legacyPage
+    .getByRole("button", { name: "Delete project", exact: true })
     .click();
   await legacyPage
     .getByRole("heading", { name: "Every great project starts with an idea." })

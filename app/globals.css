@@ -2560,3 +2560,57 @@ progress {
     font-size: 15px;
   }
 }
+
+.delete-project-dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 32px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #f8f7f2;
+  color: var(--ink);
+  box-shadow: 0 24px 80px #102d3340;
+}
+.delete-project-dialog::backdrop {
+  background: #102d3399;
+  backdrop-filter: blur(4px);
+}
+.delete-project-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #f4e2d7;
+  color: #ae4124;
+  margin-bottom: 22px;
+}
+.delete-project-dialog h2 {
+  font-size: 26px;
+  margin: 0 0 16px;
+}
+.delete-project-name {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.delete-project-dialog p {
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 12px 0 24px;
+}
+.delete-project-actions {
+  display: flex;
+  gap: 12px;
+}
+.delete-project-actions button {
+  flex: 1;
+  justify-content: center;
+  border-radius: 8px;
+}
+.delete-project-dialog .delete-project-error {
+  color: #a23121;
+}
+@media (max-width: 480px) {
+  .delete-project-dialog {
+    padding: 24px;
+  }
+}
