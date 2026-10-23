@@ -25,6 +25,27 @@ try {
   await page.getByRole("heading", { name: "Welcome back" }).waitFor();
   await page.getByRole("button", { name: "Close account window" }).click();
 
+  const route = async (time) =>
+    page.locator(".builder-travel").evaluate((element, time) => {
+      element.getAnimations().forEach((animation) => {
+        animation.pause();
+        animation.currentTime = time;
+      });
+      return getComputedStyle(element).transform;
+    }, time);
+  assert.notEqual(await route(6000), await route(18000));
+  await page.getByRole("button", { name: "Pause animations" }).click();
+  assert(
+    await page
+      .locator(".builder-arm, .builder-body, .builder-travel")
+      .evaluateAll((elements) =>
+        elements.every(
+          (element) =>
+            getComputedStyle(element).animationPlayState === "paused",
+        ),
+      ),
+  );
+  await page.getByRole("button", { name: "Play animations" }).click();
   const sample = async (time) =>
     page.locator(".deck-piece").evaluateAll((elements, time) => {
       elements.forEach((element) =>
@@ -38,14 +59,26 @@ try {
       );
     }, time);
   assert((await sample(100)).every((opacity) => opacity === 0));
-  const midway = await sample(4000);
+  const midway = await sample(12000);
   assert(
     midway.some((opacity) => opacity === 1) &&
       midway.some((opacity) => opacity === 0),
   );
-  assert((await sample(9500)).every((opacity) => opacity === 1));
-  assert((await sample(11900)).every((opacity) => opacity === 0));
-  await sample(9500);
+  assert((await sample(31000)).every((opacity) => opacity === 1));
+  assert((await sample(35500)).every((opacity) => opacity === 0));
+  await sample(31000);
+  await page.locator(".builder-travel").evaluate((element) =>
+    element.getAnimations().forEach((animation) => {
+      animation.pause();
+      animation.currentTime = 31000;
+    }),
+  );
+  assert.equal(
+    await page
+      .getByText("THE POSSIBILITIES START HERE", { exact: true })
+      .count(),
+    0,
+  );
   await page.screenshot({ path: "/tmp/deck-home.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: "/tmp/deck-mobile.png", fullPage: true });
@@ -114,6 +147,15 @@ try {
           (element) =>
             getComputedStyle(element).animationName === "none" &&
             getComputedStyle(element).opacity === "1",
+        ),
+      ),
+  );
+  assert(
+    await page
+      .locator(".builder-travel, .builder-arm, .builder-body")
+      .evaluateAll((elements) =>
+        elements.every(
+          (element) => getComputedStyle(element).animationName === "none",
         ),
       ),
   );

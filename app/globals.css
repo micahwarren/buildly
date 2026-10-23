@@ -2614,3 +2614,72 @@ progress {
     padding: 24px;
   }
 }
+
+.builder-travel {
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.builder-arm {
+  transform-origin: 8px -41px;
+  animation: builder-hammer 0.65s ease-in-out infinite;
+}
+.builder-body {
+  animation: builder-bob 0.65s ease-in-out infinite;
+}
+.builder-taps {
+  animation: builder-tap 0.65s ease-out infinite;
+}
+@keyframes builder-hammer {
+  0%,
+  100% {
+    transform: rotate(-12deg);
+  }
+  55% {
+    transform: rotate(62deg);
+  }
+  70% {
+    transform: rotate(50deg);
+  }
+}
+@keyframes builder-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  55% {
+    transform: translateY(1.5px);
+  }
+}
+@keyframes builder-tap {
+  0%,
+  45%,
+  85%,
+  100% {
+    opacity: 0;
+  }
+  55%,
+  65% {
+    opacity: 0.9;
+  }
+}
+.is-paused .builder-travel,
+.is-paused .builder-arm,
+.is-paused .builder-body,
+.is-paused .builder-taps {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .deck-scene .builder-travel {
+    animation: none !important;
+    transform: translate(430px, 420px);
+    opacity: 1;
+  }
+  .builder-arm,
+  .builder-body,
+  .builder-taps {
+    animation: none !important;
+  }
+  .builder-taps {
+    display: none;
+  }
+}
