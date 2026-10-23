@@ -43,6 +43,7 @@ import type { ProjectDetails } from "@/lib/project-details";
 import { RotatingHeadline } from "@/components/RotatingHeadline";
 import { DeckAnimation } from "@/components/DeckAnimation";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
+import { PlanLoader } from "@/components/PlanLoader";
 import { AccountDialog } from "@/components/AccountDialog";
 const categories = [
   { name: "Deck", image: photos.deck, icon: Layers },
@@ -1033,31 +1034,32 @@ export default function Home() {
       )}
       {view === "generating" && (
         <main className="generating">
-          <div className="loading-house">
-            <House size={52} />
-          </div>
+          <PlanLoader />
           <span className="badge">
             {generatingDemo ? "SAMPLE PLAN" : "YOUR PHOTO → YOUR DESIGN"}
           </span>
           <h1>
             {generatingDemo
               ? "Preparing your sample plan…"
-              : "Creating your backyard preview…"}
+              : "Creating your design and plan…"}
           </h1>
           <p>
             {generatingDemo
               ? "This sample won’t include an edit of your photo."
-              : "We’re adding your idea to your photo. This can take a few minutes—please keep this page open."}
+              : "This can take a few minutes. Keep this page open—we’ll show your project when it’s ready."}
           </p>
-          <div className="loading-list">
+          <div className="loading-list" role="status" aria-live="polite">
             {[
               "Photo received",
               "Project details ready",
               generatingDemo
                 ? "Preparing illustrative sample"
-                : "Editing your actual photo…",
+                : "Creating your design and plan…",
             ].map((s, i) => (
-              <div key={s} className={i < loading ? "done" : ""}>
+              <div
+                key={s}
+                className={i < loading ? "done" : i === loading ? "active" : ""}
+              >
                 {i < loading ? (
                   <CheckCircle2 size={23} />
                 ) : (

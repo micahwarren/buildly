@@ -85,11 +85,40 @@ console.log("Test artifacts: " + output);
   await page
     .getByLabel("Building experience", { exact: true })
     .selectOption("Some experience");
+  let releaseGeneration;
+  const pendingGeneration = new Promise((resolve) => {
+    releaseGeneration = resolve;
+  });
+  await page.route("**/api/projects", async (route) => {
+    await pendingGeneration;
+    await route.continue();
+  });
   await page
     .getByRole("button", {
       name: "Explore a sample plan instead (no photo edit)",
     })
     .click();
+  await page.locator(".plan-loader").waitFor();
+  assert.equal(
+    await page
+      .locator(".plan-draw")
+      .evaluate((element) => getComputedStyle(element).animationName),
+    "plan-sketch",
+  );
+  await page.screenshot({
+    path: path.join(output, "loading.png"),
+    fullPage: true,
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  assert.equal(
+    await page
+      .locator(".plan-draw")
+      .evaluate((element) => getComputedStyle(element).animationName),
+    "none",
+  );
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  releaseGeneration();
+
   await page.getByRole("heading", { name: "Here’s your project." }).waitFor();
   assert.match(await page.locator(".result-heading").innerText(), /14 × 18/);
   // The result must survive a refresh without the old manual Save action.

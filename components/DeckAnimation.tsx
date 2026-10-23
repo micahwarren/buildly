@@ -369,8 +369,8 @@ export function DeckAnimation({
             const start = startAt(i);
             return `@keyframes deck-piece-${i}{0%,${start}%{opacity:0;transform:translateY(-12px)}${start + 1.2}%,88%{opacity:1;transform:translateY(0)}96%,100%{opacity:0;transform:translateY(0)}}`;
           })
-          .join("\n")}
-        {`@keyframes builder-work{0%{transform:rotate(0deg)}${hammerKeyframes}80%,100%{transform:rotate(0deg)}} .deck-scene .builder-arm{animation-name:builder-work;animation-duration:${cycleSeconds}s;} @keyframes builder-route{0%,3%{opacity:0;transform:translate(${workerPosition(0)})}4%{opacity:1}${workerKeyframes}80%,89%{opacity:1;transform:translate(430px,420px)}96%,100%{opacity:0;transform:translate(470px,420px)}} .deck-scene .deck-piece,.deck-scene .builder-travel{animation-duration:${cycleSeconds}s;}`}
+          .join("\n") +
+          `@keyframes builder-work{0%{transform:rotate(0deg)}${hammerKeyframes}80%,100%{transform:rotate(0deg)}} .deck-scene .builder-arm{animation-name:builder-work;animation-duration:${cycleSeconds}s;} @keyframes builder-route{0%,3%{opacity:0;transform:translate(${workerPosition(0)})}4%{opacity:1}${workerKeyframes}80%,89%{opacity:1;transform:translate(430px,420px)}96%,100%{opacity:0;transform:translate(470px,420px)}} .deck-scene .deck-piece,.deck-scene .builder-travel{animation-duration:${cycleSeconds}s;}`}
       </style>
     </div>
   );
