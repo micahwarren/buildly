@@ -41,20 +41,18 @@ console.log("Test artifacts: " + output);
   });
   await page.goto(BASE_URL);
   await page
-    .getByRole("heading", { name: /Your idea.*A plan to build it/ })
+    .getByRole("heading", { name: /Big ideas.*Built by you/ })
     .waitFor();
   await page.screenshot({
     path: path.join(output, "home-desktop.png"),
     fullPage: true,
   });
   await page
-    .locator(".hero-visual>img")
+    .locator(".deck-scene")
     .screenshot({ path: path.join(output, "yard.png") });
-  await page.getByRole("button", { name: "Before", exact: true }).click();
-  assert.equal(
-    await page.locator(".hero-visual>img").getAttribute("src"),
-    "/images/before.svg",
-  );
+  await page.getByRole("button", { name: "Pause deck animation" }).click();
+  assert.ok(await page.locator(".deck-scene.is-paused").count());
+  await page.getByRole("button", { name: "Play deck animation" }).click();
   await page
     .getByRole("button", { name: "Start my project", exact: true })
     .first()

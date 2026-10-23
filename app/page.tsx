@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowLeft,
-  ArrowUpRight,
   Check,
   Camera,
   Upload,
@@ -41,6 +40,7 @@ import { ShoppingList } from "@/components/ShoppingList";
 import { PlanReview } from "@/components/PlanReview";
 import { shoppingText } from "@/lib/shopping";
 import type { ProjectDetails } from "@/lib/project-details";
+import { DeckAnimation } from "@/components/DeckAnimation";
 import { AccountDialog } from "@/components/AccountDialog";
 const categories = [
   { name: "Deck", image: photos.deck, icon: Layers },
@@ -76,7 +76,6 @@ export default function Home() {
     [toast, setToast] = useState(""),
     [mobile, setMobile] = useState(false),
     [ready, setReady] = useState(false),
-    [homeBefore, setHomeBefore] = useState(false),
     [imageAvailable, setImageAvailable] = useState<boolean | null>(null),
     [generatingDemo, setGeneratingDemo] = useState(false),
     [regenerating, setRegenerating] = useState(false),
@@ -673,11 +672,11 @@ export default function Home() {
         <main className="home-simple">
           <section className="hero">
             <div className="hero-copy">
-              <div className="eyebrow">YOUR DIY PROJECT STARTS HERE</div>
+              <div className="eyebrow">LESS GUESSWORK. MORE BUILDING.</div>
               <h1>
-                Your idea.
+                Big ideas.
                 <br />
-                <em>A plan to build it.</em>
+                <em>Built by you.</em>
               </h1>
               <p>
                 Upload a photo and tell us what you want to build. Get a design,
@@ -688,46 +687,7 @@ export default function Home() {
               </button>
               <div className="hero-note">Photo → Idea → Your plan</div>
             </div>
-            <div className="hero-visual">
-              <img
-                src={homeBefore ? photos.before : photos.hero}
-                alt={
-                  homeBefore
-                    ? "Illustration of a backyard before a project"
-                    : "Illustration of a backyard with a wood pergola and deck"
-                }
-              />
-              <div className="hero-toggle">
-                <button
-                  aria-pressed={homeBefore}
-                  onClick={() => setHomeBefore(true)}
-                >
-                  Before
-                </button>
-                <button
-                  aria-pressed={!homeBefore}
-                  onClick={() => setHomeBefore(false)}
-                >
-                  After
-                </button>
-              </div>
-              <div className="photo-label">
-                <span className="small-dot" /> EXAMPLE: DECK + PERGOLA
-              </div>
-              <div className="project-float">
-                <div className="float-icon">
-                  <House size={24} />
-                </div>
-                <div>
-                  <strong>See what you could build.</strong>
-                  <span>Design · Materials · Instructions</span>
-                </div>
-                <span className="float-arrow">
-                  <ArrowUpRight size={25} />
-                </span>
-              </div>
-              <div className="image-caption">Illustrated example</div>
-            </div>
+            <DeckAnimation />
           </section>
           <section className="section" id="how">
             <div className="section-heading">
@@ -768,19 +728,19 @@ export default function Home() {
                 <h2>What will you build?</h2>
               </div>
             </div>
-            <div className="category-grid">
+            <div className="project-pills">
               {categories.map((c) => (
-                <button
-                  key={c.name}
-                  className="category"
-                  onClick={() => start(c.name)}
-                >
-                  <img src={c.image} alt={`${c.name} project inspiration`} />
-                  <span>
-                    {c.name}s <ArrowRight size={19} />
-                  </span>
+                <button key={c.name} onClick={() => start(c.name)}>
+                  <c.icon size={23} />
+                  {c.name}
+                  <ArrowRight size={18} />
                 </button>
               ))}
+              <button onClick={() => start("Something else")}>
+                <Plus size={23} />
+                Something else
+                <ArrowRight size={18} />
+              </button>
             </div>
           </section>
           <section className="bottom-cta">

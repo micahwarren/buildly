@@ -2069,3 +2069,268 @@ progress {
     margin: 6px 0 0 18px;
   }
 }
+
+/* Animated homepage */
+.home-simple {
+  background: #f8f7f2;
+}
+.home-simple .hero {
+  max-width: 1520px;
+  grid-template-columns: 0.85fr 1.15fr;
+  padding: 64px 5% 70px;
+  gap: 56px;
+}
+.home-simple .hero h1 {
+  font-size: clamp(54px, 5.9vw, 86px);
+  letter-spacing: -4px;
+  line-height: 1.06;
+}
+.home-simple .hero h1 em {
+  color: #b74d2b;
+}
+.home-simple .hero-copy p {
+  font-size: 18px;
+  max-width: 420px;
+}
+.home-simple .hero .primary {
+  border-radius: 10px;
+  box-shadow: 0 5px 0 #923a20;
+}
+.home-simple .hero .primary:hover {
+  transform: translateY(-2px);
+}
+.deck-scene {
+  background: #163b30;
+  border-radius: 26px;
+  color: #f5f2e8;
+  overflow: hidden;
+  box-shadow: 0 24px 65px #173d301a;
+  position: relative;
+  min-width: 0;
+}
+.scene-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px 0;
+  gap: 10px;
+}
+.scene-top > span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+}
+.scene-top i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #dcb57d;
+}
+.scene-top button {
+  border: 1px solid #7a9d8d66;
+  background: transparent;
+  color: #e4eadd;
+  border-radius: 50%;
+  min-width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.deck-scene > svg {
+  pointer-events: none;
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: -18px;
+}
+.deck-piece {
+  animation-duration: 12s;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+.is-paused .deck-piece {
+  animation-play-state: paused;
+}
+.scene-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 4px 28px 28px;
+  gap: 20px;
+}
+.scene-bottom strong {
+  display: block;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+  font-family: Manrope, sans-serif;
+  font-weight: 500;
+  margin-top: 8px;
+}
+.scene-number {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #d6af79;
+}
+.scene-caption {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #aec2b4;
+  text-align: right;
+}
+.home-simple #how {
+  border-top: 1px solid #dedfd6;
+}
+.home-simple .how-grid {
+  gap: 0;
+}
+.home-simple .how-card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 30px 10px 0;
+  box-shadow: none;
+}
+.home-simple .how-card + .how-card {
+  border-left: 1px solid #dedfd6;
+  padding-left: 30px;
+}
+.home-simple .how-top {
+  margin-bottom: 18px;
+}
+.home-simple .how-top span {
+  color: #b64f2e;
+  font-size: 15px;
+}
+.home-simple .how-card h3 {
+  font-size: 21px;
+}
+.home-simple .ideas-section {
+  background: #eeeee5;
+}
+.project-pills {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.project-pills button {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid #d6dace;
+  border-radius: 12px;
+  background: #f8f7f2;
+  color: var(--ink);
+  padding: 23px;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.project-pills button svg:last-child {
+  margin-left: auto;
+}
+.project-pills button:hover {
+  background: white;
+  transform: translateY(-3px);
+}
+.home-simple .bottom-cta {
+  background: #163b30;
+  color: #f8f7f2;
+}
+.home-simple .bottom-cta h2,
+.home-simple .bottom-cta > span {
+  color: inherit;
+}
+@media (max-width: 900px) {
+  .home-simple .hero {
+    grid-template-columns: 1fr;
+    gap: 38px;
+  }
+  .home-simple .hero-copy {
+    max-width: 620px;
+  }
+  .deck-scene {
+    width: 100%;
+    max-width: 680px;
+    margin: auto;
+  }
+  .home-simple .hero h1 {
+    font-size: 66px;
+  }
+}
+@media (max-width: 600px) {
+  .home-simple .hero {
+    padding: 36px 20px 42px;
+    gap: 34px;
+  }
+  .home-simple .hero h1 {
+    font-size: 55px;
+    letter-spacing: -2.7px;
+  }
+  .home-simple .hero .eyebrow {
+    font-size: 9px;
+    letter-spacing: 1.4px;
+  }
+  .deck-scene {
+    border-radius: 18px;
+  }
+  .scene-top {
+    padding: 16px 16px 0;
+  }
+  .scene-top > span {
+    font-size: 7px;
+    letter-spacing: 0.9px;
+  }
+  .scene-bottom {
+    padding: 6px 18px 20px;
+  }
+  .scene-bottom strong {
+    font-size: 16px;
+  }
+  .scene-caption {
+    font-size: 9px;
+  }
+  .home-simple .how-card,
+  .home-simple .how-card + .how-card {
+    border: 0;
+    border-bottom: 1px solid #dedfd6;
+    padding: 24px 0;
+  }
+  .home-simple .how-top {
+    margin-bottom: 12px;
+  }
+  .project-pills {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .project-pills button {
+    font-size: 14px;
+    padding: 16px 12px;
+    gap: 9px;
+  }
+  .project-pills button svg:last-child {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deck-piece {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  .scene-top button {
+    display: none;
+  }
+  .project-pills button,
+  .home-simple .hero .primary {
+    transition: none;
+    transform: none;
+  }
+}
