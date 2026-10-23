@@ -28,6 +28,7 @@ import {
   Sun,
   Image as ImageIcon,
 } from "lucide-react";
+import { estimateProject } from "@/lib/estimates";
 import { brand, photos, type Project } from "@/lib/project";
 import { ProjectComparison } from "@/components/ProjectComparison";
 import { ProgressSteps } from "@/components/ProgressSteps";
@@ -877,7 +878,7 @@ export default function Home() {
                     [
                       "A rough idea is all we need for this sample concept.",
                       "We’ll keep your budget with your project. Sample estimates may differ.",
-                      "We’ll keep your experience level with your project.",
+                      "Your experience level adjusts the estimated labor hours.",
                     ][detail]
                   }
                 </p>
@@ -1127,14 +1128,15 @@ export default function Home() {
                 <div>
                   <span>Estimated materials</span>
                   <strong>
-                    {money(project.estimatedCostLow)}–
-                    {money(project.estimatedCostHigh)}
+                    {project.materials.length
+                      ? `${money(project.estimatedCostLow)}–${money(project.estimatedCostHigh)}`
+                      : "Scope review needed"}
                   </strong>
                   <small>Illustrative, not live prices</small>
                 </div>
                 <div>
                   <Clock />
-                  <span>Estimated build time</span>
+                  <span>Estimated hands-on labor</span>
                   <strong>{project.estimatedHours}</strong>
                 </div>
                 <div>
@@ -1144,10 +1146,25 @@ export default function Home() {
                 </div>
                 <div>
                   <Users />
-                  <span>Recommended helpers</span>
-                  <strong>2 people</strong>
+                  <span>Suggested crew</span>
+                  <strong>
+                    {project.recommendedCrew || "See project details"}
+                  </strong>
                 </div>
               </div>
+              <p>
+                {project.assumptions.find((a) =>
+                  a.startsWith("Time is a planning allowance:"),
+                )}
+              </p>
+              <button
+                className="button secondary"
+                onClick={() =>
+                  update({ ...project, ...estimateProject(project) })
+                }
+              >
+                Recalculate materials and time
+              </button>
               <div className="plan-links">
                 {["Materials", "Tools", "Build steps", "Project details"].map(
                   (s, i) => (
@@ -1201,7 +1218,7 @@ export default function Home() {
                 </table>
               </div>
               <div className="total">
-                <span>Estimated sample materials total</span>
+                <span>Reference materials subtotal</span>
                 <strong>
                   {money(
                     project.materials.reduce(

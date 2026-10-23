@@ -130,3 +130,25 @@ BROWSER_PATH=/usr/bin/chromium BASE_URL=http://127.0.0.1:3001 node tests/account
 ```
 
 The test intercepts all auth requests and never creates real accounts. It verifies signup/confirmation messaging, login, private image uploads, metadata saving, progress sync, restoration in a fresh browser context, local preservation when cloud saving fails, and isolation after sign-out. Restart/rebuild without test settings afterward. Mock success does not validate your actual Supabase policies, email delivery, or cross-device access; these require live configuration.
+
+### Preliminary materials and labor calculator
+
+`lib/estimates.ts` calculates quantities separately for decks, open pergolas,
+paver patios, straight panel fences and basic sheds. Dimensions and experience
+change the labor allowance. Labor is total person-hours, with a stated crew and
+six productive hours/person/day conversion; it excludes curing, weather and
+administrative waiting. Labor coefficients are planning heuristics, not measured
+contractor productivity data. Price inputs are reference USD allowances, not live
+quotes; the displayed range is 80–140% of the itemized subtotal, not a statistical
+confidence interval. Fasteners are listed explicitly; approved connector schedules
+must replace the allowances before purchase. Do not substitute ordinary deck screws
+for rated connector fasteners.
+
+Each estimate discloses its assumed layout and missing scope in Project details.
+The calculator does not infer height, spans, soil, gates, stairs, guards, roof loads
+or custom features from an image or free text. These require a site-specific design
+and supplier takeoff before this can become a purchase-ready bill of materials.
+Custom project types show “Scope review needed” instead of an invented quote.
+Saved projects can use “Recalculate materials and time” without regenerating their
+image; this preserves project identity, images and progress and saves the updated
+estimate through the existing account/device persistence flow.

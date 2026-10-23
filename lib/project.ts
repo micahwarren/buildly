@@ -1,3 +1,4 @@
+import { estimateProject } from "./estimates";
 export const brand = {
   name: "Buildly",
   tagline: "A little vision. A lot of possibility.",
@@ -17,6 +18,7 @@ export type Project = {
   estimatedCostLow: number;
   estimatedCostHigh: number;
   estimatedHours: string;
+  recommendedCrew?: string;
   difficulty: string;
   materials: Material[];
   tools: string[];
@@ -49,142 +51,12 @@ export function makeDemo(input: Partial<Project>): Project {
   const type = input.projectType || "Pergola";
   const w = Number(input.width) || 12,
     l = Number(input.length) || 16;
-  const area = w * l;
-  const catalogs: Record<string, Material[]> = {
-    Pergola: [
-      {
-        item: "Pressure-treated posts",
-        quantity: 6,
-        dimensions: "6 × 6 × 10 ft",
-        unitCost: 68,
-      },
-      {
-        item: "Beams",
-        quantity: 4,
-        dimensions: `2 × 10 × ${l} ft`,
-        unitCost: 58,
-      },
-      {
-        item: "Rafters",
-        quantity: Math.ceil(l),
-        dimensions: `2 × 8 × ${w} ft`,
-        unitCost: 32,
-      },
-      {
-        item: "Post bases (allowance)",
-        quantity: 6,
-        dimensions: "Engineer to specify",
-        unitCost: 42,
-      },
-      {
-        item: "Structural hardware allowance",
-        quantity: 1,
-        dimensions: "Per approved design",
-        unitCost: 240,
-      },
-      {
-        item: "Concrete allowance",
-        quantity: 18,
-        dimensions: "80 lb bags; verify footing design",
-        unitCost: 8,
-      },
-    ],
-    Deck: [
-      {
-        item: "Decking boards allowance",
-        quantity: Math.ceil(area / 4),
-        dimensions: "5/4 × 6 × 8 ft",
-        unitCost: 14,
-      },
-      {
-        item: "Framing lumber allowance",
-        quantity: Math.ceil(area / 10),
-        dimensions: "Final sizes to be designed",
-        unitCost: 35,
-      },
-      {
-        item: "Footings and connectors allowance",
-        quantity: 1,
-        dimensions: "Professional design required",
-        unitCost: 650,
-      },
-    ],
-    Patio: [
-      {
-        item: "Pavers",
-        quantity: Math.ceil(area * 1.1),
-        dimensions: "1 sq ft equivalent",
-        unitCost: 4,
-      },
-      {
-        item: "Compacted base allowance",
-        quantity: Math.ceil(area / 40),
-        dimensions: "Cubic yards; verify depth",
-        unitCost: 65,
-      },
-      {
-        item: "Bedding sand allowance",
-        quantity: Math.ceil(area / 100),
-        dimensions: "Cubic yards",
-        unitCost: 55,
-      },
-      {
-        item: "Edging and joint sand",
-        quantity: 1,
-        dimensions: "Project allowance",
-        unitCost: 180,
-      },
-    ],
-    Fence: [
-      {
-        item: "Fence panels",
-        quantity: Math.ceil(l / 8),
-        dimensions: "6 × 8 ft",
-        unitCost: 95,
-      },
-      {
-        item: "Posts",
-        quantity: Math.ceil(l / 8) + 1,
-        dimensions: "4 × 4 × 10 ft; verify",
-        unitCost: 28,
-      },
-      {
-        item: "Hardware and footing allowance",
-        quantity: 1,
-        dimensions: "Verify local requirements",
-        unitCost: 200,
-      },
-    ],
-    Shed: [
-      {
-        item: "Framing and roof allowance",
-        quantity: 1,
-        dimensions: `${w} × ${l} ft concept`,
-        unitCost: area * 12,
-      },
-      {
-        item: "Siding and trim allowance",
-        quantity: 1,
-        dimensions: "Verify openings",
-        unitCost: area * 6,
-      },
-      {
-        item: "Foundation allowance",
-        quantity: 1,
-        dimensions: "Professional specification",
-        unitCost: area * 5,
-      },
-    ],
-  };
-  const materials = catalogs[type] || [
-    {
-      item: "Preliminary materials allowance",
-      quantity: 1,
-      dimensions: "Scope and design to be established",
-      unitCost: area * 10,
-    },
-  ];
-  const total = materials.reduce((s, m) => s + m.quantity * m.unitCost, 0);
+  const estimate = estimateProject({
+    projectType: type,
+    width: w,
+    length: l,
+    experienceLevel: input.experienceLevel || "Beginner",
+  });
   return {
     id: crypto.randomUUID(),
     title: `My backyard ${type.toLowerCase()}`,
@@ -194,19 +66,41 @@ export function makeDemo(input: Partial<Project>): Project {
     generatedImage: photos.pergola,
     budget: "Not sure",
     experienceLevel: "Beginner",
-    estimatedCostLow: Math.round(total * 0.9),
-    estimatedCostHigh: Math.round(total * 1.25),
-    estimatedHours: "2–4 weekends",
-    difficulty: type === "Patio" ? "Moderate" : "Experienced help recommended",
-    materials,
+    estimatedCostLow: estimate.estimatedCostLow,
+    estimatedCostHigh: estimate.estimatedCostHigh,
+    estimatedHours: estimate.estimatedHours,
+    difficulty: estimate.difficulty,
+    recommendedCrew: estimate.recommendedCrew,
+    materials: estimate.materials,
     tools: [
       "Tape measure",
       "Level",
       "Safety glasses and hearing protection",
       "Work gloves",
       ...(type === "Patio"
-        ? ["Plate compactor (rent)", "Rubber mallet"]
-        : ["Circular saw", "Impact driver", "Clamps"]),
+        ? [
+            "Plate compactor (rent)",
+            "Rubber mallet",
+            "Shovel",
+            "Wheelbarrow",
+            "Screed rails and board",
+            "Masonry saw with dust control (rent)",
+          ]
+        : [
+            "Circular saw",
+            "Drill and bits",
+            "Impact driver",
+            "Clamps",
+            "Socket wrench set",
+            "Framing square",
+            "Post-hole digger / auger (rent)",
+            "Shovel",
+            "Wheelbarrow",
+            "Concrete mixing equipment",
+            ...(type === "Pergola" || type === "Shed"
+              ? ["Suitable ladders / work platforms"]
+              : []),
+          ]),
     ],
     steps: [
       {
@@ -238,11 +132,7 @@ export function makeDemo(input: Partial<Project>): Project {
         text: "Check the completed work with your professional or inspector as required. Apply suitable finishes following manufacturer instructions and clean up the work area.",
       },
     ],
-    assumptions: [
-      "Dimensions are entered by you, not measured from the photo.",
-      "Costs are illustrative US material allowances; labor, delivery, tax, and permits excluded.",
-      "A level, accessible site is assumed.",
-    ],
+    assumptions: estimate.assumptions,
     warnings: [
       "Concept only — not construction-ready engineering.",
       "Verify measurements, local codes, permits, utilities, soil, and structural requirements before building.",
