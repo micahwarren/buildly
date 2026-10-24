@@ -160,7 +160,7 @@ test("refinement updates dimensions and stores a separate version while clearing
     design: async (input, _demo, options) => {
       assert.equal(input.originalImage, project.generatedImage);
       assert.equal(input.width, 14);
-      assert.equal(options?.timeoutMs, 150000);
+      assert.equal(options?.timeoutMs, 120000);
       return {
         originalImage: input.originalImage,
         generatedImage: "new-image",

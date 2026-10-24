@@ -87,7 +87,7 @@ export async function refineProject(
   const design = await (dependencies.design ?? createDesign)(
     { ...next, originalImage: project.generatedImage, refinement: change },
     false,
-    { timeoutMs: 150000 },
+    { timeoutMs: 120000 },
   );
   next.generatedImage = design.generatedImage;
   next.visualizationMode = design.mode;

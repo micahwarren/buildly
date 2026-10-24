@@ -79,11 +79,13 @@ test("planner sends both actual photos, description and structured response sche
         2,
       );
       assert.match(
-        body.contents[0].parts.at(-1).text,
+        body.contents[0].parts
+          .map((p: { text?: string }) => p.text || "")
+          .join("\n"),
         /Build pavers, preserve the existing fence/,
       );
-      assert.ok(body.generationConfig.responseSchema.properties.steps);
-      assert.match(body.contents[0].parts.at(-1).text, /18 inches/);
+      assert.ok(body.generationConfig.responseSchema.properties.stepTitles);
+      assert.match(JSON.stringify(body.contents[0].parts), /18 inches/);
       return Response.json({
         candidates: [
           {
@@ -265,7 +267,7 @@ test("retries truncated output with a larger output budget but never accepts the
         const body = JSON.parse(init!.body as string);
         assert.equal(
           body.generationConfig.maxOutputTokens,
-          calls === 1 ? 16000 : 32000,
+          calls === 1 ? 6000 : 32000,
         );
         return Response.json({
           candidates: [
@@ -280,4 +282,62 @@ test("retries truncated output with a larger output budget but never accepts the
   );
   assert.equal(calls, 2);
   assert.equal(result.planStatus, "design-based");
+});
+
+test("staged planning expands instructions concurrently and combines them in outline order", async () => {
+  const jpeg = await sharp({
+    create: { width: 20, height: 20, channels: 3, background: "white" },
+  })
+    .jpeg()
+    .toBuffer();
+  const image = `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+  const plan = fixture();
+  let calls = 0,
+    active = 0,
+    peak = 0;
+  const result = await createDesignPlan(
+    makeDemo({ originalImage: image, generatedImage: image }),
+    {
+      apiKey: "test",
+      fetcher: async (_url, init) => {
+        calls++;
+        const body = JSON.parse(init!.body as string);
+        assert.equal(
+          body.contents[0].parts.filter(
+            (p: { inlineData?: unknown }) => p.inlineData,
+          ).length,
+          2,
+        );
+        let payload: unknown;
+        if (body.generationConfig.responseSchema.properties.stepTitles) {
+          const { steps, ...outline } = plan;
+          payload = { ...outline, stepTitles: steps.map((s) => s.title) };
+        } else {
+          const prompt = body.contents[0].parts.at(-1).text;
+          const range = /Expand ONLY phases (\d+)–(\d+)/.exec(prompt)!;
+          assert.ok(range);
+          active++;
+          peak = Math.max(peak, active);
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          active--;
+          payload = {
+            steps: plan.steps.slice(Number(range[1]) - 1, Number(range[2])),
+          };
+        }
+        return Response.json({
+          candidates: [
+            {
+              finishReason: "STOP",
+              content: { parts: [{ text: JSON.stringify(payload) }] },
+            },
+          ],
+        });
+      },
+    },
+  );
+  assert.equal(calls, 4);
+  assert.equal(peak, 3);
+  assert.equal(result.planStatus, "design-based");
+  assert.deepEqual(result.steps, plan.steps);
+  assert.deepEqual(result.materials, plan.materials);
 });
