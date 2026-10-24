@@ -11,7 +11,9 @@ export async function planProject(
   } = {},
 ) {
   const project = makeDemo(input);
-  const design = await (dependencies.design ?? createDesign)(project, demo);
+  const design = await (dependencies.design ?? createDesign)(project, demo, {
+    timeoutMs: 180000,
+  });
   const result = {
     ...project,
     generatedImage: design.generatedImage,

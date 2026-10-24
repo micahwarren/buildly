@@ -172,13 +172,21 @@ export async function requestGemini(
   }
   try {
     for (let attempt = 0; attempt < 6; attempt++) {
+      // Numeric thinking budgets are supported by 2.5 Flash. Do not impose
+      // those settings on a user-pinned or discovered model from another family.
+      const compatibleConfig = { ...generationConfig };
+      if (!/^gemini-2\.5-flash(?:-\d+)?$/.test(model))
+        delete compatibleConfig.thinkingConfig;
       const response = await fetcher(
         `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
         {
           method: "POST",
           headers,
           signal,
-          body: JSON.stringify({ contents: requestContents, generationConfig }),
+          body: JSON.stringify({
+            contents: requestContents,
+            generationConfig: compatibleConfig,
+          }),
         },
       );
       if (response.ok) {
@@ -250,9 +258,20 @@ export async function requestGemini(
     );
   } catch (error) {
     if (error instanceof DesignError) throw error;
+    const timedOut =
+      signal.aborted ||
+      (error instanceof Error &&
+        ["TimeoutError", "AbortError"].includes(error.name));
+    console.warn("buildly_planning_transport", {
+      model,
+      reason: timedOut ? "timeout" : "connection",
+      timeoutMs: dependencies.timeoutMs ?? 45000,
+    });
     throw new DesignError(
-      "Planning could not connect or timed out. Your image is saved; retry from this design.",
-      504,
+      timedOut
+        ? "Planning reached its time limit before Google finished. Your image is saved; retry the plan from this design."
+        : "The planning server could not connect to Google. Your image is saved; retry the plan shortly.",
+      timedOut ? 504 : 502,
     );
   }
 }

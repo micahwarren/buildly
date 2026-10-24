@@ -5,7 +5,7 @@ import { checkChatLimit } from "@/lib/chat-rate-limit";
 import { DesignError } from "@/lib/services/image-design";
 import { createDesignPlan } from "@/lib/services/design-plan";
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 export async function POST(req: Request) {
   try {
     const { input } = await readProjectRequest(req.clone());

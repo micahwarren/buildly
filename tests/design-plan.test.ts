@@ -199,3 +199,85 @@ test("truncated, blocked and provider-error responses cannot become a usable pla
       }),
     );
 });
+
+test("corrects a rejected plan once, retaining both photos and the requested scope", async () => {
+  const jpeg = await sharp({
+    create: { width: 20, height: 20, channels: 3, background: "white" },
+  })
+    .jpeg()
+    .toBuffer();
+  const image = `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+  let calls = 0;
+  const result = await createDesignPlan(
+    makeDemo({
+      originalImage: image,
+      generatedImage: image,
+      description: "A paver seating area",
+    }),
+    {
+      apiKey: "test",
+      fetcher: async (_url, init) => {
+        calls++;
+        const body = JSON.parse(init!.body as string);
+        assert.equal(
+          body.contents[0].parts.filter(
+            (p: { inlineData?: unknown }) => p.inlineData,
+          ).length,
+          2,
+        );
+        const plan = fixture();
+        if (calls === 1) plan.steps[0].materials = ["Unlisted screws"];
+        else
+          assert.match(
+            body.contents[0].parts.at(-1).text,
+            /references must match/,
+          );
+        return Response.json({
+          candidates: [
+            {
+              finishReason: "STOP",
+              content: { parts: [{ text: JSON.stringify(plan) }] },
+            },
+          ],
+        });
+      },
+    },
+  );
+  assert.equal(calls, 2);
+  assert.equal(result.planStatus, "design-based");
+  assert.equal(result.materials![0].item, "Concrete pavers");
+});
+
+test("retries truncated output with a larger output budget but never accepts the truncated plan", async () => {
+  const jpeg = await sharp({
+    create: { width: 20, height: 20, channels: 3, background: "white" },
+  })
+    .jpeg()
+    .toBuffer();
+  const image = `data:image/jpeg;base64,${jpeg.toString("base64")}`;
+  let calls = 0;
+  const result = await createDesignPlan(
+    makeDemo({ originalImage: image, generatedImage: image }),
+    {
+      apiKey: "test",
+      fetcher: async (_url, init) => {
+        calls++;
+        const body = JSON.parse(init!.body as string);
+        assert.equal(
+          body.generationConfig.maxOutputTokens,
+          calls === 1 ? 16000 : 32000,
+        );
+        return Response.json({
+          candidates: [
+            {
+              finishReason: calls === 1 ? "MAX_TOKENS" : "STOP",
+              content: { parts: [{ text: JSON.stringify(fixture()) }] },
+            },
+          ],
+        });
+      },
+    },
+  );
+  assert.equal(calls, 2);
+  assert.equal(result.planStatus, "design-based");
+});

@@ -157,3 +157,52 @@ test("JSON compatibility parser accepts a complete fence, not arbitrary surround
   assert.deepEqual(parseModelJson('{"ok":true}'), { ok: true });
   assert.throws(() => parseModelJson('Here is the answer: {"ok":true}'));
 });
+
+test("planning thinking budget is limited to compatible model families", async () => {
+  for (const model of ["gemini-2.5-flash", "gemini-3.8-flash"]) {
+    await requestGemini(
+      [],
+      { thinkingConfig: { thinkingBudget: 1024 } },
+      {
+        apiKey: "test",
+        model,
+        fetcher: async (_url, init) => {
+          const body = JSON.parse(init!.body as string);
+          assert.deepEqual(
+            body.generationConfig.thinkingConfig,
+            model === "gemini-2.5-flash" ? { thinkingBudget: 1024 } : undefined,
+          );
+          return Response.json({ candidates: [] });
+        },
+      },
+    );
+  }
+});
+test("connection failures and deadlines have distinct safe diagnostics", async () => {
+  for (const [name, expected, status] of [
+    ["TimeoutError", /time limit/, 504],
+    ["TypeError", /could not connect/, 502],
+  ] as const) {
+    await assert.rejects(
+      requestGemini(
+        [],
+        {},
+        {
+          apiKey: "test",
+          fetcher: async () => {
+            const error = new Error("private provider detail");
+            error.name = name;
+            throw error;
+          },
+        },
+      ),
+      (error: unknown) => {
+        assert.ok(error instanceof Error);
+        assert.match(error.message, expected);
+        assert.doesNotMatch(error.message, /private provider detail/);
+        assert.equal((error as Error & { status: number }).status, status);
+        return true;
+      },
+    );
+  }
+});
