@@ -2811,3 +2811,344 @@ progress {
 .delete-account-confirm button {
   margin: 6px 0;
 }
+
+/* iPhone workspace: separate from the public marketing site. */
+.native-app {
+  min-height: 100dvh;
+  background: #f4f5ef;
+  padding-bottom: calc(90px + env(safe-area-inset-bottom));
+}
+.native-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: auto;
+  min-height: 64px;
+  padding: 12px 22px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  border: 0;
+  background: #f4f5ef;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.native-topbar button {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  background: none;
+  border: 0;
+  color: #234333;
+  font-size: 21px;
+  font-weight: 800;
+}
+.native-tabbar {
+  position: fixed;
+  inset: auto 0 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-top: 1px solid #e2e6dc;
+  z-index: 40;
+}
+.native-tabbar button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  color: #637066;
+  font-size: 11px;
+  min-width: 80px;
+  min-height: 48px;
+}
+.native-tabbar button[aria-current] {
+  color: #c5532d;
+}
+.native-dashboard {
+  padding: 20px 22px 32px;
+  max-width: 720px;
+  margin: auto;
+}
+.native-welcome h1 {
+  font-size: 36px;
+  line-height: 1.15;
+  margin: 10px 0;
+  letter-spacing: -1.3px;
+}
+.native-welcome p {
+  font-size: 15px;
+  margin: 0 0 26px;
+  color: #687166;
+}
+.native-create {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 14px;
+  width: 100%;
+  border: 0;
+  border-radius: 24px;
+  padding: 24px 20px;
+  background: #234b38;
+  color: #fff;
+  box-shadow: 0 12px 24px #234b3818;
+}
+.native-create span:nth-child(2) {
+  flex: 1;
+}
+.native-create strong,
+.native-create small {
+  display: block;
+}
+.native-create strong {
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+.native-create small {
+  font-size: 12px;
+  color: #d3dfd2;
+}
+.native-create-icon {
+  background: #ffffff18;
+  border-radius: 16px;
+  padding: 10px;
+}
+.native-resume {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 18px 4px;
+  border: 0;
+  background: none;
+  color: #345440;
+}
+.native-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 30px 0 15px;
+}
+.native-section-title h2 {
+  font-size: 19px;
+  margin: 0;
+}
+.native-section-title span {
+  font-size: 12px;
+  color: #72796e;
+}
+.native-empty {
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e2e6dc;
+  border-radius: 24px;
+  padding: 40px 24px;
+}
+.native-empty svg {
+  color: #a5b59c;
+  margin: auto;
+}
+.native-empty h2 {
+  font-size: 23px;
+  line-height: 1.3;
+}
+.native-empty p {
+  font-size: 15px;
+  color: #6f776b;
+}
+.native-empty .primary {
+  width: 100%;
+  justify-content: center;
+  margin-top: 16px;
+}
+.native-projects {
+  display: grid;
+  gap: 18px;
+}
+.native-project-card {
+  border-radius: 22px;
+  background: white;
+  overflow: hidden;
+  border: 1px solid #e3e7dd;
+}
+.native-project-open {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  flex-wrap: wrap;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0 18px 16px;
+  color: #294735;
+}
+.native-project-open img {
+  width: calc(100% + 36px);
+  max-width: none;
+  margin: 0 -18px 4px;
+  height: 190px;
+  object-fit: cover;
+}
+.native-project-open span {
+  flex: 1;
+}
+.native-project-open strong,
+.native-project-open small {
+  display: block;
+  margin: 5px 0;
+}
+.native-project-open strong {
+  font-size: 20px;
+}
+.native-project-open small {
+  font-size: 12px;
+  color: #6f776b;
+}
+.native-project-card > .text-button {
+  margin: 0 18px 15px;
+  font-size: 12px;
+}
+.native-login,
+.native-boot {
+  min-height: 100dvh;
+  background: #f4f5ef;
+  padding: calc(40px + env(safe-area-inset-top)) 24px 32px;
+}
+.native-boot {
+  display: grid;
+  place-items: center;
+  color: #345440;
+}
+.native-login-logo {
+  display: block;
+  margin: 0 auto 30px;
+  border-radius: 18px;
+}
+.native-auth-form {
+  display: block;
+  position: static;
+  max-width: 420px;
+  width: 100%;
+  margin: auto;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+.native-auth-form .eyebrow {
+  display: none;
+}
+.native-auth-form h2 {
+  font-size: 34px;
+  margin: 0 0 12px;
+  letter-spacing: -1px;
+}
+.native-auth-form form .primary {
+  width: 100%;
+  justify-content: center;
+  min-height: 54px;
+  border-radius: 16px;
+}
+.native-auth-form input {
+  min-height: 54px;
+  border-radius: 14px;
+  background: white;
+  font-size: 16px;
+}
+.native-auth-form .account-tabs {
+  margin: 24px 0;
+}
+.native-tutorial {
+  max-width: 480px;
+  margin: auto;
+  padding: 30px 28px;
+  text-align: center;
+}
+.tutorial-art {
+  width: 180px;
+  height: 180px;
+  display: grid;
+  place-items: center;
+  margin: 36px auto;
+  background: #e1e9da;
+  color: #315a40;
+  border-radius: 44px;
+  transform: rotate(-4deg);
+}
+.tutorial-art svg {
+  transform: rotate(4deg);
+}
+.tutorial-dots {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+.tutorial-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 6px;
+  background: #d1d8c9;
+}
+.tutorial-dots .active {
+  width: 25px;
+  background: #c5532d;
+}
+.native-tutorial h1 {
+  font-size: 32px;
+  line-height: 1.2;
+}
+.native-tutorial p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #697365;
+  min-height: 80px;
+}
+.native-tutorial .primary {
+  width: 100%;
+  justify-content: center;
+  border-radius: 16px;
+  min-height: 54px;
+}
+.native-tutorial .text-button {
+  margin-top: 18px;
+}
+.native-app main.wizard,
+.native-app main.results {
+  padding: 24px 20px;
+  width: 100%;
+}
+.native-app h1 {
+  font-size: clamp(27px, 7vw, 36px);
+}
+.native-app .upload {
+  border-radius: 22px;
+  min-height: 220px;
+}
+.native-app .upload p {
+  display: none;
+}
+.native-app button {
+  touch-action: manipulation;
+}
+.native-app input,
+.native-app textarea,
+.native-app select {
+  font-size: 16px;
+}
+.native-app .primary,
+.native-app .secondary {
+  border-radius: 14px;
+  min-height: 48px;
+}
+.native-app .toast {
+  bottom: 110px;
+}
+.photo-preparing {
+  padding: 14px;
+  background: #e7eddf;
+  border-radius: 12px;
+  text-align: center;
+}

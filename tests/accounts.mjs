@@ -156,10 +156,117 @@ async function signIn(page) {
     viewport: { width: 1440, height: 1000 },
   });
   await mock(context);
+  if (process.env.NATIVE_TEST) {
+    const bytes = await sharp({
+      create: { width: 1800, height: 1200, channels: 3, background: "#789966" },
+    })
+      .jpeg()
+      .toBuffer();
+    await context.addInitScript((data) => {
+      window.webkit = { messageHandlers: { bridge: {} } };
+      window.Capacitor = {
+        PluginHeaders: [
+          { name: "Camera", methods: [{ name: "getPhoto", rtype: "promise" }] },
+        ],
+        nativePromise: async () => ({ base64String: data, format: "jpeg" }),
+      };
+    }, bytes.toString("base64"));
+  }
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(base);
+  if (process.env.NATIVE_TEST) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator(".native-login").waitFor();
+    await page.screenshot({ path: "/tmp/buildly-native-login.png" });
+    assert.equal(await page.locator(".hero").count(), 0);
+    await page.getByLabel("Email address").fill(user.email);
+    await page
+      .getByLabel("Password", { exact: true })
+      .fill("test-password-123");
+    await page
+      .locator("form")
+      .getByRole("button", { name: "Sign in", exact: true })
+      .click();
+    await page.locator(".native-dashboard").waitFor();
+    await page.screenshot({ path: "/tmp/buildly-native-dashboard.png" });
+    await page.getByRole("button", { name: "Create my first project" }).click();
+    await page.locator(".native-tutorial").waitFor();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Add my photo", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Choose a photo", exact: true })
+      .click();
+    await page.getByAltText("Your uploaded project area").waitFor();
+    assert.ok(
+      (
+        await page
+          .getByAltText("Your uploaded project area")
+          .getAttribute("src")
+      ).startsWith("data:image/jpeg;base64,"),
+    );
+    await page.reload();
+    await page.locator(".native-dashboard").waitFor();
+    await page
+      .getByRole("button", { name: "Start a project", exact: false })
+      .first()
+      .click();
+    await page
+      .getByRole("heading", { name: "Add a photo of your space" })
+      .waitFor();
+    assert.equal(await page.locator(".native-tutorial").count(), 0);
+    const photoBytes = await sharp({
+      create: { width: 640, height: 400, channels: 3, background: "#779955" },
+    })
+      .jpeg()
+      .toBuffer();
+    const response = await page.request.post(base + "/api/projects", {
+      data: {
+        mode: "demo",
+        originalImage:
+          "data:image/jpeg;base64," + photoBytes.toString("base64"),
+        projectType: "Patio",
+        description: "My saved backyard patio",
+        width: 12,
+        length: 16,
+        budget: "Not sure",
+        experienceLevel: "Beginner",
+      },
+    });
+    assert.ok(response.ok());
+    const savedProject = await response.json();
+    const photoPath = `${user.id}/${savedProject.id}/original.jpg`;
+    objects.set(photoPath, { bytes: photoBytes, type: "image/jpeg" });
+    rows.set(savedProject.id, {
+      id: savedProject.id,
+      user_id: user.id,
+      payload: { ...savedProject, originalImage: `storage:${photoPath}` },
+    });
+    await page.reload();
+    await page.locator(".native-project-card").waitFor();
+    await page.locator(".native-project-open").click();
+    await page.getByRole("tab", { name: "Materials", exact: true }).waitFor();
+
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    );
+    await page.getByRole("button", { name: "My account", exact: true }).click();
+    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await page.locator(".native-login").waitFor();
+    assert.equal(await page.locator(".native-dashboard").count(), 0);
+    assert.deepEqual(errors, []);
+    await browser.close();
+    console.log(
+      "PASS: native login, dashboard, first-project-only tutorial, base64 camera bridge, prepared upload preview, draft return, mobile fit and sign-out gate (mocked device/auth).",
+    );
+    return;
+  }
   await page
     .getByRole("button", { name: "Sign in / Create account", exact: true })
     .click();

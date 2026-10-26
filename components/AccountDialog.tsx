@@ -8,7 +8,9 @@ export function AccountDialog({
   close,
   initialMode = "signup",
   onPurchases,
+  embedded = false,
 }: {
+  embedded?: boolean;
   account: AccountState;
   onPurchases?: () => void;
   close: () => void;
@@ -86,24 +88,8 @@ export function AccountDialog({
       setBusy(false);
     }
   }
-  return (
-    <dialog
-      ref={dialog}
-      className="account-dialog"
-      aria-labelledby="account-title"
-      onCancel={(e) => {
-        e.preventDefault();
-        if (!busy) close();
-      }}
-    >
-      <button
-        className="dialog-close"
-        aria-label="Close account window"
-        disabled={busy}
-        onClick={close}
-      >
-        ×
-      </button>
+  const content = (
+    <>
       <div className="eyebrow">YOUR PROJECTS, RIGHT WHERE YOU LEFT THEM</div>
       <h2 id="account-title">
         {account.user && !account.recovery
@@ -285,9 +271,11 @@ export function AccountDialog({
               Forgot your password?
             </button>
           )}
-          <button className="text-button" disabled={busy} onClick={close}>
-            Keep working on this device
-          </button>
+          {!embedded && (
+            <button className="text-button" disabled={busy} onClick={close}>
+              Keep working on this device
+            </button>
+          )}
         </>
       )}
       {message && (
@@ -300,6 +288,36 @@ export function AccountDialog({
           {error}
         </p>
       )}
+    </>
+  );
+  if (embedded)
+    return (
+      <section
+        className="account-dialog native-auth-form"
+        aria-labelledby="account-title"
+      >
+        {content}
+      </section>
+    );
+  return (
+    <dialog
+      ref={dialog}
+      className="account-dialog"
+      aria-labelledby="account-title"
+      onCancel={(e) => {
+        e.preventDefault();
+        if (!busy) close();
+      }}
+    >
+      <button
+        className="dialog-close"
+        aria-label="Close account window"
+        disabled={busy}
+        onClick={close}
+      >
+        ×
+      </button>
+      {content}
     </dialog>
   );
 }

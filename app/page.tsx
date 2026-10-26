@@ -47,6 +47,7 @@ import { PlanLoader } from "@/components/PlanLoader";
 import { Paywall } from "@/components/Paywall";
 import { accountFetch } from "@/lib/billing/client";
 import { isNativeApp, nativePhoto, exportFile } from "@/lib/native";
+import { NativeHome, FirstProjectGuide } from "@/components/NativeHome";
 import { AccountDialog } from "@/components/AccountDialog";
 const categories = [
   { name: "Deck", image: photos.deck, icon: Layers },
@@ -93,6 +94,11 @@ export default function Home() {
     [showPaywall, setShowPaywall] = useState(false),
     [accountMode, setAccountMode] = useState<"signup" | "signin">("signup"),
     [draftStatus, setDraftStatus] = useState("");
+  const [native, setNative] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  useEffect(() => {
+    setNative(isNativeApp());
+  }, []);
   const account = useAccount();
   const library = useProjectLibrary(account);
   const {
@@ -147,7 +153,7 @@ export default function Home() {
           )
             return;
           setProject(null);
-          setView("home");
+          setView(isNativeApp() ? "saved" : "home");
           setPhoto("");
           setDescription("");
           setDetails({});
@@ -175,10 +181,10 @@ export default function Home() {
               return;
             if (recovered) {
               setProject(recovered);
-              setView("result");
+              setView(isNativeApp() ? "saved" : "result");
               setToast("Your project was restored.");
             } else if (draft.photo) {
-              setView("wizard");
+              setView(isNativeApp() ? "saved" : "wizard");
               setToast("Your unfinished project was restored.");
             }
           }
@@ -293,9 +299,29 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function start(t?: string) {
+    if (native) {
+      setPhoto("");
+      setDescription("");
+      setDetails({});
+      setProject(null);
+    }
     if (t) setType(t);
     setStep(0);
     setDetail(0);
+    let seen = account.user?.user_metadata?.first_project_tutorial === true;
+    try {
+      seen ||=
+        localStorage.getItem(`buildly-tutorial:${account.user?.id}`) === "done";
+    } catch {}
+    go(native && !seen && saved.length === 0 ? "tutorial" : "wizard");
+  }
+  function finishTutorial() {
+    try {
+      localStorage.setItem(`buildly-tutorial:${account.user?.id}`, "done");
+    } catch {}
+    void account.client?.auth.updateUser({
+      data: { first_project_tutorial: true },
+    });
     go("wizard");
   }
   function notify(s: string) {
@@ -337,12 +363,17 @@ export default function Home() {
       (source === "camera" ? camera : file).current?.click();
       return;
     }
+    if (photoBusy) return;
+    setPhotoBusy(true);
     try {
       await upload(await nativePhoto(source));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not open photos.");
+    } finally {
+      setPhotoBusy(false);
     }
   }
+
   const pendingPaidAction = useRef<null | (() => void)>(null);
   function downloadBackup() {
     if (!project) return;
@@ -381,25 +412,44 @@ export default function Home() {
       setError("Please choose a photo smaller than 15 MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const image = new window.Image();
-      image.onload = () => {
-        const canvas = document.createElement("canvas");
-        const scale = Math.min(1, 1400 / image.width, 1400 / image.height);
-        canvas.width = image.width * scale;
-        canvas.height = image.height * scale;
-        canvas
-          .getContext("2d")
-          ?.drawImage(image, 0, 0, canvas.width, canvas.height);
-        setPhoto(canvas.toDataURL("image/jpeg", 0.8));
-      };
-      image.onerror = () =>
-        setError("That photo could not be read. Please choose another.");
-      image.src = String(reader.result);
-    };
-    reader.readAsDataURL(f);
+    setPhotoBusy(true);
+    try {
+      const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () =>
+          reject(new Error("The photo could not be read. Please try another."));
+        reader.readAsDataURL(f);
+      });
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = () => resolve(img);
+        img.onerror = () =>
+          reject(
+            new Error("That photo could not be opened. Try a JPEG photo."),
+          );
+        img.src = data;
+      });
+      const canvas = document.createElement("canvas");
+      const scale = Math.min(1, 1400 / image.width, 1400 / image.height);
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const context = canvas.getContext("2d");
+      if (!context)
+        throw new Error(
+          "Photo processing is unavailable. Please reopen the app.",
+        );
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      setPhoto(canvas.toDataURL("image/jpeg", 0.8));
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Could not prepare this photo.",
+      );
+    } finally {
+      setPhotoBusy(false);
+    }
   }
+
   async function generate(demo = false) {
     pendingPaidAction.current = () => void generate(demo);
     if (!description.trim()) {
@@ -631,68 +681,112 @@ export default function Home() {
         "text/plain",
       ).catch(() => setError("Could not share the shopping list."));
   }
+  if (
+    native &&
+    (account.loading ||
+      (account.user &&
+        (!ready || !libraryReady || restoredScope.current !== account.user.id)))
+  )
+    return (
+      <main className="native-boot" role="status">
+        Opening your workspace…
+      </main>
+    );
+  if (native && !account.user)
+    return (
+      <main className="native-login">
+        <img
+          className="native-login-logo"
+          src="/buildly-logo.png"
+          alt="Buildly"
+          width="64"
+          height="64"
+        />
+        <AccountDialog
+          embedded
+          account={account}
+          initialMode="signin"
+          close={() => setShowAccount(false)}
+        />
+      </main>
+    );
   return (
-    <>
-      <header className={view === "home" ? "home-header" : undefined}>
-        <button
-          className="logo"
-          onClick={() => go("home")}
-          aria-label="Buildly home"
-        >
-          <span className="logo-mark">
-            <img src="/buildly-logo.png" alt="" width="40" height="40" />
-          </span>
-          {brand.name}
-          <span className="logo-dot">.</span>
-        </button>
-        <nav className={mobile ? "open" : ""}>
+    <div className={native ? "native-app" : undefined}>
+      {native && (
+        <header className="native-topbar">
+          <button onClick={() => go("saved")} aria-label="My projects">
+            <img src="/buildly-logo.png" alt="" width="30" height="30" />
+            Buildly
+          </button>
+          <button onClick={() => setShowAccount(true)} aria-label="My account">
+            <Users size={22} />
+          </button>
+        </header>
+      )}
+      {!native && (
+        <header className={view === "home" ? "home-header" : undefined}>
           <button
-            onClick={() => {
-              go("home");
-              setTimeout(
-                () =>
-                  document
-                    .getElementById("how")
-                    ?.scrollIntoView({ behavior: "smooth" }),
-                50,
-              );
-            }}
+            className="logo"
+            onClick={() => go("home")}
+            aria-label="Buildly home"
           >
-            How it works
+            <span className="logo-mark">
+              <img src="/buildly-logo.png" alt="" width="40" height="40" />
+            </span>
+            {brand.name}
+            <span className="logo-dot">.</span>
+          </button>
+          <nav className={mobile ? "open" : ""}>
+            <button
+              onClick={() => {
+                go("home");
+                setTimeout(
+                  () =>
+                    document
+                      .getElementById("how")
+                      ?.scrollIntoView({ behavior: "smooth" }),
+                  50,
+                );
+              }}
+            >
+              How it works
+            </button>
+            <button
+              onClick={() => {
+                go("home");
+                setTimeout(
+                  () =>
+                    document
+                      .getElementById("ideas")
+                      ?.scrollIntoView({ behavior: "smooth" }),
+                  50,
+                );
+              }}
+            >
+              Explore projects
+            </button>
+            <button onClick={() => go("saved")}>
+              <Bookmark size={17} /> My projects
+              {saved.length > 0 && (
+                <span className="count">{saved.length}</span>
+              )}
+            </button>
+            <button onClick={() => setShowAccount(true)}>
+              {account.user ? "My account" : "Sign in / Create account"}
+            </button>
+          </nav>
+          <button className="primary header-cta" onClick={() => start()}>
+            Start my project <ArrowRight size={18} />
           </button>
           <button
-            onClick={() => {
-              go("home");
-              setTimeout(
-                () =>
-                  document
-                    .getElementById("ideas")
-                    ?.scrollIntoView({ behavior: "smooth" }),
-                50,
-              );
-            }}
+            className="mobile-menu"
+            aria-label="Toggle navigation"
+            onClick={() => setMobile(!mobile)}
           >
-            Explore projects
+            {mobile ? <X /> : <Menu />}
           </button>
-          <button onClick={() => go("saved")}>
-            <Bookmark size={17} /> My projects
-            {saved.length > 0 && <span className="count">{saved.length}</span>}
-          </button>
-          <button onClick={() => setShowAccount(true)}>
-            {account.user ? "My account" : "Sign in / Create account"}
-          </button>
-        </nav>
-        <button className="primary header-cta" onClick={() => start()}>
-          Start my project <ArrowRight size={18} />
-        </button>
-        <button
-          className="mobile-menu"
-          aria-label="Toggle navigation"
-          onClick={() => setMobile(!mobile)}
-        >
-          {mobile ? <X /> : <Menu />}
-        </button>
-      </header>
+        </header>
+      )}
       {error && (
         <div className="error" role="alert">
           {error}
@@ -701,7 +795,7 @@ export default function Home() {
           </button>
         </div>
       )}
-      {view === "home" && (
+      {!native && view === "home" && (
         <main className="home-simple">
           <section className="hero">
             <div className="hero-copy">
@@ -811,9 +905,30 @@ export default function Home() {
           </section>
         </main>
       )}
+      {native && ["home", "saved"].includes(view) && (
+        <NativeHome
+          projects={saved}
+          start={() => start()}
+          resume={photo ? () => go("wizard") : undefined}
+          open={(p) => {
+            setProject(p);
+            setTab("Overview");
+            go("result");
+          }}
+          remove={setProjectToDelete}
+        />
+      )}
+      {native && view === "tutorial" && (
+        <FirstProjectGuide finish={finishTutorial} />
+      )}
       {view === "wizard" && (
         <main className="wizard">
           <ProgressSteps step={step} />
+          {photoBusy && (
+            <p className="photo-preparing" role="status">
+              Preparing your photo…
+            </p>
+          )}
           {photo && (
             <p className="save-status" aria-live="polite">
               {draftStatus}
@@ -871,6 +986,7 @@ export default function Home() {
                   <>
                     <button
                       className="secondary"
+                      disabled={photoBusy}
                       onClick={() => void choosePhoto("photos")}
                     >
                       Choose a different photo
@@ -883,12 +999,14 @@ export default function Home() {
                   <>
                     <button
                       className="secondary"
+                      disabled={photoBusy}
                       onClick={() => void choosePhoto("camera")}
                     >
                       <Camera size={20} /> Take a photo
                     </button>
                     <button
                       className="primary"
+                      disabled={photoBusy}
                       onClick={() => void choosePhoto("photos")}
                     >
                       <Upload size={20} /> Choose a photo
@@ -1659,7 +1777,7 @@ export default function Home() {
           </div>
         </main>
       )}
-      {view === "saved" && (
+      {!native && view === "saved" && (
         <main className="saved-page">
           <div className="section-heading">
             <div>
@@ -1809,25 +1927,49 @@ export default function Home() {
           }}
         />
       )}
-      <footer>
-        <button className="logo" onClick={() => go("home")}>
-          <span className="logo-mark">
-            <img src="/buildly-logo.png" alt="" width="28" height="28" />
-          </span>
-          {brand.name}.
-        </button>
-        <span>{brand.tagline}</span>
-        <small>
-          © {new Date().getFullYear()} Buildly · Thoughtfully planned. Proudly
-          built.
-        </small>
-      </footer>
+      {!native && (
+        <footer>
+          <button className="logo" onClick={() => go("home")}>
+            <span className="logo-mark">
+              <img src="/buildly-logo.png" alt="" width="28" height="28" />
+            </span>
+            {brand.name}.
+          </button>
+          <span>{brand.tagline}</span>
+          <small>
+            © {new Date().getFullYear()} Buildly · Thoughtfully planned. Proudly
+            built.
+          </small>
+        </footer>
+      )}
+      {native && view !== "generating" && (
+        <nav className="native-tabbar" aria-label="App navigation">
+          <button
+            aria-current={["home", "saved"].includes(view) ? "page" : undefined}
+            onClick={() => go("saved")}
+          >
+            <Bookmark size={22} />
+            Projects
+          </button>
+          <button
+            onClick={() => start()}
+            disabled={regenerating || rebuilding || refining}
+          >
+            <Plus size={26} />
+            New project
+          </button>
+          <button onClick={() => setShowAccount(true)}>
+            <Users size={22} />
+            Account
+          </button>
+        </nav>
+      )}
       {toast && (
         <div className="toast" role="status">
           <CheckCircle2 size={21} />
           {toast}
         </div>
       )}
-    </>
+    </div>
   );
 }

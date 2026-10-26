@@ -8,20 +8,27 @@ export async function nativePhoto(
   try {
     const photo = await Camera.getPhoto({
       source: source === "camera" ? CameraSource.Camera : CameraSource.Photos,
-      resultType: CameraResultType.Uri,
+      resultType: CameraResultType.Base64,
       quality: 85,
       width: 1600,
       height: 1600,
       correctOrientation: true,
     });
-    if (!photo.webPath) return;
-    const blob = await (await fetch(photo.webPath)).blob();
-    return new File([blob], `photo.${photo.format}`, {
-      type: blob.type || `image/${photo.format}`,
+    if (!photo.base64String)
+      throw new Error("No photo was returned. Please choose another photo.");
+    const bytes = Uint8Array.from(atob(photo.base64String), (c) =>
+      c.charCodeAt(0),
+    );
+    return new File([bytes], `photo.${photo.format}`, {
+      type: `image/${photo.format === "jpg" ? "jpeg" : photo.format}`,
     });
   } catch (error) {
-    if (error instanceof Error && /cancel/i.test(error.message)) return;
-    throw error;
+    const message =
+      error && typeof error === "object" && "message" in error
+        ? String(error.message)
+        : "Could not open photos. Check photo and camera access in iPhone Settings.";
+    if (/cancel/i.test(message)) return;
+    throw new Error(message);
   }
 }
 export async function exportFile(name: string, text: string, type: string) {
