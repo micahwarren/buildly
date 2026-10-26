@@ -10,7 +10,7 @@ jobs:
   archive:
     runs-on: macos-15
     timeout-minutes: 45
-    environment: testflight
+    environment: "buildly test"
     env:
       TESTFLIGHT_PAYMENTS: ${{ inputs.test_purchases }}
       BUILDLY_APP_URL: ${{ vars.BUILDLY_APP_URL }}

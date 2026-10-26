@@ -12,7 +12,7 @@ Track the funnel during the beta: project-start → photo added → generate tap
 
 ## 1. Supabase and hosted server
 
-For the first TestFlight build **without purchases**, leave `BILLING_ENABLED=false` on the hosted app. In GitHub's `testflight` environment, only BUILDLY_APP_URL and APPLE_TEAM_ID variables plus the three Apple signing secrets are required. Run the workflow with **Test App Store purchases unchecked**. RevenueCat setup can follow later. The preflight verifies that hosted billing is disabled and AI is configured. This does not disable billing inside a binary: the app uses the hosted server, so keep billing disabled for the duration of this test. For a local no-purchase build, set `TESTFLIGHT_PAYMENTS=false` before preflight.
+For the first TestFlight build **without purchases**, leave `BILLING_ENABLED=false` on the hosted app. In GitHub's `buildly test` environment, only BUILDLY_APP_URL and APPLE_TEAM_ID variables plus the three Apple signing secrets are required. Run the workflow with **Test App Store purchases unchecked**. RevenueCat setup can follow later. The preflight verifies that hosted billing is disabled and AI is configured. This does not disable billing inside a binary: the app uses the hosted server, so keep billing disabled for the duration of this test. For a local no-purchase build, set `TESTFLIGHT_PAYMENTS=false` before preflight.
 
 1. Apply `supabase/setup.sql` (existing accounts) then `supabase/billing.sql` in Supabase SQL Editor. Billing tables have RLS and no client mutation policies. Only service-role RPCs may grant/spend credits.
 2. In Vercel configure `SUPABASE_SERVICE_ROLE_KEY`, `REVENUECAT_WEBHOOK_SECRET` (a long random value), `REVENUECAT_PROJECT_PRODUCT_ID=buildly.project.single`, `NEXT_PUBLIC_PROJECT_PRODUCT_ID=buildly.project.single`, and `NEXT_PUBLIC_REVENUECAT_IOS_KEY` (RevenueCat's public iOS SDK key). Never expose the service-role key or webhook secret with a NEXT_PUBLIC prefix.
@@ -46,7 +46,7 @@ npm run ios:open
 
 In Xcode select the App target → Signing & Capabilities → your team, use automatic signing, and set version/build number. Run on a device first. Then choose **Product → Archive → Distribute App → App Store Connect → Upload**. Once processed, select the build in TestFlight. External testers may require Beta App Review. Apple's approval is not guaranteed; supply a working review account, access to sample functionality, and clear review notes explaining native camera, sharing, saved projects and purchases.
 
-Alternatively, `.github/workflows/ios-testflight.yml` archives/uploads on manual dispatch only. Create GitHub environment `testflight`; set variables BUILDLY_APP_URL, APPLE_TEAM_ID, REVENUECAT_IOS_KEY, PROJECT_PRODUCT_ID and secrets APPLE_KEY_ID, APPLE_ISSUER_ID, APPLE_PRIVATE_KEY (App Store Connect API key with appropriate app/signing access). The workflow has not been executed here. Confirm Apple's current SDK submission requirements and the selected GitHub runner's Xcode before running it.
+Alternatively, `.github/workflows/ios-testflight.yml` archives/uploads on manual dispatch only. Use GitHub environment `buildly test`; set variables BUILDLY_APP_URL, APPLE_TEAM_ID, REVENUECAT_IOS_KEY, PROJECT_PRODUCT_ID and secrets APPLE_KEY_ID, APPLE_ISSUER_ID, APPLE_PRIVATE_KEY (App Store Connect API key with appropriate app/signing access). The workflow has not been executed here. Confirm Apple's current SDK submission requirements and the selected GitHub runner's Xcode before running it.
 
 ## Release checks — must pass on a real device
 
