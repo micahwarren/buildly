@@ -1,3 +1,4 @@
+import { billed } from "@/lib/billing/server";
 import { NextResponse } from "next/server";
 import { readProjectRequest } from "@/lib/project-request";
 import { makeDemo } from "@/lib/project";
@@ -28,17 +29,19 @@ export async function POST(req: Request) {
       );
     checkImageLimit(req, false);
     return NextResponse.json(
-      await refineProject(
-        {
-          ...makeDemo(input),
-          id: data.id,
-          title:
-            typeof data.title === "string"
-              ? data.title.slice(0, 200)
-              : "My revised project",
-          generatedImage: data.generatedImage,
-        },
-        data.change.trim(),
+      await billed(req, "design", data.id, () =>
+        refineProject(
+          {
+            ...makeDemo(input),
+            id: data.id,
+            title:
+              typeof data.title === "string"
+                ? data.title.slice(0, 200)
+                : "My revised project",
+            generatedImage: data.generatedImage,
+          },
+          data.change.trim(),
+        ),
       ),
     );
   } catch (error) {

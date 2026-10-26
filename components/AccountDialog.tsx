@@ -1,12 +1,16 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { accountFetch } from "@/lib/billing/client";
+import { clearAccountLocalData } from "@/lib/local-projects";
 import type { AccountState } from "@/lib/accounts/use-account";
 export function AccountDialog({
   account,
   close,
   initialMode = "signup",
+  onPurchases,
 }: {
   account: AccountState;
+  onPurchases?: () => void;
   close: () => void;
   initialMode?: "signup" | "signin";
 }) {
@@ -17,7 +21,8 @@ export function AccountDialog({
     [password, setPassword] = useState(""),
     [message, setMessage] = useState(""),
     [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [confirmDelete, setConfirmDelete] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const element = dialog.current;
@@ -131,6 +136,62 @@ export function AccountDialog({
             Projects you create while signed in are automatically saved to your
             account when a cloud save succeeds.
           </p>
+          {onPurchases && (
+            <button className="primary" disabled={busy} onClick={onPurchases}>
+              Project purchases
+            </button>
+          )}
+          <button
+            className="text-button"
+            disabled={busy}
+            onClick={() => setConfirmDelete(true)}
+          >
+            Delete my account
+          </button>
+          {confirmDelete && (
+            <div className="delete-account-confirm">
+              <p>
+                Delete your account, saved projects, photos, and unused credits?
+                This can’t be undone. Apple purchase records are managed by
+                Apple.
+              </p>
+              <button
+                className="secondary"
+                disabled={busy}
+                onClick={() => setConfirmDelete(false)}
+              >
+                Keep my account
+              </button>
+              <button
+                className="primary"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  setError("");
+                  try {
+                    const res = await accountFetch("/api/account", {
+                      method: "DELETE",
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error);
+                    await clearAccountLocalData(account.user!.id);
+                    await account.client!.auth.signOut({ scope: "local" });
+                    window.location.assign("/");
+                  } catch (e) {
+                    setError(
+                      e instanceof Error
+                        ? e.message
+                        : "Could not delete your account.",
+                    );
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                {busy ? "Deleting…" : "Permanently delete account"}
+              </button>
+            </div>
+          )}
           <button
             className="secondary"
             disabled={busy}

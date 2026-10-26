@@ -110,3 +110,20 @@ export async function readDraft(
 export async function writeDraft(scope: string, draft: ProjectDraft) {
   await transaction("drafts", "readwrite", (s) => s.put(draft, scope));
 }
+export async function clearAccountLocalData(scope: string) {
+  const db = await open();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(["projects", "drafts"], "readwrite");
+    const cursor = tx.objectStore("projects").openCursor();
+    cursor.onsuccess = () => {
+      const c = cursor.result;
+      if (c) {
+        if (c.value.scope === scope) c.delete();
+        c.continue();
+      }
+    };
+    tx.objectStore("drafts").delete(scope);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}

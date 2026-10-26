@@ -44,6 +44,9 @@ import { RotatingHeadline } from "@/components/RotatingHeadline";
 import { DeckAnimation } from "@/components/DeckAnimation";
 import { DeleteProjectDialog } from "@/components/DeleteProjectDialog";
 import { PlanLoader } from "@/components/PlanLoader";
+import { Paywall } from "@/components/Paywall";
+import { accountFetch } from "@/lib/billing/client";
+import { isNativeApp, nativePhoto, exportFile } from "@/lib/native";
 import { AccountDialog } from "@/components/AccountDialog";
 const categories = [
   { name: "Deck", image: photos.deck, icon: Layers },
@@ -87,6 +90,7 @@ export default function Home() {
     [refining, setRefining] = useState(false),
     [projectToDelete, setProjectToDelete] = useState<Project | null>(null),
     [showAccount, setShowAccount] = useState(false),
+    [showPaywall, setShowPaywall] = useState(false),
     [accountMode, setAccountMode] = useState<"signup" | "signin">("signup"),
     [draftStatus, setDraftStatus] = useState("");
   const account = useAccount();
@@ -315,19 +319,38 @@ export default function Home() {
     setProject(next);
     void library.save(next);
   }
+  useEffect(() => {
+    const paywall = () => {
+      if (account.user) setShowPaywall(true);
+      else setShowAccount(true);
+    };
+    const signin = () => setShowAccount(true);
+    window.addEventListener("buildly:paywall", paywall);
+    window.addEventListener("buildly:signin", signin);
+    return () => {
+      window.removeEventListener("buildly:paywall", paywall);
+      window.removeEventListener("buildly:signin", signin);
+    };
+  }, [account.user]);
+  async function choosePhoto(source: "camera" | "photos") {
+    if (!isNativeApp()) {
+      (source === "camera" ? camera : file).current?.click();
+      return;
+    }
+    try {
+      await upload(await nativePhoto(source));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not open photos.");
+    }
+  }
+  const pendingPaidAction = useRef<null | (() => void)>(null);
   function downloadBackup() {
     if (!project) return;
-    const url = URL.createObjectURL(
-      new Blob(
-        [JSON.stringify({ format: "buildly-project-v1", project }, null, 2)],
-        { type: "application/json" },
-      ),
-    );
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "buildly-project-backup.json";
-    a.click();
-    URL.revokeObjectURL(url);
+    void exportFile(
+      "buildly-project-backup.json",
+      JSON.stringify({ format: "buildly-project-v1", project }, null, 2),
+      "application/json",
+    ).catch(() => setError("Could not share the project backup."));
   }
   async function importBackup(file?: File) {
     if (!file) return;
@@ -378,6 +401,7 @@ export default function Home() {
     reader.readAsDataURL(f);
   }
   async function generate(demo = false) {
+    pendingPaidAction.current = () => void generate(demo);
     if (!description.trim()) {
       setError("Tell us a little about your idea first.");
       return;
@@ -386,7 +410,7 @@ export default function Home() {
     setLoading(0);
     go("generating");
     try {
-      const res = await fetch("/api/projects", {
+      const res = await accountFetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -414,14 +438,16 @@ export default function Home() {
     }
   }
   async function regenerateDesign() {
+    pendingPaidAction.current = () => void regenerateDesign();
     if (!project || regenerating || rebuilding || refining || asking) return;
     setRegenerating(true);
     setError("");
     try {
-      const res = await fetch("/api/design", {
+      const res = await accountFetch("/api/design", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: project.id,
           originalImage: project.originalImage,
           projectType: project.projectType,
           description: project.description,
@@ -458,14 +484,16 @@ export default function Home() {
     }
   }
   async function rebuildPlan(updatedDetails?: ProjectDetails) {
+    pendingPaidAction.current = () => void rebuildPlan(updatedDetails);
     if (!project || rebuilding || regenerating || refining || asking) return;
     setRebuilding(true);
     setError("");
     try {
-      const response = await fetch("/api/plan", {
+      const response = await accountFetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          id: project.id,
           originalImage: project.originalImage,
           generatedImage: project.generatedImage,
           projectType: project.projectType,
@@ -514,7 +542,7 @@ export default function Home() {
     const q = question;
     setQuestion("");
     try {
-      const res = await fetch("/api/ask", {
+      const res = await accountFetch("/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -550,10 +578,11 @@ export default function Home() {
   }
   async function refine(change: string, updatedDetails: Project["details"]) {
     if (!project || refining || rebuilding || regenerating || asking) return;
+    pendingPaidAction.current = () => void refine(change, updatedDetails);
     setRefining(true);
     setError("");
     try {
-      const response = await fetch("/api/refine", {
+      const response = await accountFetch("/api/refine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -595,14 +624,12 @@ export default function Home() {
     }
   }
   function download() {
-    if (!project) return;
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(
-      new Blob([shoppingText(project)], { type: "text/plain" }),
-    );
-    a.download = "buildly-shopping-list.txt";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    if (project)
+      void exportFile(
+        "buildly-shopping-list.txt",
+        shoppingText(project),
+        "text/plain",
+      ).catch(() => setError("Could not share the shopping list."));
   }
   return (
     <>
@@ -844,7 +871,7 @@ export default function Home() {
                   <>
                     <button
                       className="secondary"
-                      onClick={() => file.current?.click()}
+                      onClick={() => void choosePhoto("photos")}
                     >
                       Choose a different photo
                     </button>
@@ -856,13 +883,13 @@ export default function Home() {
                   <>
                     <button
                       className="secondary"
-                      onClick={() => camera.current?.click()}
+                      onClick={() => void choosePhoto("camera")}
                     >
                       <Camera size={20} /> Take a photo
                     </button>
                     <button
                       className="primary"
-                      onClick={() => file.current?.click()}
+                      onClick={() => void choosePhoto("photos")}
                     >
                       <Upload size={20} /> Choose a photo
                     </button>
@@ -1750,9 +1777,31 @@ export default function Home() {
           onClose={() => setProjectToDelete(null)}
         />
       )}
+      {showPaywall && account.user && (
+        <Paywall
+          key={account.user.id}
+          userId={account.user.id}
+          onContinue={
+            pendingPaidAction.current
+              ? () => {
+                  setShowPaywall(false);
+                  const action = pendingPaidAction.current;
+                  pendingPaidAction.current = null;
+                  action?.();
+                }
+              : undefined
+          }
+          close={() => setShowPaywall(false)}
+        />
+      )}
       {showAccount && (
         <AccountDialog
           account={account}
+          onPurchases={() => {
+            pendingPaidAction.current = null;
+            setShowAccount(false);
+            setShowPaywall(true);
+          }}
           initialMode={accountMode}
           close={() => {
             setShowAccount(false);

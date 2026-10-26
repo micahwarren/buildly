@@ -176,6 +176,28 @@ async function signIn(page) {
     .click();
   await signIn(page);
   console.log("Account signup and sign-in passed");
+  await page.route("**/api/config", (route) =>
+    route.fulfill({
+      json: { billingEnabled: true, imageGenerationAvailable: true },
+    }),
+  );
+  await page.route("**/api/billing/status", (route) => {
+    assert.equal(route.request().headers().authorization, `Bearer ${token}`);
+    return route.fulfill({ json: { credits: 1 } });
+  });
+  await page.getByRole("button", { name: "My account", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Delete my account", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Keep my account", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Project purchases", exact: true })
+    .click();
+  await page.getByText("1 unused project credit", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+
   const photo = await sharp({
     create: { width: 640, height: 400, channels: 3, background: "#779955" },
   })

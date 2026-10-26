@@ -1,3 +1,4 @@
+import { reservePurchase } from "@/lib/billing/server";
 import { answerProjectQuestion } from "@/lib/services/project-qa";
 import { NextResponse } from "next/server";
 import { parseProjectBackup } from "@/lib/project-backup";
@@ -43,10 +44,15 @@ export async function POST(req: Request) {
         400,
       );
     checkChatLimit(req);
-    return NextResponse.json({
-      answer: await answerProjectQuestion(question, project),
-      demo: false,
-    });
+    const access = await reservePurchase(req, "chat", project.id);
+    try {
+      const answer = await answerProjectQuestion(question, project);
+      await access.finish(true);
+      return NextResponse.json({ answer, demo: false });
+    } catch (error) {
+      await access.finish(false);
+      throw error;
+    }
   } catch (error) {
     return NextResponse.json(
       {

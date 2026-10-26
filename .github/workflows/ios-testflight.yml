@@ -1,0 +1,52 @@
+name: Build iOS for TestFlight
+on:
+  workflow_dispatch:
+jobs:
+  archive:
+    runs-on: macos-15
+    timeout-minutes: 45
+    environment: testflight
+    env:
+      BUILDLY_APP_URL: ${{ vars.BUILDLY_APP_URL }}
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      NEXT_PUBLIC_REVENUECAT_IOS_KEY: ${{ vars.REVENUECAT_IOS_KEY }}
+      NEXT_PUBLIC_PROJECT_PRODUCT_ID: ${{ vars.PROJECT_PRODUCT_ID }}
+      APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
+      APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
+      APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Select Xcode 26 or newer
+        run: |
+          XCODE_PATH=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort | tail -1)
+          if [ -z "$XCODE_PATH" ]; then echo "Xcode 26 is required; update the macOS runner image."; exit 1; fi
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
+      - run: npm ci
+      - run: npm run ios:preflight
+      - run: npm run ios:sync
+      - name: Install App Store Connect authentication key
+        run: |
+          mkdir -p "$RUNNER_TEMP/apple"
+          python3 - <<'PY'
+          import os,pathlib
+          path=pathlib.Path(os.environ['RUNNER_TEMP'])/'apple'/'AuthKey.p8'
+          path.write_text(os.environ['APPLE_PRIVATE_KEY'])
+          path.chmod(0o600)
+          PY
+      - name: Archive and upload
+        run: |
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Buildly.xcarchive" DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" CODE_SIGN_STYLE=Automatic -allowProvisioningUpdates -authenticationKeyPath "$RUNNER_TEMP/apple/AuthKey.p8" -authenticationKeyID "$APPLE_KEY_ID" -authenticationKeyIssuerID "$APPLE_ISSUER_ID" archive
+          python3 - <<'PY'
+          import os,plistlib,pathlib
+          options={'method':'app-store-connect','destination':'upload','teamID':os.environ['APPLE_TEAM_ID'],'signingStyle':'automatic','manageAppVersionAndBuildNumber':True}
+          (pathlib.Path(os.environ['RUNNER_TEMP'])/'ExportOptions.plist').write_bytes(plistlib.dumps(options))
+          PY
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/Buildly.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" -allowProvisioningUpdates -authenticationKeyPath "$RUNNER_TEMP/apple/AuthKey.p8" -authenticationKeyID "$APPLE_KEY_ID" -authenticationKeyIssuerID "$APPLE_ISSUER_ID"
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/apple/AuthKey.p8"

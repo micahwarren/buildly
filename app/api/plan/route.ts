@@ -1,3 +1,4 @@
+import { billed } from "@/lib/billing/server";
 import { NextResponse } from "next/server";
 import { readProjectRequest } from "@/lib/project-request";
 import { makeDemo } from "@/lib/project";
@@ -17,10 +18,12 @@ export async function POST(req: Request) {
       throw new DesignError("A saved design image is required.", 400);
     checkChatLimit(req);
     return NextResponse.json(
-      await createDesignPlan({
-        ...makeDemo(input),
-        generatedImage: data.generatedImage,
-      }),
+      await billed(req, "plan", data.id || "", () =>
+        createDesignPlan({
+          ...makeDemo(input),
+          generatedImage: data.generatedImage,
+        }),
+      ),
     );
   } catch (error) {
     return NextResponse.json(

@@ -197,3 +197,8 @@ Explicit `GEMINI_PLANNING_MODEL` pins are still respected; remove an incompatibl
 pin or choose a supported stable text/vision model in Vercel and redeploy.
 These regression tests mock Google responses; production acceptance still requires
 rebuilding a saved plan against the configured account.
+
+
+## iPhone app and project purchases
+
+See [the TestFlight release guide](docs/TESTFLIGHT.md) for native builds, App Store consumable purchases, the three-revision allowance, Supabase billing migration, and release checks. Billing is disabled until configured; do not submit an app with unverified purchases or failing live plan generation.

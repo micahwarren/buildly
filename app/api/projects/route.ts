@@ -1,3 +1,4 @@
+import { billed } from "@/lib/billing/server";
 import { checkImageLimit } from "@/lib/image-rate-limit";
 import { NextResponse } from "next/server";
 import { planProject } from "@/lib/services/project-planning";
@@ -9,7 +10,16 @@ export async function POST(req: Request) {
   try {
     const { input, demo } = await readProjectRequest(req);
     checkImageLimit(req, demo);
-    return NextResponse.json(await planProject(input, demo));
+    const id = crypto.randomUUID();
+    return NextResponse.json(
+      await billed(
+        req,
+        "design",
+        id,
+        () => planProject({ ...input, id }, demo),
+        demo,
+      ),
+    );
   } catch (error) {
     return NextResponse.json(
       {

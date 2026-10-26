@@ -2785,3 +2785,29 @@ progress {
     stroke-dashoffset: 0;
   }
 }
+
+.paywall ul {
+  padding-left: 22px;
+  line-height: 1.8;
+}
+.paywall .primary {
+  width: 100%;
+  justify-content: center;
+}
+.legal-page {
+  max-width: 800px;
+  margin: auto;
+  padding: 48px 24px;
+}
+.legal-page p {
+  line-height: 1.7;
+}
+.delete-account-confirm {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #c65430;
+  border-radius: 12px;
+}
+.delete-account-confirm button {
+  margin: 6px 0;
+}
