@@ -62,4 +62,6 @@ Alternatively, `.github/workflows/ios-testflight.yml` archives/uploads on manual
 
 ## Operations
 
+The upload workflow uses GitHub's standard `macos-15-intel` runner after the original `macos-15` run remained queued. It checks for Xcode 26 before building. A runner change does not resolve GitHub-wide incidents or account Actions limits; if the job remains at “Waiting for a runner,” inspect GitHub Status and account billing before starting more runs.
+
 The billing ledger grants/spends credits atomically, limits accounts to 100 paid-service requests/day, and permits one pending paid request per account. A successful initial image with a failed plan consumes the project credit but permits plan retries. If a finalize call fails, logs include `buildly_billing_finalize_failed` and the reservation ID; reconcile before retrying or issuing a manual credit. Refunds remove an unused credit when available; consumed outputs cannot be taken back. App Store refund and fraud disputes may need manual support.
