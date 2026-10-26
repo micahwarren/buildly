@@ -1,12 +1,18 @@
 name: Build iOS for TestFlight
 on:
   workflow_dispatch:
+    inputs:
+      test_purchases:
+        description: 'Test App Store purchases (requires completed RevenueCat setup)'
+        type: boolean
+        default: false
 jobs:
   archive:
     runs-on: macos-15
     timeout-minutes: 45
     environment: testflight
     env:
+      TESTFLIGHT_PAYMENTS: ${{ inputs.test_purchases }}
       BUILDLY_APP_URL: ${{ vars.BUILDLY_APP_URL }}
       APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
       NEXT_PUBLIC_REVENUECAT_IOS_KEY: ${{ vars.REVENUECAT_IOS_KEY }}
