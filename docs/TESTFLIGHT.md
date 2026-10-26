@@ -1,3 +1,7 @@
+# Native app migration
+
+**The TestFlight workflow now builds the SwiftUI app in `ios-native`, not the Capacitor wrapper described below.** See [native setup and current beta limits](../ios-native/README.md). Keep purchases unchecked. Deploy the updated public API configuration before starting a new workflow run on main. Native compilation and real-device verification remain pending.
+
 # Buildly iPhone release
 
 The repository contains a Capacitor 8 iOS app, native camera/library access, native file sharing, a consumable Apple purchase paywall, and server-side project credits. The app loads the hosted Buildly application over HTTPS. It is not an offline app. Xcode compilation, signing, real StoreKit purchases, and Apple review cannot be verified on the Linux development machine.

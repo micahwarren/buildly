@@ -202,3 +202,7 @@ rebuilding a saved plan against the configured account.
 ## iPhone app and project purchases
 
 See [the TestFlight release guide](docs/TESTFLIGHT.md) for native builds, App Store consumable purchases, the three-revision allowance, Supabase billing migration, and release checks. Billing is disabled until configured; do not submit an app with unverified purchases or failing live plan generation.
+
+## Native iPhone app
+
+The iPhone product now has a dedicated SwiftUI implementation in [ios-native](ios-native/README.md). The TestFlight workflow builds that project. The existing Next.js site remains the prototype and JSON API backend. Native purchases are not yet ported; the initial native beta runs with billing disabled.

@@ -1,0 +1,4 @@
+BuildlyNative.xcodeproj/
+Info.plist
+Sources/Configuration.swift
+build/

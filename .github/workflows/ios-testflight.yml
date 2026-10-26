@@ -34,7 +34,15 @@ jobs:
           xcodebuild -version
       - run: npm ci
       - run: npm run ios:preflight
-      - run: npm run ios:sync
+      - name: Generate native app configuration
+        run: node scripts/native-config.mjs
+      - name: Generate SwiftUI Xcode project
+        run: |
+          brew install xcodegen
+          cd ios-native
+          xcodegen generate
+      - name: Compile native app for simulator
+        run: xcodebuild -project ios-native/BuildlyNative.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
       - name: Install App Store Connect authentication key
         run: |
           mkdir -p "$RUNNER_TEMP/apple"
@@ -46,7 +54,7 @@ jobs:
           PY
       - name: Archive app without development signing
         run: |
-          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Buildly.xcarchive" DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" CODE_SIGNING_ALLOWED=NO archive
+          xcodebuild -project ios-native/BuildlyNative.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/Buildly.xcarchive" DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" CODE_SIGNING_ALLOWED=NO archive
       - name: Sign for App Store and upload
         run: |
           python3 - <<'PY'
