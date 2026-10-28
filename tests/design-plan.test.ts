@@ -11,6 +11,13 @@ import { planProject } from "../lib/services/project-planning";
 import { makeDemo } from "../lib/project";
 function fixture(): DesignPlan {
   return {
+    recommendedMeasurements: [
+      {
+        label: "Seating clearance",
+        value: "Allow 3 feet around seating",
+        reason: "Concept allowance; confirm fit on site.",
+      },
+    ],
     summary:
       "A ground-level paver seating area; the existing wood fence is not part of the work.",
     materials: [
@@ -97,6 +104,10 @@ test("planner sends both actual photos, description and structured response sche
     },
   });
   assert.equal(result.planStatus, "design-based");
+  assert.deepEqual(
+    result.recommendedMeasurements,
+    fixture().recommendedMeasurements,
+  );
   assert.equal(result.materials![0].item, "Concrete pavers");
   assert.ok(!result.materials!.some((m) => /deck|screw/i.test(m.item)));
   assert.ok(result.assumptions!.some((a) => a.startsWith("Incomplete cost:")));
@@ -340,4 +351,20 @@ test("staged planning expands instructions concurrently and combines them in out
   assert.equal(result.planStatus, "design-based");
   assert.deepEqual(result.steps, plan.steps);
   assert.deepEqual(result.materials, plan.materials);
+});
+
+test("recommendations preserve design-specific guidance and reject malformed model values", () => {
+  const plan = fixture();
+  assert.deepEqual(
+    planFields(validatePlan(plan)).recommendedMeasurements,
+    plan.recommendedMeasurements,
+  );
+  assert.throws(() =>
+    validatePlan({
+      ...plan,
+      recommendedMeasurements: [
+        { label: "Width", value: 12, reason: "A guess" },
+      ],
+    }),
+  );
 });

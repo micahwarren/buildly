@@ -1,8 +1,6 @@
-import Link from "next/link";
 export default function Terms() {
   return (
     <main className="legal-page">
-      <Link href="/">← Buildly</Link>
       <h1>Terms of use</h1>
       <p>
         Buildly provides AI-generated design concepts and project planning

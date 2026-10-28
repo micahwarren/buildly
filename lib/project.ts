@@ -19,6 +19,9 @@ export type Project = {
     recordedAt: string;
     checks: string[];
   };
+  referenceImages?: string[];
+  materialImages?: string[];
+  recommendedMeasurements?: { label: string; value: string; reason: string }[];
   originalImage: string;
   generatedImage: string;
   visualizationMode?: "ai" | "demo";
@@ -75,8 +78,8 @@ export const photos = {
 };
 export function makeDemo(input: Partial<Project>): Project {
   const type = input.projectType || "Pergola";
-  const w = Number(input.width) || 12,
-    l = Number(input.length) || 16;
+  const w = input.width === undefined ? 12 : input.width,
+    l = input.length === undefined ? 16 : input.length;
   const estimate = estimateProject({
     projectType: type,
     width: w,
@@ -85,7 +88,10 @@ export function makeDemo(input: Partial<Project>): Project {
   });
   return {
     id: crypto.randomUUID(),
-    title: `My backyard ${type.toLowerCase()}`,
+    title:
+      type === "Something else" && input.description?.trim()
+        ? input.description.trim().slice(0, 60)
+        : `My backyard ${type.toLowerCase()}`,
     projectType: type,
     description: "",
     originalImage: "",

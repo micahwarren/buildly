@@ -1,8 +1,6 @@
-import Link from "next/link";
 export default function Privacy() {
   return (
     <main className="legal-page">
-      <Link href="/">← Buildly</Link>
       <h1>Privacy</h1>
       <p>
         Buildly uses your email address to manage your account and stores the
