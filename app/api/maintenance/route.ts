@@ -5,16 +5,26 @@ import {
   cleanupFailedUploads,
 } from "@/lib/production/cleanup";
 export const maxDuration = 120;
+function authorizedMaintenance(req: Request) {
+  const supplied =
+    req.headers.get("authorization")?.replace(/^Bearer /, "") || "";
+  const expected = process.env.BUILDLY_MAINTENANCE_TOKEN;
+  return (
+    !!expected &&
+    Buffer.byteLength(supplied) === Buffer.byteLength(expected) &&
+    timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))
+  );
+}
+export async function GET(req: Request) {
+  // Vercel Cron sends GET with CRON_SECRET as the bearer token. Anonymous GET
+  // must never fall through to account-scoped cleanup or touch the database.
+  if (!authorizedMaintenance(req))
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  return POST(req);
+}
 export async function POST(req: Request) {
   try {
-    const supplied =
-      req.headers.get("authorization")?.replace(/^Bearer /, "") || "";
-    const expected = process.env.BUILDLY_MAINTENANCE_TOKEN;
-    if (
-      expected &&
-      Buffer.byteLength(supplied) === Buffer.byteLength(expected) &&
-      timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))
-    ) {
+    if (authorizedMaintenance(req)) {
       const db = adminClient();
       const expired = await db
         .from("buildly_jobs")
@@ -31,7 +41,9 @@ export async function POST(req: Request) {
         .delete()
         .lt("created_at", old)
         .is("result_id", null)
-        .in("state", ["complete", "failed", "interrupted"]);
+        .in("state", ["complete", "failed", "interrupted"])
+        // Keep failed image operations until their orphan files were cleaned.
+        .or("kind.eq.plan,failure_code.eq.files_cleaned");
       if (prunedJobs.error) throw prunedJobs.error;
       const prunedReports = await db
         .from("buildly_diagnostics")

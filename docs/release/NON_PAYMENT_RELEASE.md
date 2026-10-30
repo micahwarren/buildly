@@ -8,7 +8,7 @@ Do not deploy this service change before the reviewed SQL migration. In the exis
 
 Required server configuration: existing Supabase URL, publishable key, **SUPABASE_SERVICE_ROLE_KEY**, and the approved existing AI credentials/models. Both image providers still use Gemini for plans. `BUILDLY_GENERATION_ENABLED=false` pauses new work without denying saved-project reads. Defaults are 20 starts/account/day, 50/service/day, six/account/15 minutes, one active/account and five active/service. These limits do not represent charges or guarantee a dollar budget.
 
-Add a random BUILDLY_MAINTENANCE_TOKEN in host secrets and the repository Actions secret; configure Actions variables BUILDLY_API_URL and BUILDLY_MAINTENANCE_ENABLED=true after a successful manual check. The workflow is initially disabled. It retries project file deletion, removes eligible failed uploads, expires stalled requests and prunes eligible diagnostics/history after 30 days. Confirm job logs/failure notifications; do not claim retention is working before scheduling and verifying it. Saved-result idempotency records remain with their accounts; unknown legacy folders need manual review.
+The primary schedule is the daily Vercel Cron in `vercel.json`. Set server-only `CRON_SECRET` and `BUILDLY_MAINTENANCE_TOKEN` to the same random value. Anonymous GET requests are rejected; authenticated account cleanup still uses POST. The GitHub maintenance workflow is an alternative and stays disabled unless explicitly configured; do not enable both schedules. It retries project file deletion, removes eligible failed uploads, expires stalled requests and prunes eligible diagnostics/history after 30 days. Confirm job logs/failure notifications; do not claim retention is working before scheduling and verifying it. Saved-result idempotency records remain with their accounts; unknown legacy folders need manual review.
 
 After the approved service deployment, run:
 
@@ -29,3 +29,9 @@ The Expo repository contains the complete coordinated release runbook, device ac
 Compatible PostCSS override fixes its high advisory. Three moderate audit advisories remain through the archived Capacitor CLI/xcode/uuid chain; review official fixes before launch. Existing purchase dependencies/configuration/schema remain unchanged. Do not run billing.sql or enable/configure payment products as part of this task.
 
 For incidents, pause generation if needed and roll back to a compatible service deployment. Keep additive data/migration in place; do not delete customer tables to roll back code. Record the app commit, service commit and Apple build number together.
+
+## Deployment preparation — October 30, 2026
+
+The production SQL migration was applied to the existing Buildly Supabase project and verified against the live database. Existing project contents and private image counts were unchanged. Actual authenticated-role ownership/isolation checks passed. Confirmation/reset redirects and the eight-character new-password minimum were configured. Production SMTP still needs a sender configured and real delivery testing.
+
+The hosting cleanup schedule is once daily at 06:23 UTC; the existing Hobby scheduler may run within that hour rather than at an exact minute. This uses the existing plan with no upgrade. Confirm the hosting plan's permitted use and allowance before public commercial launch. Failed upload records are retained until their storage cleanup succeeds, so history retention does not strand orphan files.
