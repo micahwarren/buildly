@@ -1,3 +1,4 @@
+import { recordUsage } from "../production/telemetry";
 import { DesignError } from "./image-design";
 type Dependencies = {
   apiKey?: string;
@@ -191,7 +192,9 @@ export async function requestGemini(
       );
       if (response.ok) {
         try {
-          return await response.json();
+          const result = await response.json();
+          recordUsage("google", model, result.usageMetadata);
+          return result;
         } catch {
           throw new DesignError(
             "Google returned an unreadable planning response. Your saved image can be reused.",

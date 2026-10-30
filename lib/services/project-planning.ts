@@ -8,6 +8,7 @@ export async function planProject(
   dependencies: {
     design?: typeof createDesign;
     plan?: typeof createDesignPlan;
+    onDesign?: (project: Project) => Promise<void>;
   } = {},
 ) {
   const project = makeDemo(input);
@@ -20,6 +21,7 @@ export async function planProject(
     visualizationMode: design.mode,
   };
   if (demo) return result;
+  await dependencies.onDesign?.(result);
   try {
     return {
       ...result,

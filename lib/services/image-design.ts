@@ -1,3 +1,4 @@
+import { recordUsage } from "../production/telemetry";
 import { imageProviderConfig, type ImageProvider } from "../image-provider";
 import sharp from "sharp";
 import { photos, type Project } from "../project";
@@ -286,6 +287,8 @@ export async function createDesign(
     );
   }
   type ProviderResponse = {
+    usageMetadata?: unknown;
+    usage?: unknown;
     data?: { b64_json?: unknown }[];
     promptFeedback?: { blockReason?: string };
     candidates?: {
@@ -306,6 +309,11 @@ export async function createDesign(
       "The image service did not return a usable preview. Please try again.",
     );
   }
+  recordUsage(
+    provider === "gemini" ? "google" : "openai",
+    model,
+    provider === "gemini" ? data.usageMetadata : data.usage,
+  );
   const candidate = data?.candidates?.[0];
   if (
     provider === "gemini" &&

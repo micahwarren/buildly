@@ -1,3 +1,4 @@
+import { generationUser } from "@/lib/production/access";
 import { reservePurchase } from "@/lib/billing/server";
 import { answerProjectQuestion } from "@/lib/services/project-qa";
 import { NextResponse } from "next/server";
@@ -8,6 +9,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
+    const account = await generationUser(req, true);
     const raw = await req.text();
     if (raw.length > 150000)
       throw new DesignError(
@@ -44,13 +46,43 @@ export async function POST(req: Request) {
         400,
       );
     checkChatLimit(req);
-    const access = await reservePurchase(req, "chat", project.id);
+    const { ownedProject } = await import("@/lib/production/projects");
+    await ownedProject(account.db, account.user.id, project.id);
+    const jobId = crypto.randomUUID();
+    const claim = await account.db.rpc("buildly_claim_job", {
+      p_user: account.user.id,
+      p_id: jobId,
+      p_kind: "plan",
+      p_source: project.id,
+      p_hash: jobId,
+      p_daily: 20,
+      p_global: 50,
+    });
+    if (claim.error) {
+      const { jobError } = await import("@/lib/production/errors");
+      throw jobError(claim.error.message);
+    }
     try {
-      const answer = await answerProjectQuestion(question, project);
-      await access.finish(true);
-      return NextResponse.json({ answer, demo: false });
+      const access = await reservePurchase(req, "chat", project.id);
+      try {
+        const answer = await answerProjectQuestion(question, project);
+        await access.finish(true);
+        await account.db
+          .from("buildly_jobs")
+          .update({ state: "complete" })
+          .eq("id", jobId)
+          .eq("user_id", account.user.id);
+        return NextResponse.json({ answer, demo: false });
+      } catch (error) {
+        await access.finish(false);
+        throw error;
+      }
     } catch (error) {
-      await access.finish(false);
+      await account.db
+        .from("buildly_jobs")
+        .update({ state: "failed" })
+        .eq("id", jobId)
+        .eq("user_id", account.user.id);
       throw error;
     }
   } catch (error) {

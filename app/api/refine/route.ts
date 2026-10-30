@@ -1,58 +1,28 @@
-import { billed } from "@/lib/billing/server";
-import { NextResponse } from "next/server";
-import { readProjectRequest } from "@/lib/project-request";
-import { makeDemo } from "@/lib/project";
-import { refineProject } from "@/lib/services/refine-project";
+import { executeJob } from "@/lib/production/jobs";
 import { DesignError } from "@/lib/services/image-design";
-import { checkImageLimit } from "@/lib/image-rate-limit";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 export async function POST(req: Request) {
   try {
-    const { input } = await readProjectRequest(req.clone());
-    const data = await req.json();
-    if (
-      typeof data.change !== "string" ||
-      !data.change.trim() ||
-      data.change.length > 1000 ||
-      typeof data.generatedImage !== "string" ||
-      !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=\s]+$/.test(
-        data.generatedImage,
-      ) ||
-      data.generatedImage.length > 3500000 ||
-      typeof data.id !== "string" ||
-      !/^[a-zA-Z0-9-]{1,80}$/.test(data.id)
-    )
-      throw new DesignError(
-        "Open a saved design and describe your change in under 1,000 characters.",
-        400,
+    const result = await executeJob(req, "refine", false);
+    if (!result.project)
+      return Response.json(
+        {
+          error: "This request is still processing. Check your projects.",
+          jobId: result.jobId,
+        },
+        { status: 409 },
       );
-    checkImageLimit(req, false);
-    return NextResponse.json(
-      await billed(req, "design", data.id, () =>
-        refineProject(
-          {
-            ...makeDemo(input),
-            id: data.id,
-            title:
-              typeof data.title === "string"
-                ? data.title.slice(0, 200)
-                : "My revised project",
-            generatedImage: data.generatedImage,
-          },
-          data.change.trim(),
-        ),
-      ),
-    );
+    return Response.json(result.project);
   } catch (error) {
-    return NextResponse.json(
+    return Response.json(
       {
         error:
           error instanceof DesignError
             ? error.message
-            : "The revision could not be completed. Your previous version is unchanged.",
+            : "Your request could not finish. Check your projects before trying again.",
       },
-      { status: error instanceof DesignError ? error.status : 500 },
+      { status: error instanceof DesignError ? error.status : 503 },
     );
   }
 }

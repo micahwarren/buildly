@@ -1,0 +1,1 @@
+Authenticated operation endpoint. POST /api/jobs?kind=design|refine|plan requires Idempotency-Key UUID and current AI-processing consent in authenticated user metadata. GET /api/jobs[?id=UUID] lists the caller's own request statuses and saved results. The production.sql migration must be applied before deployment. No payment/credit/receipt schema is changed.

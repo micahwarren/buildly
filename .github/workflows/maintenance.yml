@@ -1,0 +1,30 @@
+name: Project photo cleanup and diagnostic retention
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 6 * * *"
+permissions:
+  contents: read
+jobs:
+  cleanup:
+    if: ${{ vars.BUILDLY_MAINTENANCE_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run protected cleanup
+        env:
+          BUILDLY_API_URL: ${{ vars.BUILDLY_API_URL }}
+          BUILDLY_MAINTENANCE_TOKEN: ${{ secrets.BUILDLY_MAINTENANCE_TOKEN }}
+        run: |
+          node --input-type=module <<'JS'
+          const origin=process.env.BUILDLY_API_URL;
+          const token=process.env.BUILDLY_MAINTENANCE_TOKEN;
+          if(!origin?.startsWith('https://')||!token)throw Error('Maintenance is not configured');
+          const response=await fetch(new URL('/api/maintenance',origin),{method:'POST',headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(125000)});
+          if(!response.ok)throw Error(`Cleanup failed: HTTP ${response.status}`);
+          const data=await response.json();
+          console.log({complete:data.complete,pending:data.pending,failedUploads:data.failedUploads});
+          if(data.pending)process.exitCode=1;
+          JS

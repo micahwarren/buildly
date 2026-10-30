@@ -1,9 +1,9 @@
-name: Build iOS for TestFlight
+name: Legacy SwiftUI archive (not the Expo release)
 on:
   workflow_dispatch:
     inputs:
       test_purchases:
-        description: 'Test App Store purchases (requires completed RevenueCat setup)'
+        description: "Test App Store purchases (requires completed RevenueCat setup)"
         type: boolean
         default: false
 jobs:
@@ -21,6 +21,10 @@ jobs:
       APPLE_ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
       APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
     steps:
+      - name: Prevent publishing the superseded mobile client
+        run: |
+          echo "The active mobile release is in micahwarren/expo-starter and uses EAS. This retained workflow must not upload the old SwiftUI client."
+          exit 1
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:

@@ -1,39 +1,28 @@
-import { billed } from "@/lib/billing/server";
-import { NextResponse } from "next/server";
-import { readProjectRequest } from "@/lib/project-request";
-import { makeDemo } from "@/lib/project";
-import { checkChatLimit } from "@/lib/chat-rate-limit";
+import { executeJob } from "@/lib/production/jobs";
 import { DesignError } from "@/lib/services/image-design";
-import { createDesignPlan } from "@/lib/services/design-plan";
 export const runtime = "nodejs";
-export const maxDuration = 150;
+export const maxDuration = 300;
 export async function POST(req: Request) {
   try {
-    const { input } = await readProjectRequest(req.clone());
-    const data = await req.json();
-    if (
-      typeof data.generatedImage !== "string" ||
-      data.generatedImage.length > 4_000_000
-    )
-      throw new DesignError("A saved design image is required.", 400);
-    checkChatLimit(req);
-    return NextResponse.json(
-      await billed(req, "plan", data.id || "", () =>
-        createDesignPlan({
-          ...makeDemo(input),
-          generatedImage: data.generatedImage,
-        }),
-      ),
-    );
+    const result = await executeJob(req, "plan", false);
+    if (!result.project)
+      return Response.json(
+        {
+          error: "This request is still processing. Check your projects.",
+          jobId: result.jobId,
+        },
+        { status: 409 },
+      );
+    return Response.json(result.project);
   } catch (error) {
-    return NextResponse.json(
+    return Response.json(
       {
         error:
           error instanceof DesignError
             ? error.message
-            : "We could not rebuild the plan. Your saved project is unchanged.",
+            : "Your request could not finish. Check your projects before trying again.",
       },
-      { status: error instanceof DesignError ? error.status : 500 },
+      { status: error instanceof DesignError ? error.status : 503 },
     );
   }
 }

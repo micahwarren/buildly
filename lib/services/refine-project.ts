@@ -64,6 +64,8 @@ export async function refineProject(
     interpret?: typeof interpretRefinement;
     design?: typeof createDesign;
     plan?: typeof createDesignPlan;
+    id?: string;
+    onDesign?: (project: Project) => Promise<void>;
   } = {},
 ): Promise<Project> {
   const request = await (dependencies.interpret ?? interpretRefinement)(
@@ -74,7 +76,7 @@ export async function refineProject(
     ...project,
     ...request,
     details: parseDetails(project.details),
-    id: crypto.randomUUID(),
+    id: dependencies.id || crypto.randomUUID(),
     parentProjectId: project.id,
     title: `${project.title.slice(0, 170)} · revised`,
     createdAt: new Date().toISOString(),
@@ -92,6 +94,7 @@ export async function refineProject(
   );
   next.generatedImage = design.generatedImage;
   next.visualizationMode = design.mode;
+  await dependencies.onDesign?.(next);
   try {
     return {
       ...next,

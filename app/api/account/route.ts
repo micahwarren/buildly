@@ -1,21 +1,16 @@
 import { authenticatedUser } from "@/lib/billing/server";
+import { requireRecentLogin } from "@/lib/production/access";
+import { jobError } from "@/lib/production/errors";
 import { DesignError } from "@/lib/services/image-design";
 export const maxDuration = 120;
 export async function DELETE(req: Request) {
   try {
     const { db, user } = await authenticatedUser(req);
-    const access = await db
-      .from("buildly_reservations")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("state", "pending")
-      .gte("created_at", new Date(Date.now() - 600000).toISOString())
-      .limit(1);
-    if (access.data?.length)
-      throw new DesignError(
-        "Wait for your current generation to finish before deleting your account.",
-        409,
-      );
+    requireRecentLogin(user);
+    const deletion = await db.rpc("buildly_begin_deletion", {
+      p_user: user.id,
+    });
+    if (deletion.error) throw jobError(deletion.error.message);
     const bucket = db.storage.from("project-images");
     async function empty(prefix: string): Promise<void> {
       // Always delete page zero, so removing files cannot skip subsequent pages.
