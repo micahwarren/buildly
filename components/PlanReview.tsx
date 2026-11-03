@@ -40,7 +40,7 @@ export function PlanReview({
           );
           const a = document.createElement("a");
           a.href = url;
-          a.download = "buildly-review-packet.html";
+          a.download = "sightsaw-review-packet.html";
           a.click();
           setTimeout(() => URL.revokeObjectURL(url), 1000);
         }}

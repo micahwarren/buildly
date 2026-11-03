@@ -23,3 +23,13 @@ The prepared confirmation template uses SightSaw and retains `{{ .ConfirmationUR
 ## Delivery
 
 The owner's prior binary-upload hold remains in effect. TestFlight metadata was renamed immediately; the installed home-screen label/icon changes when the owner resumes delivery and installs a new native build. Build 21's submission remains canceled. No new TestFlight/App Review/Play submission is authorized by this metadata/source update alone.
+
+## Verification receipt — November 3, 2026
+
+- Apple API reads confirm `SightSaw DIY`, the original bundle ID, `SightSaw Testers`, and SightSaw beta description/testing notes. Historical binaries are unchanged.
+- Generated iOS Info.plist confirms `CFBundleDisplayName=SightSaw`, the original bundle ID, and both new and legacy return schemes. The iOS Hermes export succeeds.
+- Mobile typecheck/lint and 26 tests pass. All four Chromium fixture suites pass in light/dark, including auth, confirmation, settings, projects and creation. The confirmation suite passed on rerun after its initial app-resume timing failure; this is browser-fixture evidence, not a physical-device authentication test.
+- Backend typecheck/lint, 80 tests and production build pass, including old and SightSaw backup imports. Production health/database and policy/support pages pass via the retained address and show the SightSaw service/branding.
+- Hosting API confirms the new branded domain and retained legacy domain are aliases of the same READY production deployment. This workspace cannot directly fetch the new hostname because its network allowlist excludes it; no claim of a direct new-host request is made.
+- The owner confirmed Google branding has not yet been updated. No usable Google Cloud admin credentials or browser-control connection are available here. Set App name to `SightSaw` in the linked Branding page; do not replace OAuth clients.
+- Live email sender/subject/template activation remains blocked by Supabase's default-provider/custom-SMTP requirements described above. Source templates are prepared, not claimed as activated.

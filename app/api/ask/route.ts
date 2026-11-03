@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       question = data.question;
       project = parseProjectBackup(
         JSON.stringify({
-          format: "buildly-project-v1",
+          format: "sightsaw-project-v1",
           project: {
             ...data.project,
             originalImage: "/images/before.svg",
