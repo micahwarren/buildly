@@ -1,6 +1,6 @@
 # SightSaw identity
 
-- Installed/home-screen name: **sight saw** (`name` and `CFBundleDisplayName`, lowercase and spaced as requested).
+- Installed/home-screen name: **Sight Saw** (`name` and `CFBundleDisplayName`, capitalization and spacing as requested).
 - Existing Apple/TestFlight record: **Sight Saw: DIY**, app ID `6827150277`.
 - Settings version footer: **Sight Saw**, followed by the actual native version/build. Build 20 still displays the pre-rename text until a new native update is installed.
 - Login/signup no longer have an app-name header or adjacent logo. Their existing backgrounds, form, provider buttons and keyboard handling remain.
@@ -28,7 +28,7 @@ The owner's prior binary-upload hold remains in effect. TestFlight metadata was 
 
 ## Verification receipt — November 3, 2026
 
-- Latest display-name/auth adjustment: Apple confirms `Sight Saw: DIY`; generated iOS config confirms `sight saw` and the original bundle/URL schemes. Mobile typecheck/lint, 26 tests and the browser regression/layout flow pass. Login/signup screenshots confirm the header/logo removal. These source changes require the next native update; no new binary was uploaded.
+- Latest display-name/auth adjustment: Apple confirms `Sight Saw: DIY`; generated iOS config confirms `Sight Saw` and the original bundle/URL schemes. Mobile typecheck/lint, 26 tests and the browser regression/layout flow pass. Login/signup screenshots confirm the header/logo removal. These source changes require the next native update; no new binary was uploaded.
 
 - Apple API reads confirm `SightSaw DIY`, the original bundle ID, `SightSaw Testers`, and SightSaw beta description/testing notes. Historical binaries are unchanged.
 - Generated iOS Info.plist confirms `CFBundleDisplayName=SightSaw`, the original bundle ID, and both new and legacy return schemes. The iOS Hermes export succeeds.
