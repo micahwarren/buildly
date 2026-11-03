@@ -2,7 +2,7 @@ export const legal = {
   privacy: [
     {
       heading: false,
-      text: "Last updated October 29, 2026. SightSaw is provided by Nom Apps LLC. Contact support@nomappsllc.com for privacy and support requests.",
+      text: "Last updated November 3, 2026. SightSaw is provided by Nom Apps LLC. Contact support@nomappsllc.com for privacy and support requests.",
     },
     { heading: true, text: "Information you provide" },
     {
@@ -18,6 +18,11 @@ export const legal = {
     {
       heading: false,
       text: "Supabase provides account and private project storage. Our hosting provider processes service requests. We use limited operational records, such as request identifiers, status, duration and model token counts, to provide the service and investigate failures. If you enable minimal error reporting in Settings, we also receive a report linked to your account containing the app version, platform and a one-way error fingerprint. Those reports are retained for up to 30 days. Routine application logs should not contain your photos, passwords or full project descriptions. SightSaw does not sell personal information or use advertising trackers.",
+    },
+    { heading: true, text: "Purchases" },
+    {
+      heading: false,
+      text: "Apple processes App Store payments. RevenueCat receives your account identifier, account email, purchase and transaction details, and technical app/device information to validate purchases and help us support your account. We store verified purchase records and project-credit balances. We do not receive your payment-card details. Photos and project descriptions are not sent to RevenueCat. Purchase records may be retained by providers for legal or financial requirements.",
     },
     { heading: true, text: "Device storage" },
     {
@@ -37,7 +42,7 @@ export const legal = {
   terms: [
     {
       heading: false,
-      text: "Last updated October 29, 2026. These terms apply to SightSaw, provided by Nom Apps LLC. Contact support@nomappsllc.com for assistance.",
+      text: "Last updated November 3, 2026. These terms apply to SightSaw, provided by Nom Apps LLC. Contact support@nomappsllc.com for assistance.",
     },
     { heading: true, text: "What SightSaw provides" },
     {
@@ -57,6 +62,11 @@ export const legal = {
     {
       heading: false,
       text: "Keep your account credentials private. Upload only content you are entitled to use. You retain your rights to your content and authorize SightSaw and its identified service providers to process it to deliver the requested features. Do not use the service for unlawful purposes or attempt to bypass access controls or request limits.",
+    },
+    { heading: true, text: "Project purchases" },
+    {
+      heading: false,
+      text: "When purchases are available, the App Store shows the price and currency before confirmation. A one-time consumable purchase adds one project credit: one AI design with its materials and plan, plus three successful design revisions for that project. It is not a subscription. Retrying an incomplete plan does not use a revision. A request that fails before a design is saved releases its reserved credit or revision; a saved design uses it even if its plan still needs a retry. Unused credits do not expire and follow the same account; used credits are not restored as new credits. Saved projects remain readable without another purchase. Apple handles payment and refund requests under its applicable terms. A refunded purchase cannot fund further generation. Deleting your account removes its unused credits and does not automatically request a refund. These terms do not limit applicable consumer rights.",
     },
     { heading: true, text: "Service availability" },
     {

@@ -22,16 +22,18 @@ export async function reservePurchase(
   kind: "design" | "plan" | "chat",
   projectId: string,
   demo = false,
+  requestId?: string,
 ) {
   if (process.env.BILLING_ENABLED !== "true" || demo)
     return { finish: async () => {} };
   if (typeof projectId !== "string" || !/^[a-zA-Z0-9-]{1,80}$/.test(projectId))
     throw new DesignError("Open a saved project first.", 400);
   const { db, user } = await authenticatedUser(req);
-  const { data, error } = await db.rpc("buildly_reserve", {
+  const { data, error } = await db.rpc("buildly_reserve_job", {
     p_user: user.id,
     p_project: projectId,
     p_kind: kind,
+    p_request: requestId || null,
   });
   if (error) {
     if (/PAYMENT_REQUIRED/.test(error.message))
@@ -42,6 +44,11 @@ export async function reservePurchase(
     if (/REVISIONS_USED/.test(error.message))
       throw new DesignError(
         "All three included design revisions have been used. Start a new project to create another design.",
+        409,
+      );
+    if (/PROJECT_REFUNDED/.test(error.message))
+      throw new DesignError(
+        "This project's purchase was refunded. Start a new project to create another design.",
         409,
       );
     if (/REQUEST_IN_PROGRESS/.test(error.message))
@@ -67,11 +74,16 @@ export async function reservePurchase(
         p_success: success,
         p_result: result || null,
       });
-      if (error)
+      if (error) {
         console.error("sightsaw_billing_finalize_failed", {
           reservation: data,
           success,
         });
+        throw new DesignError(
+          "Purchase access could not be finalized. Check your saved projects before retrying.",
+          503,
+        );
+      }
     },
   };
 }
@@ -79,16 +91,30 @@ export async function billed<T extends { id?: string }>(
   req: Request,
   kind: "design" | "plan" | "chat",
   projectId: string,
-  work: () => Promise<T>,
+  work: (delivered: (result: string) => Promise<void>) => Promise<T>,
   demo = false,
+  requestId?: string,
 ): Promise<T> {
-  const reservation = await reservePurchase(req, kind, projectId, demo);
+  const reservation = await reservePurchase(
+    req,
+    kind,
+    projectId,
+    demo,
+    requestId,
+  );
+  let delivered = false;
+  const confirm = async (result: string) => {
+    // Once the design is durable, later plan/network failures must not refund
+    // its credit. Stale reservations reconcile against the saved job result.
+    delivered = true;
+    await reservation.finish(true, result);
+  };
   try {
-    const result = await work();
-    await reservation.finish(true, result.id);
+    const result = await work(confirm);
+    if (!delivered) await reservation.finish(true, result.id);
     return result;
   } catch (error) {
-    await reservation.finish(false);
+    if (!delivered) await reservation.finish(false);
     throw error;
   }
 }

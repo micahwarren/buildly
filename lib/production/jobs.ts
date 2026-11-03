@@ -105,6 +105,7 @@ export async function executeJob(
     return { jobId: id, state: job.state };
   }
   const started = Date.now();
+  let confirmDelivered: ((id: string) => Promise<void>) | null = null;
   async function update(values: object) {
     const { error } = await db
       .from("buildly_jobs")
@@ -124,6 +125,7 @@ export async function executeJob(
         "Your design is saved. Its matching plan can be retried.",
       ),
     });
+    await confirmDelivered?.(p.id);
     await update({ state: "image_saved", result_id: p.id });
   }
   try {
@@ -132,7 +134,8 @@ export async function executeJob(
         req,
         kind === "plan" ? "plan" : "design",
         source || id,
-        async () => {
+        async (delivered) => {
+          confirmDelivered = delivered;
           let p: Project;
           if (kind === "plan") {
             const loaded = await loadProjectImages(db, user.id, project!);
@@ -168,6 +171,8 @@ export async function executeJob(
           await update({ state: "complete", result_id: p.id });
           return stored;
         },
+        false,
+        id,
       ),
     );
     console.info("sightsaw_job", {

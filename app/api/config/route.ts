@@ -17,6 +17,20 @@ export function GET() {
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
         null,
       billingEnabled: process.env.BILLING_ENABLED === "true",
+      billing: {
+        productId:
+          process.env.REVENUECAT_PROJECT_PRODUCT_ID ||
+          "sightsaw.project.single",
+        iosApiKey: process.env.NEXT_PUBLIC_REVENUECAT_IOS_KEY?.startsWith(
+          "appl_",
+        )
+          ? process.env.NEXT_PUBLIC_REVENUECAT_IOS_KEY
+          : null,
+        androidApiKey:
+          process.env.NEXT_PUBLIC_REVENUECAT_ANDROID_KEY?.startsWith("goog_")
+            ? process.env.NEXT_PUBLIC_REVENUECAT_ANDROID_KEY
+            : null,
+      },
     },
     { headers: { "Cache-Control": "no-store" } },
   );
