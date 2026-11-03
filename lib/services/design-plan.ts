@@ -12,6 +12,7 @@ const object = (properties: Record<string, unknown>) => ({
   required: Object.keys(properties),
 });
 export const planSchema = object({
+  projectTitle: string,
   summary: string,
   recommendedMeasurements: {
     type: "ARRAY",
@@ -56,6 +57,7 @@ const { steps: stepSchema, ...outlineProperties } = planSchema.properties;
 const outlineSchema = object({ ...outlineProperties, stepTitles: strings });
 const stepsSchema = object({ steps: stepSchema });
 export type DesignPlan = {
+  projectTitle?: string;
   summary: string;
   recommendedMeasurements?: { label: string; value: string; reason: string }[];
   materials: {
@@ -199,6 +201,7 @@ MEASUREMENTS: A width or length of 0 means NOT PROVIDED, never a measured zero. 
 Use the supplied confirmedDetails as homeowner answers; do not ask again for information already supplied. Identify conflicts with the older description explicitly rather than silently ignoring them. Return the requested JSON schema only. Materials and steps must describe THIS scope, including combined structures where requested. Do not reuse a generic deck/pergola catalog. In particular, a request for a WOODEN patio/platform AND a pergola is a combined timber platform + pergola project even if category is Patio: include both structures and their connections. Do NOT list pavers, bedding sand, polymeric sand or paver edging for a wooden surface. Aggregate may only be included if a justified foundation/drainage design calls for it. Do not include existing buildings, furniture, plants or incidental decor as construction materials unless explicitly requested. Explain visible materials cautiously; a picture cannot establish hidden structure, species, grade or dimensions. State assumptions and ask targeted questions for missing height, attachment, foundation, soil/frost, drainage, local loads, stair/guard geometry and product choices as applicable.
 MATERIALS: itemize boards/pavers/other actual surface materials, framing if applicable, connectors, compatible fasteners (separate structural screws/connector nails from finish/deck screws), anchors, base/foundation materials, drainage, flashing/waterproofing where applicable, trim and finish. Every item must have a purpose tied to this design, explicit units in dimensions, and a quantityBasis with the calculation, waste and inputs. quantity and unitCost may be 0 ONLY to mean unknown/needs verification, never free. Use 0 for anything requiring an unresolved structural design instead of guessing a safe structural size, footing depth, connector schedule or load capacity. For known geometry calculate quantities with actual coverage dimensions and waste. Prices are reference USD allowances, not live quotes. No invented retailer prices. quantityUnit must be an unambiguous unit (linear ft, sq ft, each, cubic yard, etc.). purchase.label describes a suggested purchasable unit such as a 12 ft board or 100-count box; purchase.coverage is how many quantityUnits one package covers. Use coverage 0 if product size or structural specification is unresolved. purchase.notes must explain waste, cutting/layout limitations and what to verify. A total linear-foot conversion is not a cut list or proof that boards can span the structure. unitCost is per quantityUnit, NOT per package. Do not invent SKUs or live supplier quotes. All listed materials must be used in at least one step, referenced by exact item name.
 STEPS: 8–18 chronological steps (6 minimum for a genuinely simple job), specific to this project. Each has an explanatory text, 3–8 concrete actions a beginner can follow, exact material names from the list, exact tools from the tools list, measurable/observable checks, and stopConditions where applicable. Explain layout/reference lines, checking square using diagonals, preparation and drainage appropriate to scope, assembly sequence, fastening method/product instructions, finish, cleanup and inspection. Include calculations where supported by supplied dimensions, not invented site measurements. Avoid vague standalone 'follow the approved plan' instructions. Instead name the specific missing design decision, who resolves it, what to check before continuing, and give useful tasks that do not depend on it. Do not instruct someone to build uncertain load-bearing connections, excavate unsupported soil, alter house structure or perform electrical work without the appropriate design/professional. Steps requiring unresolved specifications must explicitly pause before that work. Do not imply code approval or engineer certification. No placeholder steps, markdown tables or fake diagrams.
+NAME: projectTitle is a concise, professional 2–6 word project name (60 characters maximum), such as "White Panel Door" or "Cedar Patio Pergola". Describe the actual design. Do not use "My", first-person requests, emojis, marketing slogans or revision suffixes.
 TIME: laborLow/laborHigh are TOTAL person-hours for this scope and experience level (not days). Explain scope/crew assumptions and excluded waiting for concrete cure, inspections, permits, weather and delivery. Difficulty must reflect actual structural and physical complexity, not just project category. Questions are unresolved scope/design inputs, not generic disclaimers. Summary describes exactly what this plan covers and excludes.`;
 }
 async function photoPart(dataUrl: string) {
@@ -430,6 +433,12 @@ export function planFields(plan: DesignPlan): Partial<Project> {
   );
   const incomplete = plan.materials.some((m) => !m.quantity || !m.unitCost);
   return {
+    ...(typeof plan.projectTitle === "string" &&
+    plan.projectTitle.trim() &&
+    plan.projectTitle.trim().length <= 60 &&
+    !/[\r\n]/.test(plan.projectTitle)
+      ? { suggestedTitle: plan.projectTitle.trim() }
+      : {}),
     planStatus: "design-based",
     planSummary: plan.summary,
     recommendedMeasurements: plan.recommendedMeasurements || [],

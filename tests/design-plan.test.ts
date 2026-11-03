@@ -368,3 +368,27 @@ test("recommendations preserve design-specific guidance and reject malformed mod
     }),
   );
 });
+
+test("AI project names come from the existing plan without replacing names during a plan-only retry", async () => {
+  const plan = { ...fixture(), projectTitle: "Courtyard Paver Patio" };
+  const fields = planFields(validatePlan(plan));
+  assert.equal(fields.suggestedTitle, "Courtyard Paver Patio");
+  assert.equal(
+    fields.title,
+    undefined,
+    "Plan-only fields must not overwrite a homeowner's saved name",
+  );
+  const result = await planProject({ description: "A paver patio" }, false, {
+    design: async () => ({
+      originalImage: "source",
+      generatedImage: "design",
+      mode: "ai" as const,
+    }),
+    plan: async () => fields,
+  });
+  assert.equal(result.title, "Courtyard Paver Patio");
+  assert.equal(
+    planFields({ ...plan, projectTitle: "x".repeat(200) }).suggestedTitle,
+    undefined,
+  );
+});

@@ -23,9 +23,11 @@ export async function planProject(
   if (demo) return result;
   await dependencies.onDesign?.(result);
   try {
+    const fields = await (dependencies.plan ?? createDesignPlan)(result);
     return {
       ...result,
-      ...(await (dependencies.plan ?? createDesignPlan)(result)),
+      ...fields,
+      title: fields.suggestedTitle || result.title,
     };
   } catch (error) {
     return {

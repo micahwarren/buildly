@@ -96,10 +96,8 @@ export async function refineProject(
   next.visualizationMode = design.mode;
   await dependencies.onDesign?.(next);
   try {
-    return {
-      ...next,
-      ...(await (dependencies.plan ?? createDesignPlan)(next)),
-    };
+    const fields = await (dependencies.plan ?? createDesignPlan)(next);
+    return { ...next, ...fields, title: fields.suggestedTitle || next.title };
   } catch (error) {
     return {
       ...next,

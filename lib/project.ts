@@ -8,6 +8,7 @@ export const brand = {
 export type Project = {
   id: string;
   title: string;
+  suggestedTitle?: string;
   projectType: string;
   description: string;
   details?: ProjectDetails;
