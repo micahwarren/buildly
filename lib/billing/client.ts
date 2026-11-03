@@ -3,7 +3,7 @@ import { isNativeApp } from "../native";
 let identity = "";
 export async function purchasesFor(userId: string) {
   if (!isNativeApp())
-    throw new Error("Purchases are available in the Buildly iPhone app.");
+    throw new Error("Purchases are available in the SightSaw iPhone app.");
   const key = process.env.NEXT_PUBLIC_REVENUECAT_IOS_KEY;
   if (!key) throw new Error("App Store purchases are not configured yet.");
   const { Purchases } = await import("@revenuecat/purchases-capacitor");

@@ -95,7 +95,7 @@ export function AccountDialog({
         {account.user && !account.recovery
           ? "Your account"
           : mode === "signup"
-            ? "Create your Buildly account"
+            ? "Create your SightSaw account"
             : mode === "signin"
               ? "Welcome back"
               : mode === "forgot"

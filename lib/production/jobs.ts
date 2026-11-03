@@ -81,8 +81,17 @@ export async function executeJob(
     p_kind: kind,
     p_source: source,
     p_hash: hash,
-    p_daily: limit(process.env.BUILDLY_DAILY_REQUESTS, 20, 100),
-    p_global: limit(process.env.BUILDLY_GLOBAL_DAILY_REQUESTS, 50, 10000),
+    p_daily: limit(
+      process.env.SIGHTSAW_DAILY_REQUESTS ?? process.env.BUILDLY_DAILY_REQUESTS,
+      20,
+      100,
+    ),
+    p_global: limit(
+      process.env.SIGHTSAW_GLOBAL_DAILY_REQUESTS ??
+        process.env.BUILDLY_GLOBAL_DAILY_REQUESTS,
+      50,
+      10000,
+    ),
   });
   if (claim.error) throw jobError(claim.error.message);
   if (!claim.data.claimed) {
@@ -161,7 +170,7 @@ export async function executeJob(
         },
       ),
     );
-    console.info("buildly_job", {
+    console.info("sightsaw_job", {
       id,
       kind,
       state: "complete",
@@ -178,7 +187,7 @@ export async function executeJob(
       failure_code:
         error instanceof DesignError ? String(error.status) : "internal",
     }).catch(() => {});
-    console.warn("buildly_job", {
+    console.warn("sightsaw_job", {
       id,
       kind,
       state: "failed",

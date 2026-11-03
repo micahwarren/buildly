@@ -1,5 +1,7 @@
 // Read-only checks. Never starts AI generation or modifies customer data.
-const url = process.env.BUILDLY_API_URL || "https://buildly-ecru.vercel.app";
+const url =
+  (process.env.SIGHTSAW_API_URL ?? process.env.BUILDLY_API_URL) ||
+  "https://sightsaw-diy.vercel.app";
 let failed = false;
 for (const path of [
   "/api/health",

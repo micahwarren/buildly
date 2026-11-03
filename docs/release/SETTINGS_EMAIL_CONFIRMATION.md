@@ -4,7 +4,7 @@ This release changes the Expo app and adds an authenticated pending-photo-deleti
 
 ## Email provider: configuration still required
 
-Live Supabase Auth project: `fewhurddrzmnqabeelyi` (Buildly). Email confirmation is enabled, the minimum new-password length is eight, and the redirect allowlist contains `buildly://auth/confirm` and `buildly://auth/callback`.
+Live Supabase Auth project: `fewhurddrzmnqabeelyi` (SightSaw). Email confirmation is enabled, the minimum new-password length is eight, and the redirect allowlist contains `buildly://auth/confirm` and `buildly://auth/callback`.
 
 The project currently uses Supabase's default mail sender with **no custom SMTP configured**. Its confirmation subject is still **Confirm your email address**. On November 2, 2026 UTC, Supabase rejected the actual management-API template/subject update with HTTP 400: “Email template modification is not available for free tier projects using the default email provider. Please upgrade your plan or configure a custom SMTP provider.” It separately rejected the sender-name update because custom SMTP is absent. No plan was upgraded and no partial sender/template update was applied.
 
@@ -17,16 +17,16 @@ Configure the approved existing transactional provider in **Supabase → Authent
 | SMTP username | Provider's SMTP login (`smtp_user`) |
 | SMTP password | Provider's SMTP credential, supplied securely (`smtp_pass`) |
 | Sender email | A provider-verified From address, preferably `support@nomappsllc.com` if that address/domain is verified (`smtp_admin_email`) |
-| Sender display name | `Buildly` (`smtp_sender_name`) |
+| Sender display name | `SightSaw` (`smtp_sender_name`) |
 
 Google hosting the support inbox does not by itself provide a configured transactional SMTP sender. If the existing NomNom sender can send for this domain, reuse its verified sender and SMTP configuration. Otherwise verify the sender/domain with the chosen provider and publish its exact SPF/DKIM records (and the provider's recommended DMARC settings). DNS record values come from that provider; they cannot be inferred here. Do not paste credentials into source control or chat, purchase a new plan, or change another app's sender.
 
 After SMTP is configured, set **Authentication → Email Templates → Confirm signup**:
 
-- Subject: **Confirm your Buildly account**.
+- Subject: **Confirm your SightSaw account**.
 - HTML: `supabase/templates/confirmation.html` in the service repository.
 - Keep every `{{ .ConfirmationURL }}` expression intact. Supabase must generate the real verification URL; do not substitute a hardcoded app link or remove verification tokens.
-- Sender display name: **Buildly** through SMTP settings, not only the HTML.
+- Sender display name: **SightSaw** through SMTP settings, not only the HTML.
 
 The prepared template has the exact welcome copy, a prominent **Confirm email** button, a fallback confirmation URL and no Supabase promotional branding. It is **not yet active**. Live inbox appearance, From/Subject, spam delivery, confirmation and reset messages remain unverified until the sender is configured. The default provider currently allows only two email sends per hour project-wide and is unsuitable as a production sender. The app's 60-second resend cooldown does not override provider limits; it handles HTTP 429 without pretending a message was sent.
 

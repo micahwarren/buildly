@@ -1,4 +1,4 @@
-name: BuildlyNative
+name: SightSawNative
 options:
   bundleIdPrefix: com.nomapps
   deploymentTarget:

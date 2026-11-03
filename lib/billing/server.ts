@@ -68,7 +68,7 @@ export async function reservePurchase(
         p_result: result || null,
       });
       if (error)
-        console.error("buildly_billing_finalize_failed", {
+        console.error("sightsaw_billing_finalize_failed", {
           reservation: data,
           success,
         });

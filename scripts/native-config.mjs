@@ -1,6 +1,7 @@
 import fs from "node:fs";
 const origin = new URL(
-  process.env.BUILDLY_APP_URL || "https://buildly-ecru.vercel.app",
+  (process.env.SIGHTSAW_APP_URL ?? process.env.BUILDLY_APP_URL) ||
+    "https://sightsaw-diy.vercel.app",
 );
 if (origin.protocol !== "https:") throw new Error("HTTPS backend required");
 const res = await fetch(new URL("/api/config", origin));

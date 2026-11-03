@@ -7,7 +7,7 @@ Generate the cases below with the configured live Gemini account. Download each
 **builder review packet** from Project details. Have a qualified builder review scope,
 missing measurements, material quantities, fastener compatibility, order of operations,
 stop conditions and whether local engineering/permits are needed. Record findings in
-Buildly, revise the input and repeat. Do not label a user-entered reviewer name as
+SightSaw, revise the input and repeat. Do not label a user-entered reviewer name as
 independently verified approval.
 
 | Case                                               | Expected result to review                                                                                 |

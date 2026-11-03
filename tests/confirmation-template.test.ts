@@ -8,7 +8,7 @@ test("confirmation email preserves the real auth URL variable and contains the b
   );
   assert.match(
     html,
-    /Welcome to Buildly! Confirm your email to start planning your projects\./,
+    /Welcome to SightSaw! Confirm your email to start planning your projects\./,
   );
   assert.match(
     html,

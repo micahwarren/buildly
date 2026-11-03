@@ -68,7 +68,7 @@ export function PlanReview({
       >
         <h3>Record review notes</h3>
         <p>
-          This is your record, not a professional approval issued by Buildly.
+          This is your record, not a professional approval issued by SightSaw.
         </p>
         <label className="field">
           Reviewer name / role

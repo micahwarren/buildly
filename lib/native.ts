@@ -43,7 +43,7 @@ export async function exportFile(name: string, text: string, type: string) {
       encoding: Encoding.UTF8,
     });
     try {
-      await Share.share({ title: "Buildly project", url: file.uri });
+      await Share.share({ title: "SightSaw project", url: file.uri });
     } finally {
       await Filesystem.deleteFile({
         path: name,

@@ -378,8 +378,8 @@ export default function Home() {
   function downloadBackup() {
     if (!project) return;
     void exportFile(
-      "buildly-project-backup.json",
-      JSON.stringify({ format: "buildly-project-v1", project }, null, 2),
+      "sightsaw-project-backup.json",
+      JSON.stringify({ format: "sightsaw-project-v1", project }, null, 2),
       "application/json",
     ).catch(() => setError("Could not share the project backup."));
   }
@@ -612,7 +612,7 @@ export default function Home() {
         conversation: [
           ...project.conversation,
           { role: "You", text: q },
-          { role: "Buildly AI", text: data.answer },
+          { role: "SightSaw AI", text: data.answer },
         ],
       });
     } catch (error) {
@@ -676,7 +676,7 @@ export default function Home() {
   function download() {
     if (project)
       void exportFile(
-        "buildly-shopping-list.txt",
+        "sightsaw-shopping-list.txt",
         shoppingText(project),
         "text/plain",
       ).catch(() => setError("Could not share the shopping list."));
@@ -697,8 +697,8 @@ export default function Home() {
       <main className="native-login">
         <img
           className="native-login-logo"
-          src="/buildly-logo.png"
-          alt="Buildly"
+          src="/sightsaw-logo.png"
+          alt="SightSaw"
           width="64"
           height="64"
         />
@@ -715,8 +715,8 @@ export default function Home() {
       {native && (
         <header className="native-topbar">
           <button onClick={() => go("saved")} aria-label="My projects">
-            <img src="/buildly-logo.png" alt="" width="30" height="30" />
-            Buildly
+            <img src="/sightsaw-logo.png" alt="" width="30" height="30" />
+            SightSaw
           </button>
           <button onClick={() => setShowAccount(true)} aria-label="My account">
             <Users size={22} />
@@ -728,10 +728,10 @@ export default function Home() {
           <button
             className="logo"
             onClick={() => go("home")}
-            aria-label="Buildly home"
+            aria-label="SightSaw home"
           >
             <span className="logo-mark">
-              <img src="/buildly-logo.png" alt="" width="40" height="40" />
+              <img src="/sightsaw-logo.png" alt="" width="40" height="40" />
             </span>
             {brand.name}
             <span className="logo-dot">.</span>
@@ -1731,7 +1731,7 @@ export default function Home() {
                     className={m.role === "You" ? "message user" : "message"}
                     key={i}
                   >
-                    <strong>{m.role}</strong>
+                    <strong>{m.role === "You" ? "You" : "SightSaw AI"}</strong>
                     <p>{m.text}</p>
                   </div>
                 ))}
@@ -1931,14 +1931,14 @@ export default function Home() {
         <footer>
           <button className="logo" onClick={() => go("home")}>
             <span className="logo-mark">
-              <img src="/buildly-logo.png" alt="" width="28" height="28" />
+              <img src="/sightsaw-logo.png" alt="" width="28" height="28" />
             </span>
             {brand.name}.
           </button>
           <span>{brand.tagline}</span>
           <small>
-            © {new Date().getFullYear()} Buildly · Thoughtfully planned. Proudly
-            built.
+            © {new Date().getFullYear()} SightSaw · Thoughtfully planned.
+            Proudly built.
           </small>
         </footer>
       )}

@@ -1,7 +1,7 @@
 export default function Support() {
   return (
     <main className="legal-page">
-      <h1>Buildly support</h1>
+      <h1>SightSaw support</h1>
       <p>
         Contact Nom Apps LLC at{" "}
         <a href="mailto:support@nomappsllc.com">support@nomappsllc.com</a>.

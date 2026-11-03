@@ -15,7 +15,7 @@ export async function GET() {
   const generationEnabled = process.env.BUILDLY_GENERATION_ENABLED !== "false";
   return Response.json(
     {
-      service: "buildly",
+      service: "sightsaw",
       version: "non-payment-release-v1",
       commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local",
       status: database

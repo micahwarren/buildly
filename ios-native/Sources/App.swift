@@ -1,7 +1,7 @@
 import SwiftUI
 import PhotosUI
 
-@main struct BuildlyApp: App {
+@main struct SightSawApp: App {
     @StateObject private var store = Store()
     var body: some Scene {
         WindowGroup {
@@ -12,7 +12,7 @@ import PhotosUI
             }
             .environmentObject(store).tint(Color(red: 0.19, green: 0.36, blue: 0.26))
             .task { await store.restore() }
-            .alert("Buildly", isPresented: Binding(get: { !store.error.isEmpty }, set: { if !$0 { store.error = "" } })) { Button("OK") { store.error = "" } } message: { Text(store.error) }
+            .alert("SightSaw", isPresented: Binding(get: { !store.error.isEmpty }, set: { if !$0 { store.error = "" } })) { Button("OK") { store.error = "" } } message: { Text(store.error) }
         }
     }
 }
@@ -25,7 +25,7 @@ struct LoginScreen: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    Image("BuildlyLogo").resizable().scaledToFit().frame(width: 64, height: 64).padding(.top, 36)
+                    Image("SightSawLogo").resizable().scaledToFit().frame(width: 64, height: 64).padding(.top, 36)
                     Text(signup ? "Make room for your next idea." : "Welcome back.").font(.largeTitle.bold())
                     Text("Your space. Your projects. Your next great idea.").foregroundStyle(.secondary)
                     Picker("Account", selection: $signup) { Text("Log in").tag(false); Text("Sign up").tag(true) }.pickerStyle(.segmented)

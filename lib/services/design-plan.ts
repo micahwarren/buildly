@@ -416,7 +416,7 @@ export async function createDesignPlan(
             : "response was not valid JSON";
       }
     }
-    console.warn("buildly_plan_validation", { attempt: attempt + 1, reason });
+    console.warn("sightsaw_plan_validation", { attempt: attempt + 1, reason });
     if (attempt === 1)
       throw new DesignError(
         `Planning could not finish a valid plan: ${reason}. Your image is saved; retry from this design.`,

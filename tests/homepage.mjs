@@ -15,7 +15,7 @@ try {
     .getByRole("button", { name: "Create account" })
     .click();
   await page
-    .getByRole("heading", { name: "Create your Buildly account" })
+    .getByRole("heading", { name: "Create your SightSaw account" })
     .waitFor();
   await page.getByRole("button", { name: "Close account window" }).click();
   await page

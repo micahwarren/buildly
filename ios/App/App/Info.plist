@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Buildly</string>
+	<string>SightSaw</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -67,11 +67,11 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Take a photo of your space to create a Buildly design and plan.</string>
+	<string>Take a photo of your space to create a SightSaw design and plan.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose a photo of your space for your Buildly project.</string>
+	<string>Choose a photo of your space for your SightSaw project.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Save your Buildly project images to your photo library.</string>
+	<string>Save your SightSaw project images to your photo library.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>

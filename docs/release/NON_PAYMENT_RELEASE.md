@@ -13,7 +13,7 @@ The primary schedule is the daily Vercel Cron in `vercel.json`. Set server-only 
 After the approved service deployment, run:
 
 ```sh
-BUILDLY_API_URL=https://buildly-ecru.vercel.app node scripts/check-production.mjs
+SIGHTSAW_API_URL=https://sightsaw-diy.vercel.app node scripts/check-production.mjs
 ```
 
 This is read-only and makes no AI call. Verify the returned release/commit, then test with disposable real accounts. The next mobile binary needs `/api/jobs`, the new consent configuration, `/api/account`, deletion/maintenance/diagnostic APIs and updated policies/support. Older clients without consent need the new app; no public generation bypass is retained. Explicit demo mode still avoids paid AI.
@@ -32,6 +32,6 @@ For incidents, pause generation if needed and roll back to a compatible service 
 
 ## Deployment preparation — October 30, 2026
 
-The production SQL migration was applied to the existing Buildly Supabase project and verified against the live database. Existing project contents and private image counts were unchanged. Actual authenticated-role ownership/isolation checks passed. Confirmation/reset redirects and the eight-character new-password minimum were configured. Production SMTP still needs a sender configured and real delivery testing.
+The production SQL migration was applied to the existing SightSaw Supabase project and verified against the live database. Existing project contents and private image counts were unchanged. Actual authenticated-role ownership/isolation checks passed. Confirmation/reset redirects and the eight-character new-password minimum were configured. Production SMTP still needs a sender configured and real delivery testing.
 
 The hosting cleanup schedule is once daily at 06:23 UTC; the existing Hobby scheduler may run within that hour rather than at an exact minute. This uses the existing plan with no upgrade. Confirm the hosting plan's permitted use and allowance before public commercial launch. Failed upload records are retained until their storage cleanup succeeds, so history retention does not strand orphan files.

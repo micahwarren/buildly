@@ -9,10 +9,10 @@ export function RotatingHeadline({ paused }: { paused: boolean }) {
   return (
     <h1
       className={`rotating-headline${paused ? " is-paused" : ""}`}
-      aria-label="Buildly turns ‘what if’ into a plan to build."
+      aria-label="SightSaw turns ‘what if’ into a plan to build."
     >
       <span aria-hidden="true">
-        Buildly turns
+        SightSaw turns
         <br />
         “what if” into
       </span>

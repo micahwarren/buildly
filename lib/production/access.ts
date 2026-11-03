@@ -3,7 +3,10 @@ import { authenticatedUser } from "../billing/server";
 import { DesignError } from "../services/image-design";
 export const consentVersion = "2026-10-29";
 export async function generationUser(req: Request, consent = false) {
-  if (process.env.BUILDLY_GENERATION_ENABLED === "false")
+  if (
+    (process.env.SIGHTSAW_GENERATION_ENABLED ??
+      process.env.BUILDLY_GENERATION_ENABLED) === "false"
+  )
     throw new DesignError(
       "New designs are temporarily paused. Your saved projects are still available.",
       503,

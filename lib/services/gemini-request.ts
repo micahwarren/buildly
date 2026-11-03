@@ -218,7 +218,7 @@ export async function requestGemini(
           : "",
       );
       // Only controlled diagnostic labels: never raw upstream text, keys or photo data.
-      console.warn("buildly_gemini_failure", {
+      console.warn("sightsaw_gemini_failure", {
         status: response.status,
         code,
         model,
@@ -265,7 +265,7 @@ export async function requestGemini(
       signal.aborted ||
       (error instanceof Error &&
         ["TimeoutError", "AbortError"].includes(error.name));
-    console.warn("buildly_planning_transport", {
+    console.warn("sightsaw_planning_transport", {
       model,
       reason: timedOut ? "timeout" : "connection",
       timeoutMs: dependencies.timeoutMs ?? 45000,

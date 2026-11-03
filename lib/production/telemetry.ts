@@ -29,7 +29,7 @@ export function recordUsage(
       tokens[key] = value;
   }
   if (Object.keys(tokens).length)
-    console.info("buildly_ai_usage", {
+    console.info("sightsaw_ai_usage", {
       operation: context.getStore()?.id,
       provider,
       model,

@@ -5,9 +5,13 @@ export function parseProjectBackup(text: string): Project {
   const backup = JSON.parse(text);
   const p = backup?.project;
   const fail = () => {
-    throw new Error("That file is not a valid Buildly project backup.");
+    throw new Error("That file is not a valid SightSaw project backup.");
   };
-  if (backup?.format !== "buildly-project-v1" || !p || typeof p !== "object")
+  if (
+    !["sightsaw-project-v1", "buildly-project-v1"].includes(backup?.format) ||
+    !p ||
+    typeof p !== "object"
+  )
     return fail();
   for (const key of [
     "id",

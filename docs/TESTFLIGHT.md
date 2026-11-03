@@ -2,9 +2,9 @@
 
 **The TestFlight workflow now builds the SwiftUI app in `ios-native`, not the Capacitor wrapper described below.** See [native setup and current beta limits](../ios-native/README.md). Keep purchases unchecked. Deploy the updated public API configuration before starting a new workflow run on main. Native compilation and real-device verification remain pending.
 
-# Buildly iPhone release
+# SightSaw iPhone release
 
-The repository contains a Capacitor 8 iOS app, native camera/library access, native file sharing, a consumable Apple purchase paywall, and server-side project credits. The app loads the hosted Buildly application over HTTPS. It is not an offline app. Xcode compilation, signing, real StoreKit purchases, and Apple review cannot be verified on the Linux development machine.
+The repository contains a Capacitor 8 iOS app, native camera/library access, native file sharing, a consumable Apple purchase paywall, and server-side project credits. The app loads the hosted SightSaw application over HTTPS. It is not an offline app. Xcode compilation, signing, real StoreKit purchases, and Apple review cannot be verified on the Linux development machine.
 
 ## Offer to test
 
@@ -16,7 +16,7 @@ Track the funnel during the beta: project-start → photo added → generate tap
 
 ## 1. Supabase and hosted server
 
-For the first TestFlight build **without purchases**, leave `BILLING_ENABLED=false` on the hosted app. In GitHub's `buildly test` environment, only BUILDLY_APP_URL and APPLE_TEAM_ID variables plus the three Apple signing secrets are required. Run the workflow with **Test App Store purchases unchecked**. RevenueCat setup can follow later. The preflight verifies that hosted billing is disabled and AI is configured. This does not disable billing inside a binary: the app uses the hosted server, so keep billing disabled for the duration of this test. For a local no-purchase build, set `TESTFLIGHT_PAYMENTS=false` before preflight.
+For the first TestFlight build **without purchases**, leave `BILLING_ENABLED=false` on the hosted app. In GitHub's `buildly test` environment, only SIGHTSAW_APP_URL and APPLE_TEAM_ID variables plus the three Apple signing secrets are required. Run the workflow with **Test App Store purchases unchecked**. RevenueCat setup can follow later. The preflight verifies that hosted billing is disabled and AI is configured. This does not disable billing inside a binary: the app uses the hosted server, so keep billing disabled for the duration of this test. For a local no-purchase build, set `TESTFLIGHT_PAYMENTS=false` before preflight.
 
 1. Apply `supabase/setup.sql` (existing accounts) then `supabase/billing.sql` in Supabase SQL Editor. Billing tables have RLS and no client mutation policies. Only service-role RPCs may grant/spend credits.
 2. In Vercel configure `SUPABASE_SERVICE_ROLE_KEY`, `REVENUECAT_WEBHOOK_SECRET` (a long random value), `REVENUECAT_PROJECT_PRODUCT_ID=buildly.project.single`, `NEXT_PUBLIC_PROJECT_PRODUCT_ID=buildly.project.single`, and `NEXT_PUBLIC_REVENUECAT_IOS_KEY` (RevenueCat's public iOS SDK key). Never expose the service-role key or webhook secret with a NEXT_PUBLIC prefix.
@@ -28,9 +28,9 @@ For the first TestFlight build **without purchases**, leave `BILLING_ENABLED=fal
 ## 2. Apple and RevenueCat
 
 1. Use a paid Apple Developer membership. Register bundle ID **com.nomapps.buildly** (change in `capacitor.config.ts` AND Xcode if unavailable). Create the matching iOS application in App Store Connect.
-2. Create **consumable** IAP `buildly.project.single`, display name **Buildly Project**, description **One project design and plan with three design revisions**. Set the introductory test price to **$4.99 USD** and Apple's regional equivalents. Complete agreements, banking, tax, product metadata and IAP review screenshot.
+2. Create **consumable** IAP `buildly.project.single`, display name **SightSaw Project**, description **One project design and plan with three design revisions**. Set the introductory test price to **$4.99 USD** and Apple's regional equivalents. Complete agreements, banking, tax, product metadata and IAP review screenshot.
 3. In RevenueCat create the iOS app for that bundle ID, connect App Store credentials, import the consumable product, and place it in the **current offering** as a custom package. No subscription entitlement is needed for this credit-based product.
-4. Configure a RevenueCat webhook to `https://YOUR-STABLE-DOMAIN/api/billing/webhook` with authorization header `Bearer YOUR_REVENUECAT_WEBHOOK_SECRET`. Include NON_RENEWING_PURCHASE and CANCELLATION events. The server deduplicates transaction IDs and refunds; retry failed webhook delivery. Subscriber IDs must be Supabase user UUIDs. Do not enable anonymous purchases or automatic account transfers. Credits are owned by the Buildly account used at purchase.
+4. Configure a RevenueCat webhook to `https://YOUR-STABLE-DOMAIN/api/billing/webhook` with authorization header `Bearer YOUR_REVENUECAT_WEBHOOK_SECRET`. Include NON_RENEWING_PURCHASE and CANCELLATION events. The server deduplicates transaction IDs and refunds; retry failed webhook delivery. Subscriber IDs must be Supabase user UUIDs. Do not enable anonymous purchases or automatic account transfers. Credits are owned by the SightSaw account used at purchase.
 5. Consumed consumables cannot be restored from the App Store. “Refresh purchases” reads the server balance for the signed-in account; it does not fabricate a restore. Unused credits and saved projects follow the same account across devices. Deleted accounts intentionally lose their credits.
 
 ## 3. Build on a Mac
@@ -39,7 +39,7 @@ Use Xcode compatible with Capacitor 8 (Xcode 26 or newer), Node 24, and a connec
 
 ```sh
 npm ci
-export BUILDLY_APP_URL=https://YOUR-STABLE-DOMAIN
+export SIGHTSAW_APP_URL=https://YOUR-STABLE-DOMAIN
 export APPLE_TEAM_ID=YOUR_TEAM_ID
 export NEXT_PUBLIC_REVENUECAT_IOS_KEY=YOUR_PUBLIC_IOS_SDK_KEY
 export NEXT_PUBLIC_PROJECT_PRODUCT_ID=buildly.project.single
@@ -50,7 +50,7 @@ npm run ios:open
 
 In Xcode select the App target → Signing & Capabilities → your team, use automatic signing, and set version/build number. Run on a device first. Then choose **Product → Archive → Distribute App → App Store Connect → Upload**. Once processed, select the build in TestFlight. External testers may require Beta App Review. Apple's approval is not guaranteed; supply a working review account, access to sample functionality, and clear review notes explaining native camera, sharing, saved projects and purchases.
 
-Alternatively, `.github/workflows/ios-testflight.yml` archives/uploads on manual dispatch only. Use GitHub environment `buildly test`; set variables BUILDLY_APP_URL, APPLE_TEAM_ID, REVENUECAT_IOS_KEY, PROJECT_PRODUCT_ID and secrets APPLE_KEY_ID, APPLE_ISSUER_ID, APPLE_PRIVATE_KEY (App Store Connect API key with appropriate app/signing access). The workflow has not been executed here. Confirm Apple's current SDK submission requirements and the selected GitHub runner's Xcode before running it.
+Alternatively, `.github/workflows/ios-testflight.yml` archives/uploads on manual dispatch only. Use GitHub environment `buildly test`; set variables SIGHTSAW_APP_URL, APPLE_TEAM_ID, REVENUECAT_IOS_KEY, PROJECT_PRODUCT_ID and secrets APPLE_KEY_ID, APPLE_ISSUER_ID, APPLE_PRIVATE_KEY (App Store Connect API key with appropriate app/signing access). The workflow has not been executed here. Confirm Apple's current SDK submission requirements and the selected GitHub runner's Xcode before running it.
 
 ## Release checks — must pass on a real device
 

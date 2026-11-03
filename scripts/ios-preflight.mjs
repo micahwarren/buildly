@@ -1,6 +1,6 @@
 import fs from "node:fs";
 const testPayments = process.env.TESTFLIGHT_PAYMENTS !== "false";
-const required = ["BUILDLY_APP_URL", "APPLE_TEAM_ID"];
+const required = ["SIGHTSAW_APP_URL", "APPLE_TEAM_ID"];
 if (testPayments)
   required.push(
     "NEXT_PUBLIC_REVENUECAT_IOS_KEY",
@@ -8,16 +8,22 @@ if (testPayments)
   );
 if (process.env.GITHUB_ACTIONS === "true")
   required.push("APPLE_KEY_ID", "APPLE_ISSUER_ID", "APPLE_PRIVATE_KEY");
-const missing = required.filter((key) => !process.env[key]);
+const missing = required.filter((key) =>
+  key === "SIGHTSAW_APP_URL"
+    ? !(process.env.SIGHTSAW_APP_URL || process.env.BUILDLY_APP_URL)
+    : !process.env[key],
+);
 if (missing.length) {
   console.error("Missing release configuration: " + missing.join(", "));
   process.exit(1);
 }
-const url = new URL(process.env.BUILDLY_APP_URL);
+const url = new URL(
+  process.env.SIGHTSAW_APP_URL ?? process.env.BUILDLY_APP_URL,
+);
 if (url.protocol !== "https:" || url.pathname !== "/" || url.search || url.hash)
-  throw new Error("BUILDLY_APP_URL must be an HTTPS origin.");
+  throw new Error("SIGHTSAW_APP_URL must be an HTTPS origin.");
 const response = await fetch(new URL("/api/config", url));
-if (!response.ok) throw new Error("Could not reach deployed Buildly.");
+if (!response.ok) throw new Error("Could not reach deployed SightSaw.");
 const config = await response.json();
 if (!config.imageGenerationAvailable)
   throw new Error("Deploy AI configuration before building a release.");
