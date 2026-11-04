@@ -2,81 +2,173 @@ export const legal = {
   privacy: [
     {
       heading: false,
-      text: "Last updated November 4, 2026. Site AI is provided by Nom Apps LLC. Contact support@nomappsllc.com for privacy and support requests.",
+      text: "Last updated November 4, 2026. Site AI: Visualize & DIY is operated by Nom Apps LLC. Privacy contact: support@nomappsllc.com.",
     },
-    { heading: true, text: "Information you provide" },
     {
-      heading: false,
-      text: "We use your email address to manage your account. We store the project descriptions, photos, reference images, material preferences and generated designs you save. Do not upload images you do not have permission to use or sensitive personal documents.",
-    },
-    { heading: true, text: "AI processing" },
-    {
-      heading: false,
-      text: "With your permission, your selected photos and descriptions are sent to the AI services identified in the app before generation. Google Gemini provides planning and may generate images; OpenAI may generate images when configured. These services process your content under their own applicable terms. AI output can be inaccurate. You can withdraw permission for future requests in Settings. Requests already submitted may continue processing.",
-    },
-    { heading: true, text: "Accounts, storage and diagnostics" },
-    {
-      heading: false,
-      text: "Supabase provides account and private project storage. Our hosting provider processes service requests. We use limited operational records, such as request identifiers, status, duration and model token counts, to provide the service and investigate failures. If you enable minimal error reporting in Settings, we also receive a report linked to your account containing the app version, platform and a one-way error fingerprint. Those reports are retained for up to 30 days. Routine application logs should not contain your photos, passwords or full project descriptions. Site AI does not sell personal information or use advertising trackers.",
-    },
-    { heading: true, text: "Purchases" },
-    {
-      heading: false,
-      text: "Apple processes App Store payments. RevenueCat receives your account identifier, account email, purchase and transaction details, and technical app/device information to validate purchases and help us support your account. We store verified purchase records and project-token balances. We do not receive your payment-card details. Photos and project descriptions are not sent to RevenueCat. Purchase records may be retained by providers for legal or financial requirements.",
-    },
-    { heading: true, text: "Device storage" },
-    {
-      heading: false,
-      text: "Your phone stores an account session securely and may save unfinished project drafts in the app’s private storage. Drafts are associated with your account and are cleared when you log out or delete your account. Removing the app removes its local app data, subject to your device’s backup settings.",
-    },
-    { heading: true, text: "Retention and deletion" },
-    {
-      heading: false,
-      text: "Saved projects remain until you delete them or your account. Project deletion removes the project and its private photos; a failed cleanup is retried when deletion is retried. Use Settings → Delete my account to request permanent deletion of your account, projects and private project photos. This requires password confirmation. Backups may retain data until their normal retention period expires. Providers may retain limited records where required for legal or operational purposes.",
+      heading: true,
+      text: "Information you provide",
     },
     {
       heading: false,
-      text: "For access, correction, deletion assistance or other privacy questions, contact support@nomappsllc.com. We will update this notice when our data practices change.",
+      text: "We collect your account email and identifier, and profile information supplied by Apple or Google when present. We store the photos, project descriptions, optional measurements, inspiration/material images, generated designs and plans you choose to save. An optional profile photo is also linked to your account. Upload only images you have permission to use; avoid sensitive documents and unnecessary personal information.",
+    },
+    {
+      heading: true,
+      text: "AI processing and your permission",
+    },
+    {
+      heading: false,
+      text: "With your permission, selected photos and project descriptions are sent to the AI providers identified in the app before generation. The current service identifies Google Gemini for designs and plans. If another provider is enabled, we identify it before sending new requests and apply the relevant consent requirement. AI providers process content under their applicable terms and settings; this notice does not promise that their retention or training rules are identical.",
+    },
+    {
+      heading: false,
+      text: "You can turn AI processing off in Settings to stop new requests. A request already submitted may continue. Your projects are private to your account; they are not posted to a public gallery. Processing by our service providers is still necessary to deliver the features you request.",
+    },
+    {
+      heading: true,
+      text: "Services that process your data",
+    },
+    {
+      heading: false,
+      text: "Supabase handles accounts and private file/project storage. Our hosting provider runs the app APIs. Apple and Google handle their sign-in services. The disclosed AI provider processes generation inputs and outputs. Apple and RevenueCat handle purchase verification. These providers may process data in the United States or other countries where they operate. Contact us if you need more information about a provider before using the service.",
+    },
+    {
+      heading: true,
+      text: "Purchases and RevenueCat",
+    },
+    {
+      heading: false,
+      text: "Apple processes payments. RevenueCat receives the account identifier, account email and purchase/transaction information needed to verify purchases and support your account, along with technical app/device information. We store verified receipts and token balances linked to your account. We do not receive your payment-card number. We do not send project photos or descriptions to RevenueCat.",
+    },
+    {
+      heading: true,
+      text: "Diagnostics and device storage",
+    },
+    {
+      heading: false,
+      text: "We use request identifiers, status, duration and model-usage records for operation, recovery, security and troubleshooting. Share error reports is optional and off by default. If enabled, it sends the app release, platform and a one-way error fingerprint linked to your account, rather than readable error text or your photos. Eligible optional reports are removed after up to 30 days by the cleanup service.",
+    },
+    {
+      heading: false,
+      text: "Your device stores a sign-in session and may keep unfinished project drafts in private app storage. Drafts are account-scoped and cleared on logout/account deletion. A minimal deletion-in-progress marker may remain locally until a deletion request finishes. Device or cloud backups, if enabled, follow their own retention settings. We do not use advertising trackers or sell your personal information.",
+    },
+    {
+      heading: true,
+      text: "Deleting projects and your account",
+    },
+    {
+      heading: false,
+      text: "Delete a project from My projects to remove it and its private photos. If file cleanup fails, the service retries it; Settings shows pending photo cleanup when action is available. To delete your account, open Settings → Delete my account. Confirm with your password or the same Apple/Google account, then type DELETE.",
+    },
+    {
+      heading: false,
+      text: "Account deletion removes the account, saved projects, private files and unused token balance, and removes its RevenueCat customer profile. If provider cleanup cannot complete, deletion is not reported as finished; retry it in the app or contact support. Apple may retain purchase records under its own legal and financial obligations. Deletion does not cancel an Apple order or automatically request a refund.",
+    },
+    {
+      heading: false,
+      text: "Saved projects remain until deleted. Minimal operational records and provider records may remain where needed for security, legal or financial obligations. Copies in backups, where configured, expire under their retention settings rather than being erased instantly. We do not promise an unverified universal backup-retention period.",
+    },
+    {
+      heading: true,
+      text: "Your choices and privacy requests",
+    },
+    {
+      heading: false,
+      text: "Use Settings to change AI permission and optional reporting, update your profile photo, or delete your account. Contact support@nomappsllc.com for access, correction, deletion assistance or other privacy requests. We may verify account ownership before acting. Rights and complaint options depend on where you live; this policy does not remove rights provided by applicable law.",
+    },
+    {
+      heading: true,
+      text: "Children and policy updates",
+    },
+    {
+      heading: false,
+      text: "Site AI is not designed for children under 13. We do not knowingly collect their personal information; contact us if you believe such information was provided so we can investigate and remove it. We will update this notice when practices change. Material changes will be described in the app or through an appropriate notice before they apply to new processing.",
     },
   ],
   terms: [
     {
       heading: false,
-      text: "Last updated November 4, 2026. These terms apply to Site AI, provided by Nom Apps LLC. Contact support@nomappsllc.com for assistance.",
+      text: "Last updated November 4, 2026. These terms cover Site AI: Visualize & DIY, operated by Nom Apps LLC. Support: support@nomappsllc.com.",
     },
-    { heading: true, text: "What Site AI provides" },
     {
-      heading: false,
-      text: "Site AI generates design concepts, suggested measurements, estimated materials and planning guidance. AI-generated images, instructions, quantities and costs may contain errors. A photograph cannot establish hidden structure, actual dimensions, product specifications or code compliance.",
-    },
-    { heading: true, text: "Before buying or building" },
-    {
-      heading: false,
-      text: "Verify measurements and material quantities on site. Resolve the plan’s questions, checks and stop conditions before proceeding. Obtain qualified professional help for structural, electrical, gas, plumbing and other regulated or hazardous work. Site AI does not provide certified engineering drawings, permits, inspections or a guarantee of structural safety.",
+      heading: true,
+      text: "Using Site AI",
     },
     {
       heading: false,
-      text: "Estimated costs are reference allowances, not live retailer quotes. Unconfirmed quantities or prices may be excluded from a partial estimate. Labor, tax, delivery, rentals and permits are excluded unless explicitly included. Check product instructions and applicable local requirements.",
+      text: "Site AI provides AI design concepts and project-planning guidance. Use the service only if you can agree to these terms under applicable law. If you are below the legal age of majority, obtain permission from a parent or guardian, including for purchases. The service is not designed for children under 13. Keep your sign-in details secure.",
     },
-    { heading: true, text: "Your account and content" },
+    {
+      heading: true,
+      text: "Designs, measurements and safety",
+    },
     {
       heading: false,
-      text: "Keep your account credentials private. Upload only content you are entitled to use. You retain your rights to your content and authorize Site AI and its identified service providers to process it to deliver the requested features. Do not use the service for unlawful purposes or attempt to bypass access controls or request limits.",
+      text: "AI images, plans, quantities, prices and suggested measurements can be wrong or incomplete. A photo cannot establish actual dimensions, hidden structure, soil conditions, loads, product specifications or code compliance. Site AI does not provide certified engineering drawings, permits, inspections or a professional approval.",
     },
-    { heading: true, text: "Project purchases" },
     {
       heading: false,
-      text: "The App Store shows the price and currency before confirmation. One-time packs contain 1, 2 or 4 project tokens. Each token unlocks one AI design with its materials and plan, plus three successful design revisions for that project. Packs can be purchased repeatedly and tokens add to your balance. There is no subscription. Retrying a plan does not use a revision. A request that fails before a design is saved releases its reserved token or revision; a saved design uses it even if its plan still needs a retry. Unused tokens do not expire and stay with the same account; used tokens are not restored as new tokens. Saved projects remain readable without another purchase. Apple handles payment and refund requests under its terms. A refunded pack removes its unused tokens and cannot fund further revisions of projects made with its tokens. Deleting your account removes unused tokens and does not automatically request a refund. These terms do not limit applicable consumer rights.",
+      text: "Verify measurements, quantities, product instructions, local rules and site conditions before buying or building. Review the plan’s questions, checks and stop conditions. Use qualified professionals for structural, electrical, gas, plumbing and other regulated or hazardous work. Do not rely on an AI concept as authorization to start unsafe work.",
     },
-    { heading: true, text: "Service availability" },
     {
       heading: false,
-      text: "Generation may take several minutes and depends on third-party services. Availability and output quality are not guaranteed. Request limits may apply. Check request history before repeating interrupted work. Saved drafts do not guarantee recovery of work that was never received or completed by the server.",
+      text: "Cost and time estimates are planning allowances, not live retailer quotes or guaranteed prices/schedules. Unpriced items may be excluded from partial totals. Labor, taxes, delivery, rentals and permits are excluded unless a plan expressly includes them.",
     },
-    { heading: true, text: "Deleting your data and getting help" },
+    {
+      heading: true,
+      text: "Project tokens and payment",
+    },
     {
       heading: false,
-      text: "You can delete projects or your account in the app. Account deletion is permanent. Contact support@nomappsllc.com for help or to report incorrect output. These terms do not limit rights that cannot legally be excluded under applicable consumer law.",
+      text: "The app is free to download. One-time packs contain 1, 2 or 4 project tokens. One token starts one project with an AI design, materials and plan, plus up to three successful design revisions. There is no subscription. Packs can be purchased repeatedly; unused tokens add to the same account and do not expire. Apple shows the local price and currency before you confirm payment.",
+    },
+    {
+      heading: false,
+      text: "A request that fails before its design is saved releases its reserved token or revision. Once the design is saved, it uses that token/revision while the service attempts to finish its matching plan. Plan-only recovery does not use another token or design revision. Check the existing request before repeating interrupted work.",
+    },
+    {
+      heading: true,
+      text: "Purchase problems and refunds",
+    },
+    {
+      heading: false,
+      text: "If a purchase or plan is missing, use Check purchase or contact support@nomappsllc.com so we can investigate and help complete the service. Apple handles App Store payment/refund requests under its rules. If a complete paid project cannot be delivered, contact us for help and use Apple’s refund process where appropriate. These terms do not exclude mandatory consumer remedies.",
+    },
+    {
+      heading: false,
+      text: "A refunded pack removes its unused tokens and cannot fund further revisions of projects created with its tokens. Used tokens do not become new unused tokens when purchases are restored. Saved projects remain readable without buying again. Deleting an account removes its unused token balance and does not automatically request an Apple refund.",
+    },
+    {
+      heading: true,
+      text: "Your photos, ideas and outputs",
+    },
+    {
+      heading: false,
+      text: "You retain your rights in the content you upload. You give Nom Apps LLC and the disclosed processors the permission needed to process and store it to provide your requested features. Do not upload content you are not entitled to use or that infringes someone else’s rights. We do not claim that AI outputs are exclusive, copyrightable or free of third-party rights; check those issues before commercial use.",
+    },
+    {
+      heading: true,
+      text: "Acceptable use and availability",
+    },
+    {
+      heading: false,
+      text: "Do not use the service unlawfully, attempt to access another account, bypass purchase/security/request limits or submit abusive material. We may restrict use that threatens the service or others. Requests depend on third-party availability and may be limited for capacity or abuse prevention. An unfinished local draft is not a promise that work was received or saved by the server.",
+    },
+    {
+      heading: true,
+      text: "Responsibility and changes",
+    },
+    {
+      heading: false,
+      text: "To the extent permitted by law, the service is provided without a promise of uninterrupted availability or error-free output. Nothing in these terms excludes liability, consumer guarantees, privacy rights or other protections that applicable law does not allow us to exclude. Material term changes will be notified appropriately; the current version is available in the app.",
+    },
+    {
+      heading: true,
+      text: "Deletion and support",
+    },
+    {
+      heading: false,
+      text: "Delete projects from My projects and request permanent account deletion in Settings. Account deletion requires ownership confirmation and removes the private account content and RevenueCat customer profile as described in the Privacy Policy. Contact support@nomappsllc.com for purchase issues, privacy requests, unsafe or incorrect output, or other questions.",
     },
   ],
 } as const;

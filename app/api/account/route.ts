@@ -1,3 +1,4 @@
+import { deletePurchaseCustomer } from "@/lib/billing/delete-customer";
 import { authenticatedUser } from "@/lib/billing/server";
 import { requireRecentLogin } from "@/lib/production/access";
 import { jobError } from "@/lib/production/errors";
@@ -11,6 +12,8 @@ export async function DELETE(req: Request) {
       p_user: user.id,
     });
     if (deletion.error) throw jobError(deletion.error.message);
+    // Keep the auth account and deletion fence available for retry if provider cleanup fails.
+    await deletePurchaseCustomer(user.id);
     const bucket = db.storage.from("project-images");
     async function empty(prefix: string): Promise<void> {
       // Always delete page zero, so removing files cannot skip subsequent pages.
