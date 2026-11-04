@@ -5,6 +5,9 @@ import { DELETE } from '../app/api/account/route';
 async function main() {
 if(process.env.SITEAI_DELETION_QA!=='1')throw Error('Explicit deletion QA opt-in required');
 const url=process.env.NEXT_PUBLIC_SUPABASE_URL!, key=process.env.SUPABASE_SERVICE_ROLE_KEY!;
+assert.ok(process.env.REVENUECAT_SECRET_API_KEY, 'Purchase cleanup credential missing in build');
+assert.equal(process.env.REVENUECAT_PROJECT_ID, 'projff09f31d', 'Purchase cleanup project mismatch');
+console.log('Deletion QA credential configuration:', {present:!!process.env.REVENUECAT_SECRET_API_KEY, length:process.env.REVENUECAT_SECRET_API_KEY?.length, trimmed:process.env.REVENUECAT_SECRET_API_KEY===process.env.REVENUECAT_SECRET_API_KEY?.trim()});
 const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 const email=`support+siteai-deletion-${randomUUID()}@nomappsllc.com`,password=randomBytes(28).toString('base64url');
 const created=await db.auth.admin.createUser({email,password,email_confirm:true});
