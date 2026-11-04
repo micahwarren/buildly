@@ -295,7 +295,7 @@ test("retries truncated output with a larger output budget but never accepts the
   assert.equal(result.planStatus, "design-based");
 });
 
-test("staged planning expands instructions concurrently and combines them in outline order", async () => {
+test("staged planning preserves purchased equipment and installation scope across concurrent phases", async () => {
   const jpeg = await sharp({
     create: { width: 20, height: 20, channels: 3, background: "white" },
   })
@@ -303,16 +303,60 @@ test("staged planning expands instructions concurrently and combines them in out
     .toBuffer();
   const image = `data:image/jpeg;base64,${jpeg.toString("base64")}`;
   const plan = fixture();
+  plan.summary = "Purchase a complete hot tub and build the surrounding deck.";
+  plan.materials = [
+    {
+      item: "Complete ready-made hot tub",
+      quantity: 1,
+      quantityUnit: "each",
+      dimensions: "Manufacturer dimensions to confirm",
+      unitCost: 5500,
+      purpose: "Purchased spa for the requested installation",
+      quantityBasis: "One new unit; provisional midrange purchase allowance",
+      purchase: {
+        label: "Complete factory-built spa",
+        coverage: 1,
+        notes: "Confirm model, operating weight and installation requirements.",
+      },
+    },
+    {
+      ...plan.materials[0],
+      item: "Surrounding deck surface",
+      purpose: "DIY deck surrounding the purchased spa",
+    },
+  ];
+  plan.steps = plan.steps.map((step) => ({
+    ...step,
+    materials: plan.materials.map((material) => material.item),
+  }));
   let calls = 0,
     active = 0,
     peak = 0;
   const result = await createDesignPlan(
-    makeDemo({ originalImage: image, generatedImage: image }),
+    makeDemo({
+      originalImage: image,
+      generatedImage: image,
+      description: "Install a hot tub with a surrounding wooden deck",
+    }),
     {
       apiKey: "test",
       fetcher: async (_url, init) => {
         calls++;
         const body = JSON.parse(init!.body as string);
+        const instructions = body.contents[0].parts
+          .map((part: { text?: string }) => part.text || "")
+          .join("\n");
+        assert.match(
+          instructions,
+          /Install a hot tub with a surrounding wooden deck/,
+        );
+        assert.match(instructions, /complete ready-made product/);
+        assert.match(instructions, /never fabrication of the appliance itself/);
+        assert.match(instructions, /Preserve real DIY work around the product/);
+        assert.match(
+          instructions,
+          /already owned unless the homeowner says so/,
+        );
         assert.equal(
           body.contents[0].parts.filter(
             (p: { inlineData?: unknown }) => p.inlineData,
@@ -351,6 +395,9 @@ test("staged planning expands instructions concurrently and combines them in out
   assert.equal(result.planStatus, "design-based");
   assert.deepEqual(result.steps, plan.steps);
   assert.deepEqual(result.materials, plan.materials);
+  assert.equal(result.materials![0].quantity, 1);
+  assert.equal(result.materials![0].unitCost, 5500);
+  assert.equal(result.estimatedCostLow, Math.round((5500 + 212 * 4) * 0.8));
 });
 
 test("recommendations preserve design-specific guidance and reject malformed model values", () => {

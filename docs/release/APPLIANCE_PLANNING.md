@@ -1,0 +1,7 @@
+# Purchased products in project plans
+
+The design-grounded planner now explicitly distinguishes manufactured products from surrounding DIY work. Requested hot tubs, spas, appliances, grills and similar equipment are complete products to purchase, normally one each, with a disclosed reference price included in the materials estimate. They are not fabricated from a bill of component parts. Explicitly owned products are excluded from the purchase cost; incidental items in the image are not added to the shopping list.
+
+Actual site preparation, support/base and installation supplies remain separate items. Product selection, delivery, manufacturer requirements and qualified installation replace instructions to manufacture the appliance. Surrounding decks/platforms/cabinetry remain real DIY scope. The same instructions reach the initial outline, corrective requests and detailed phase expansion. Existing saved data is not rewritten; Update estimates rebuilds a saved project's plan using these rules without regenerating its image.
+
+Validation: service TypeScript, ESLint, all 87 tests and the production build pass. The staged-planning fixture checks the complete-product instruction in all four requests, keeps a one-unit hot tub and its purchase allowance alongside DIY deck supplies, and verifies the product cost contributes to the total. This is a mocked provider integration check, not verification of an actual AI-generated hot-tub plan. No paid AI request or customer-data change was performed.
