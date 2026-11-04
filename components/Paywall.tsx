@@ -113,7 +113,7 @@ export function Paywall({
         <li>Retry an incomplete plan without using a revision</li>
       </ul>
       <p>
-        Each purchase adds one project credit to your SightSaw account. No
+        Each purchase adds one project credit to your Site AI account. No
         recurring charge.
       </p>
       {balance !== null && (
@@ -148,7 +148,7 @@ export function Paywall({
         </button>
       ) : !isNativeApp() && !balance ? (
         <p>
-          Buy project credits in the SightSaw iPhone app, then use them on any
+          Buy project credits in the Site AI iPhone app, then use them on any
           device signed into this account.
         </p>
       ) : null}
@@ -167,7 +167,7 @@ export function Paywall({
       </button>
       <p className="muted">
         Consumed project credits cannot be restored by Apple. Unused credits and
-        saved projects follow your SightSaw account.
+        saved projects follow your Site AI account.
       </p>
       {message && <p role="status">{message}</p>}
       <p>

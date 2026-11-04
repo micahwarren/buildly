@@ -12,7 +12,7 @@ import PhotosUI
             }
             .environmentObject(store).tint(Color(red: 0.19, green: 0.36, blue: 0.26))
             .task { await store.restore() }
-            .alert("SightSaw", isPresented: Binding(get: { !store.error.isEmpty }, set: { if !$0 { store.error = "" } })) { Button("OK") { store.error = "" } } message: { Text(store.error) }
+            .alert("Site AI", isPresented: Binding(get: { !store.error.isEmpty }, set: { if !$0 { store.error = "" } })) { Button("OK") { store.error = "" } } message: { Text(store.error) }
         }
     }
 }

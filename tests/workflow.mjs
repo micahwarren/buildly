@@ -41,7 +41,7 @@ console.log("Test artifacts: " + output);
   });
   await page.goto(BASE_URL);
   await page
-    .getByRole("heading", { name: /SightSaw turns.*what if.*a plan to build/ })
+    .getByRole("heading", { name: /Site AI turns.*what if.*a plan to build/ })
     .waitFor();
   await page.screenshot({
     path: path.join(output, "home-desktop.png"),
@@ -232,7 +232,7 @@ console.log("Test artifacts: " + output);
     .click();
   assert.equal(await page.locator(".message").count(), 2);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole("button", { name: "SightSaw home" }).click();
+  await page.getByRole("button", { name: "Site AI home" }).click();
   await page.screenshot({
     path: path.join(output, "home-mobile.png"),
     fullPage: true,

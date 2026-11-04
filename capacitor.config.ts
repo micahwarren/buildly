@@ -7,7 +7,7 @@ if (new URL(origin).protocol !== "https:")
   throw new Error("The iOS app requires an HTTPS deployment.");
 const config: CapacitorConfig = {
   appId: "com.nomapps.buildly",
-  appName: "Sight Saw",
+  appName: "Site AI",
   webDir: "mobile",
   server: { url: origin, cleartext: false, errorPath: "index.html" },
   ios: { contentInset: "automatic", preferredContentMode: "mobile" },

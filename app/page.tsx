@@ -378,7 +378,7 @@ export default function Home() {
   function downloadBackup() {
     if (!project) return;
     void exportFile(
-      "sightsaw-project-backup.json",
+      "site-ai-project-backup.json",
       JSON.stringify({ format: "sightsaw-project-v1", project }, null, 2),
       "application/json",
     ).catch(() => setError("Could not share the project backup."));
@@ -612,7 +612,7 @@ export default function Home() {
         conversation: [
           ...project.conversation,
           { role: "You", text: q },
-          { role: "SightSaw AI", text: data.answer },
+          { role: "Site AI", text: data.answer },
         ],
       });
     } catch (error) {
@@ -676,7 +676,7 @@ export default function Home() {
   function download() {
     if (project)
       void exportFile(
-        "sightsaw-shopping-list.txt",
+        "site-ai-shopping-list.txt",
         shoppingText(project),
         "text/plain",
       ).catch(() => setError("Could not share the shopping list."));
@@ -698,7 +698,7 @@ export default function Home() {
         <img
           className="native-login-logo"
           src="/sightsaw-logo.png"
-          alt="SightSaw"
+          alt="Site AI"
           width="64"
           height="64"
         />
@@ -716,7 +716,7 @@ export default function Home() {
         <header className="native-topbar">
           <button onClick={() => go("saved")} aria-label="My projects">
             <img src="/sightsaw-logo.png" alt="" width="30" height="30" />
-            SightSaw
+            Site AI
           </button>
           <button onClick={() => setShowAccount(true)} aria-label="My account">
             <Users size={22} />
@@ -728,7 +728,7 @@ export default function Home() {
           <button
             className="logo"
             onClick={() => go("home")}
-            aria-label="SightSaw home"
+            aria-label="Site AI home"
           >
             <span className="logo-mark">
               <img src="/sightsaw-logo.png" alt="" width="40" height="40" />
@@ -1731,7 +1731,7 @@ export default function Home() {
                     className={m.role === "You" ? "message user" : "message"}
                     key={i}
                   >
-                    <strong>{m.role === "You" ? "You" : "SightSaw AI"}</strong>
+                    <strong>{m.role === "You" ? "You" : "Site AI"}</strong>
                     <p>{m.text}</p>
                   </div>
                 ))}
@@ -1937,7 +1937,7 @@ export default function Home() {
           </button>
           <span>{brand.tagline}</span>
           <small>
-            © {new Date().getFullYear()} SightSaw · Thoughtfully planned.
+            © {new Date().getFullYear()} Site AI · Thoughtfully planned.
             Proudly built.
           </small>
         </footer>

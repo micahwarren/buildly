@@ -5,7 +5,7 @@ export function parseProjectBackup(text: string): Project {
   const backup = JSON.parse(text);
   const p = backup?.project;
   const fail = () => {
-    throw new Error("That file is not a valid SightSaw project backup.");
+    throw new Error("That file is not a valid Site AI project backup.");
   };
   if (
     !["sightsaw-project-v1", "buildly-project-v1"].includes(backup?.format) ||

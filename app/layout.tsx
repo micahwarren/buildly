@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 export const metadata: Metadata = {
-  title: "SightSaw — Your idea. A plan to build it.",
+  title: "Site AI: Visualize & DIY",
   description:
     "Upload a photo. Describe your idea. Get a DIY design, materials list, and step-by-step plan.",
 };

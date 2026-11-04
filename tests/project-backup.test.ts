@@ -57,7 +57,7 @@ test("backup import rejects executable image URLs and unsupported formats", () =
   assert.throws(() => parseProjectBackup("{}"));
 });
 
-test("SightSaw and pre-rename project backups preserve the same saved project", () => {
+test("Site AI and pre-rename project backups preserve the same saved project", () => {
   const project = fixture();
   for (const format of ["sightsaw-project-v1", "buildly-project-v1"])
     assert.deepEqual(

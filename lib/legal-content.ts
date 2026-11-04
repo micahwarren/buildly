@@ -2,7 +2,7 @@ export const legal = {
   privacy: [
     {
       heading: false,
-      text: "Last updated November 3, 2026. SightSaw is provided by Nom Apps LLC. Contact support@nomappsllc.com for privacy and support requests.",
+      text: "Last updated November 4, 2026. Site AI is provided by Nom Apps LLC. Contact support@nomappsllc.com for privacy and support requests.",
     },
     { heading: true, text: "Information you provide" },
     {
@@ -17,7 +17,7 @@ export const legal = {
     { heading: true, text: "Accounts, storage and diagnostics" },
     {
       heading: false,
-      text: "Supabase provides account and private project storage. Our hosting provider processes service requests. We use limited operational records, such as request identifiers, status, duration and model token counts, to provide the service and investigate failures. If you enable minimal error reporting in Settings, we also receive a report linked to your account containing the app version, platform and a one-way error fingerprint. Those reports are retained for up to 30 days. Routine application logs should not contain your photos, passwords or full project descriptions. SightSaw does not sell personal information or use advertising trackers.",
+      text: "Supabase provides account and private project storage. Our hosting provider processes service requests. We use limited operational records, such as request identifiers, status, duration and model token counts, to provide the service and investigate failures. If you enable minimal error reporting in Settings, we also receive a report linked to your account containing the app version, platform and a one-way error fingerprint. Those reports are retained for up to 30 days. Routine application logs should not contain your photos, passwords or full project descriptions. Site AI does not sell personal information or use advertising trackers.",
     },
     { heading: true, text: "Purchases" },
     {
@@ -42,17 +42,17 @@ export const legal = {
   terms: [
     {
       heading: false,
-      text: "Last updated November 3, 2026. These terms apply to SightSaw, provided by Nom Apps LLC. Contact support@nomappsllc.com for assistance.",
+      text: "Last updated November 4, 2026. These terms apply to Site AI, provided by Nom Apps LLC. Contact support@nomappsllc.com for assistance.",
     },
-    { heading: true, text: "What SightSaw provides" },
+    { heading: true, text: "What Site AI provides" },
     {
       heading: false,
-      text: "SightSaw generates design concepts, suggested measurements, estimated materials and planning guidance. AI-generated images, instructions, quantities and costs may contain errors. A photograph cannot establish hidden structure, actual dimensions, product specifications or code compliance.",
+      text: "Site AI generates design concepts, suggested measurements, estimated materials and planning guidance. AI-generated images, instructions, quantities and costs may contain errors. A photograph cannot establish hidden structure, actual dimensions, product specifications or code compliance.",
     },
     { heading: true, text: "Before buying or building" },
     {
       heading: false,
-      text: "Verify measurements and material quantities on site. Resolve the plan’s questions, checks and stop conditions before proceeding. Obtain qualified professional help for structural, electrical, gas, plumbing and other regulated or hazardous work. SightSaw does not provide certified engineering drawings, permits, inspections or a guarantee of structural safety.",
+      text: "Verify measurements and material quantities on site. Resolve the plan’s questions, checks and stop conditions before proceeding. Obtain qualified professional help for structural, electrical, gas, plumbing and other regulated or hazardous work. Site AI does not provide certified engineering drawings, permits, inspections or a guarantee of structural safety.",
     },
     {
       heading: false,
@@ -61,7 +61,7 @@ export const legal = {
     { heading: true, text: "Your account and content" },
     {
       heading: false,
-      text: "Keep your account credentials private. Upload only content you are entitled to use. You retain your rights to your content and authorize SightSaw and its identified service providers to process it to deliver the requested features. Do not use the service for unlawful purposes or attempt to bypass access controls or request limits.",
+      text: "Keep your account credentials private. Upload only content you are entitled to use. You retain your rights to your content and authorize Site AI and its identified service providers to process it to deliver the requested features. Do not use the service for unlawful purposes or attempt to bypass access controls or request limits.",
     },
     { heading: true, text: "Project purchases" },
     {

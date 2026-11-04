@@ -25,7 +25,7 @@ targets:
     info:
       path: Info.plist
       properties:
-        CFBundleDisplayName: Sight Saw
+        CFBundleDisplayName: Site AI
         UILaunchScreen: {}
         NSCameraUsageDescription: Take a photo of your space for your project.
         ITSAppUsesNonExemptEncryption: false

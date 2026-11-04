@@ -2,7 +2,7 @@ import type { ProjectDetails } from "./project-details";
 import type { ShoppingEntry } from "./shopping";
 import { estimateProject } from "./estimates";
 export const brand = {
-  name: "SightSaw",
+  name: "Site AI",
   tagline: "A little vision. A lot of possibility.",
 };
 export type Project = {

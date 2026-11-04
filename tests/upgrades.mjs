@@ -147,7 +147,7 @@ try {
     .click();
   await page.getByLabel("Your question").fill("What is my next step?");
   await page.locator(".assistant form").getByRole("button").click();
-  await page.getByText("SightSaw AI", { exact: true }).waitFor();
+  await page.getByText("Site AI", { exact: true }).waitFor();
   assert.match(
     await page.locator(".message").last().innerText(),
     /footing design/,

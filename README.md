@@ -1,6 +1,6 @@
 > **Active release:** The current iPhone client is the Expo app in `micahwarren/expo-starter`. This repository provides its service. Follow [the non-payment release prerequisites](docs/release/NON_PAYMENT_RELEASE.md) before deployment. The older native/purchase instructions below are historical and are not the current release path.
 
-# SightSaw
+# Site AI
 
 A functional, accessible DIY project MVP with **server-side AI photo editing and an explicit sample-plan mode**, built with Next.js App Router, React, TypeScript, and custom responsive CSS. Brand configuration is in `lib/project.ts`.
 

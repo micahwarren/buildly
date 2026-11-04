@@ -9,10 +9,10 @@ export function RotatingHeadline({ paused }: { paused: boolean }) {
   return (
     <h1
       className={`rotating-headline${paused ? " is-paused" : ""}`}
-      aria-label="SightSaw turns ‘what if’ into a plan to build."
+      aria-label="Site AI turns ‘what if’ into a plan to build."
     >
       <span aria-hidden="true">
-        SightSaw turns
+        Site AI turns
         <br />
         “what if” into
       </span>

@@ -40,7 +40,7 @@ export function PlanReview({
           );
           const a = document.createElement("a");
           a.href = url;
-          a.download = "sightsaw-review-packet.html";
+          a.download = "site-ai-review-packet.html";
           a.click();
           setTimeout(() => URL.revokeObjectURL(url), 1000);
         }}
@@ -68,7 +68,7 @@ export function PlanReview({
       >
         <h3>Record review notes</h3>
         <p>
-          This is your record, not a professional approval issued by SightSaw.
+          This is your record, not a professional approval issued by Site AI.
         </p>
         <label className="field">
           Reviewer name / role

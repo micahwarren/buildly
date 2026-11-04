@@ -95,7 +95,7 @@ export function AccountDialog({
         {account.user && !account.recovery
           ? "Your account"
           : mode === "signup"
-            ? "Create your SightSaw account"
+            ? "Create your Site AI account"
             : mode === "signin"
               ? "Welcome back"
               : mode === "forgot"
