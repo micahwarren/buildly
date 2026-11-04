@@ -6,6 +6,7 @@ import { executeJob } from "../lib/production/jobs";
 import { generationUser } from "../lib/production/access";
 import { makeDemo, type Project } from "../lib/project";
 import { DesignError } from "../lib/services/image-design";
+import { unavailablePlan } from "../lib/services/design-plan";
 const user = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   other = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const key = "11111111-1111-4111-8111-111111111111";
@@ -60,8 +61,18 @@ async function fixture() {
           );
         }
         if (url.pathname === "/rest/v1/buildly_jobs" && method === "PATCH") {
-          const id = url.searchParams.get("id")!.replace("eq.", "");
-          Object.assign(jobs.get(id)!, JSON.parse(String(init!.body)));
+          const id = url.searchParams.get("id")?.replace("eq.", "");
+          const resultId = url.searchParams
+            .get("result_id")
+            ?.replace("eq.", "");
+          const state = url.searchParams.get("state")?.replace("eq.", "");
+          for (const job of jobs.values())
+            if (
+              (!id || job.id === id) &&
+              (!resultId || job.result_id === resultId) &&
+              (!state || job.state === state)
+            )
+              Object.assign(job, JSON.parse(String(init!.body)));
           return json(null);
         }
         if (url.pathname.startsWith("/storage/v1/object/project-images/")) {
@@ -142,6 +153,111 @@ async function fixture() {
     photo,
   };
 }
+test("revision planning recovers automatically from its saved image and never retains the parent's materials", async () => {
+  const f = await fixture();
+  await executeJob(f.request(), "design", true, {
+    authorize: f.authorize,
+    design: f.design,
+  });
+  const parent = structuredClone(f.projects.get(key)!);
+  const revision = "66666666-6666-4666-8666-666666666666";
+  let images = 0,
+    plans = 0;
+  const dependencies = {
+    authorize: f.authorize,
+    refine: async (
+      p: Project,
+      _change: string,
+      hooks?: { onDesign?: (p: Project) => Promise<void> },
+    ) => {
+      images++;
+      const next = {
+        ...p,
+        ...unavailablePlan("Temporary planner failure"),
+        id: revision,
+        parentProjectId: key,
+        generationVersion: "complete-v2",
+      };
+      await hooks?.onDesign?.(next);
+      return next;
+    },
+    plan: async (p: Project) => {
+      plans++;
+      assert.equal(p.id, revision);
+      assert.deepEqual(p.materials, []);
+      assert.ok(p.generatedImage.startsWith("data:image/jpeg;"));
+      return {
+        planStatus: "design-based" as const,
+        materials: [
+          {
+            item: "Revised panels",
+            quantity: 4,
+            unitCost: 12,
+            dimensions: "Concept size",
+          },
+        ],
+        steps: [{ title: "Fit revised panels", text: "Check the opening" }],
+        estimatedCostLow: 38,
+        estimatedCostHigh: 67,
+      };
+    },
+  };
+  const request = () =>
+    f.request({ id: key, change: "Use four panels" }, revision);
+  const result = await executeJob(request(), "refine", true, dependencies);
+  assert.equal(result.state, "complete");
+  assert.equal(result.project!.materials[0].item, "Revised panels");
+  assert.equal(result.project!.parentProjectId, key);
+  assert.deepEqual(f.projects.get(key), parent);
+  await executeJob(request(), "refine", true, dependencies);
+  assert.equal(images, 1);
+  assert.equal(plans, 1);
+});
+test("a still-missing plan stays pending and its free follow-up completes the original request", async () => {
+  const f = await fixture();
+  const result = await executeJob(f.request(), "design", true, {
+    authorize: f.authorize,
+    design: async (input, _demo, hooks) => {
+      const p = makeDemo({
+        ...input,
+        originalImage: f.photo,
+        generatedImage: f.photo,
+      });
+      const next = {
+        ...p,
+        ...unavailablePlan("Temporary planning failure"),
+        generationVersion: "complete-v2",
+      };
+      await hooks?.onDesign?.(next);
+      return next;
+    },
+    plan: async () => {
+      throw new DesignError("Temporary planning failure", 504);
+    },
+  });
+  assert.equal(result.state, "image_saved");
+  assert.equal(result.failure_code, "plan_pending");
+  assert.deepEqual(result.project!.materials, []);
+  assert.equal(f.jobs.get(key)?.state, "image_saved");
+  const followup = "77777777-7777-4777-8777-777777777777";
+  await executeJob(f.request({ id: key }, followup), "plan", true, {
+    authorize: f.authorize,
+    plan: async () => ({
+      planStatus: "design-based",
+      materials: [
+        {
+          item: "New panel",
+          quantity: 1,
+          unitCost: 20,
+          dimensions: "To verify",
+        },
+      ],
+      steps: [{ title: "Fit panel", text: "Check fit" }],
+    }),
+  });
+  assert.equal(f.jobs.get(key)?.state, "complete");
+  assert.equal(f.projects.get(key)?.materials[0].item, "New panel");
+});
 test("lost-response retries return the durable result without another image, with private image references", async () => {
   const f = await fixture();
   const result = await executeJob(f.request(), "design", true, {

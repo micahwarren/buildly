@@ -10,6 +10,106 @@ const listed = (name: string, outputTokenLimit = 8192) => ({
   supportedGenerationMethods: ["generateContent"],
   outputTokenLimit,
 });
+test("generic INVALID_ARGUMENT falls back from constrained schema without dropping either photo", async () => {
+  const bodies: {
+    contents: unknown[];
+    generationConfig: Record<string, unknown>;
+  }[] = [];
+  const contents = [
+    {
+      role: "user",
+      parts: [
+        { inlineData: { mimeType: "image/jpeg", data: "site" } },
+        { inlineData: { mimeType: "image/jpeg", data: "revised" } },
+      ],
+    },
+  ];
+  await requestGemini(
+    contents,
+    {
+      responseSchema: { type: "OBJECT" },
+      responseMimeType: "application/json",
+    },
+    {
+      apiKey: "test",
+      model: "gemini-3.8-flash",
+      fetcher: async (_url, init) => {
+        bodies.push(JSON.parse(String(init?.body)));
+        return bodies.length === 1
+          ? Response.json(
+              {
+                error: {
+                  status: "INVALID_ARGUMENT",
+                  message: "Invalid argument",
+                },
+              },
+              { status: 400 },
+            )
+          : Response.json({ ok: true });
+      },
+    },
+  );
+  assert.equal(bodies.length, 2);
+  assert.equal(bodies[1].generationConfig.responseSchema, undefined);
+  assert.deepEqual(
+    (bodies[1].contents[0] as { parts: unknown[] }).parts.slice(0, 2),
+    contents[0].parts,
+  );
+  assert.match(
+    JSON.stringify(bodies[1].contents),
+    /conforming exactly to this schema/,
+  );
+});
+test("a successful discovered model is reused by the next planning stage with the same token cap", async () => {
+  const calls: string[] = [];
+  const fetcher: typeof fetch = async (url, init) => {
+    calls.push(String(url));
+    if (String(url).includes("gemini-2.5-flash:"))
+      return Response.json({ error: {} }, { status: 404 });
+    if (String(url).includes("/models?"))
+      return Response.json({ models: [listed("gemini-3.8-flash")] });
+    assert.equal(
+      JSON.parse(String(init?.body)).generationConfig.maxOutputTokens,
+      8192,
+    );
+    return Response.json({ ok: true });
+  };
+  await requestGemini(
+    [],
+    { maxOutputTokens: 32000 },
+    { apiKey: "cache-fixture", fetcher },
+  );
+  await requestGemini(
+    [],
+    { maxOutputTokens: 32000 },
+    { apiKey: "cache-fixture", fetcher },
+  );
+  assert.equal(calls.length, 4);
+  assert.equal(calls.filter((url) => url.includes("/models?")).length, 1);
+  assert.match(calls.at(-1)!, /gemini-3.8-flash:generateContent/);
+});
+test("temporary network and upstream errors recover once under the same request deadline", async () => {
+  for (const mode of ["connection", "upstream"]) {
+    let calls = 0;
+    const result = await requestGemini(
+      [],
+      {},
+      {
+        apiKey: "test",
+        fetcher: async () => {
+          if (++calls === 1) {
+            if (mode === "connection")
+              throw new TypeError("fixture connection");
+            return Response.json({}, { status: 503 });
+          }
+          return Response.json({ ok: true });
+        },
+      },
+    );
+    assert.deepEqual(result, { ok: true });
+    assert.equal(calls, 2);
+  }
+});
 test("reported omni preview can never outrank a stable numbered planning model", () => {
   const models = compatiblePlanningModels([
     listed("gemini-omni-flash-preview"),

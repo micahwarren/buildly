@@ -31,6 +31,7 @@ export async function GET(req: Request) {
     const { authenticatedUser } = await import("@/lib/billing/server");
     const { db, user } = await authenticatedUser(req);
     const id = new URL(req.url).searchParams.get("id");
+    const summary = !id && new URL(req.url).searchParams.get("summary") === "1";
     if (id && !/^[a-f0-9-]{36}$/i.test(id))
       throw new DesignError("Invalid request.", 400);
     let query = db
@@ -53,9 +54,10 @@ export async function GET(req: Request) {
           Date.parse(job.expires_at) < Date.now()
             ? "interrupted"
             : job.state,
-        project: job.result_id
-          ? await ownedProject(db, user.id, job.result_id).catch(() => null)
-          : null,
+        project:
+          !summary && job.result_id
+            ? await ownedProject(db, user.id, job.result_id).catch(() => null)
+            : null,
       })),
     );
     if (id && !jobs.length)

@@ -170,6 +170,9 @@ test("refinement updates dimensions and stores a separate version while clearing
     plan: async (input) => {
       assert.equal(input.originalImage, project.originalImage);
       assert.equal(input.generatedImage, "new-image");
+      assert.deepEqual(input.materials, []);
+      assert.equal(input.estimatedCostLow, 0);
+      assert.equal(input.generationVersion, "complete-v2");
       return { planStatus: "design-based", planSummary: "Updated request" };
     },
   });

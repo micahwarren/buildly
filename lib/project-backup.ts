@@ -104,6 +104,11 @@ export function parseProjectBackup(text: string): Project {
     (p.planStatus !== undefined &&
       !["design-based", "unavailable"].includes(p.planStatus)) ||
     (p.planSummary !== undefined && typeof p.planSummary !== "string") ||
+    (p.generationVersion !== undefined &&
+      typeof p.generationVersion !== "string") ||
+    (p.planFailureCode !== undefined &&
+      typeof p.planFailureCode !== "string") ||
+    (p.planRetryable !== undefined && typeof p.planRetryable !== "boolean") ||
     (p.estimateBasisVersion !== undefined &&
       typeof p.estimateBasisVersion !== "string") ||
     !optionalStrings(p.planQuestions)

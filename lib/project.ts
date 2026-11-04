@@ -35,6 +35,9 @@ export type Project = {
   estimatedHours: string;
   recommendedCrew?: string;
   planStatus?: "design-based" | "unavailable";
+  generationVersion?: string;
+  planFailureCode?: string;
+  planRetryable?: boolean;
   estimateBasisVersion?: string;
   planSummary?: string;
   planQuestions?: string[];

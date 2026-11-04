@@ -100,6 +100,8 @@ export async function executeJob(
       return {
         jobId: id,
         state: job.state,
+        failure_code: job.failure_code || undefined,
+        failure_message: job.failure_message || undefined,
         project: await ownedProject(db, user.id, job.result_id),
       };
     return {
@@ -164,16 +166,76 @@ export async function executeJob(
                 generatedImage: loaded.generatedImage,
               },
               data.change.trim(),
-              { id, onDesign: checkpoint },
+              { id, onDesign: checkpoint, deadline: started + 260_000 },
             );
           } else
             p = await (dependencies.design || planProject)(
               { ...input, id },
               false,
-              { onDesign: checkpoint },
+              { onDesign: checkpoint, deadline: started + 260_000 },
             );
+          // The paid image checkpoint is durable. Recover only its matching
+          // plan, never another image or another project/revision charge.
+          if (
+            kind !== "plan" &&
+            p.planStatus !== "design-based" &&
+            p.planRetryable !== false
+          ) {
+            const remaining = 280_000 - (Date.now() - started);
+            if (remaining > 15_000) {
+              await update({ state: "image_saved", result_id: p.id });
+              try {
+                const fields = await (dependencies.plan || createDesignPlan)(
+                  p,
+                  { timeoutMs: Math.min(90_000, remaining) },
+                );
+                p = {
+                  ...p,
+                  ...fields,
+                  title: fields.suggestedTitle || p.title,
+                };
+              } catch (error) {
+                p = {
+                  ...p,
+                  ...unavailablePlan(
+                    error instanceof Error
+                      ? error.message
+                      : "The matching plan could not finish.",
+                    error,
+                  ),
+                };
+              }
+            }
+          }
           const stored = await persistProject(db, user.id, p);
-          await update({ state: "complete", result_id: p.id });
+          const finished = p.planStatus === "design-based";
+          await update({
+            state: finished ? "complete" : "image_saved",
+            result_id: p.id,
+            failure_code: finished
+              ? null
+              : p.planRetryable === false
+                ? "plan_blocked"
+                : "plan_pending",
+          });
+          if (kind === "plan" && finished) {
+            const recovered = await db
+              .from("buildly_jobs")
+              .update({
+                state: "complete",
+                failure_code: null,
+                failure_message: null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("user_id", user.id)
+              .eq("result_id", p.id)
+              .eq("state", "image_saved");
+            if (recovered.error)
+              console.warn("sightsaw_plan_parent_status", {
+                id,
+                state: "refresh_needed",
+              });
+          }
           return stored;
         },
         false,
@@ -183,12 +245,18 @@ export async function executeJob(
     console.info("sightsaw_job", {
       id,
       kind,
-      state: "complete",
+      state: result.planStatus === "design-based" ? "complete" : "image_saved",
       durationMs: Date.now() - started,
     });
     return {
       jobId: id,
-      state: "complete",
+      state: result.planStatus === "design-based" ? "complete" : "image_saved",
+      failure_code:
+        result.planStatus === "design-based"
+          ? undefined
+          : result.planRetryable === false
+            ? "plan_blocked"
+            : "plan_pending",
       project: consent ? result : await loadProjectImages(db, user.id, result),
     };
   } catch (error) {

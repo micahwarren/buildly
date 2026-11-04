@@ -68,6 +68,7 @@ export async function refineProject(
     plan?: typeof createDesignPlan;
     id?: string;
     onDesign?: (project: Project) => Promise<void>;
+    deadline?: number;
   } = {},
 ): Promise<Project> {
   const request = await (dependencies.interpret ?? interpretRefinement)(
@@ -76,6 +77,10 @@ export async function refineProject(
   );
   const next: Project = {
     ...project,
+    ...unavailablePlan("The revised design's matching plan is being prepared."),
+    estimateBasisVersion: undefined,
+    suggestedTitle: undefined,
+    generationVersion: "complete-v2",
     ...request,
     details: parseDetails(project.details),
     id: dependencies.id || crypto.randomUUID(),
@@ -98,7 +103,12 @@ export async function refineProject(
   next.visualizationMode = design.mode;
   await dependencies.onDesign?.(next);
   try {
-    const fields = await (dependencies.plan ?? createDesignPlan)(next);
+    const fields = await (dependencies.plan ?? createDesignPlan)(next, {
+      timeoutMs: Math.max(
+        1000,
+        (dependencies.deadline ?? Date.now() + 120_000) - Date.now(),
+      ),
+    });
     return { ...next, ...fields, title: fields.suggestedTitle || next.title };
   } catch (error) {
     return {
@@ -107,6 +117,7 @@ export async function refineProject(
         error instanceof Error
           ? error.message
           : "The revised image is saved, but its matching plan needs a retry.",
+        error,
       ),
     };
   }

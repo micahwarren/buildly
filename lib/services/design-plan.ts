@@ -340,6 +340,7 @@ export async function createDesignPlan(
     apiKey?: string;
     model?: string;
     fetcher?: typeof fetch;
+    timeoutMs?: number;
   } = {},
 ) {
   const photos = await Promise.all([
@@ -366,7 +367,8 @@ export async function createDesignPlan(
     { text: planPrompt(project) },
   ];
   // One shared deadline covers generation and at most one corrective request.
-  const deadline = Date.now() + 120_000;
+  const deadline =
+    Date.now() + Math.min(dependencies.timeoutMs ?? 120_000, 120_000);
   let correction = "";
   let maxOutputTokens = 6000;
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -595,6 +597,8 @@ export function planFields(plan: DesignPlan): Partial<Project> {
       ? { suggestedTitle: plan.projectTitle.trim() }
       : {}),
     planStatus: "design-based",
+    planFailureCode: undefined,
+    planRetryable: undefined,
     estimateBasisVersion: "purchase-packages-v1",
     planSummary: plan.summary,
     recommendedMeasurements: plan.recommendedMeasurements || [],
@@ -624,9 +628,25 @@ export function planFields(plan: DesignPlan): Partial<Project> {
     ],
   };
 }
-export function unavailablePlan(message: string): Partial<Project> {
+export function unavailablePlan(
+  message: string,
+  error?: unknown,
+): Partial<Project> {
   return {
     planStatus: "unavailable",
+    planFailureCode:
+      error instanceof DesignError
+        ? error.code || String(error.status)
+        : undefined,
+    planRetryable: !(
+      error instanceof DesignError &&
+      [
+        "planning_model",
+        "planning_configuration",
+        "planning_access",
+        "planning_quota",
+      ].includes(error.code || "")
+    ),
     planSummary: message,
     recommendedMeasurements: [],
     planQuestions: [],

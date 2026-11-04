@@ -1,5 +1,10 @@
 import { recordUsage } from "../production/telemetry";
 import { DesignError } from "./image-design";
+import { createHash } from "node:crypto";
+const preferredModels = new WeakMap<
+  typeof fetch,
+  Map<string, { name: string; outputTokenLimit?: number; expires: number }>
+>();
 type Dependencies = {
   apiKey?: string;
   model?: string;
@@ -17,29 +22,34 @@ export function planningError(
       prefix +
         "this model is unavailable. Set GEMINI_PLANNING_MODEL to a text-and-vision model available in your Google AI Studio account, then redeploy. Your saved image can be reused.",
       503,
+      "planning_model",
     );
   if (status === 400)
     return new DesignError(
       prefix +
         "Google rejected the request format or model settings. Your image is saved; this needs an application configuration fix, not another image purchase.",
       502,
+      "planning_configuration",
     );
   if (status === 401 || status === 403)
     return new DesignError(
       prefix +
         "Google denied access. Check the Gemini API key's restrictions and this model's access in Google AI Studio.",
       503,
+      "planning_access",
     );
   if (status === 429)
     return new DesignError(
       prefix +
         "Google's quota or rate limit was reached. Check Gemini usage and billing, then retry the saved design.",
       429,
+      "planning_quota",
     );
   return new DesignError(
     prefix +
       "Google is temporarily unable to complete the request. Retry the saved design later.",
     502,
+    "planning_temporary",
   );
 }
 type ListedModel = { name: string; outputTokenLimit?: number };
@@ -62,7 +72,12 @@ export function compatiblePlanningModels(value: unknown): ListedModel[] {
 export function rejectionReason(message: string) {
   if (/response.?mime|mime.?type|json mode/i.test(message))
     return "response-format";
-  if (/schema|structured output/i.test(message)) return "response-schema";
+  if (
+    /schema|structured output|too many states|constraint.*complex|maximum.*depth/i.test(
+      message,
+    )
+  )
+    return "response-schema";
   if (/max.?output.?tokens|output.?token.?limit|maximum.*tokens/i.test(message))
     return "output-token-limit";
   if (
@@ -103,14 +118,33 @@ export async function requestGemini(
       503,
     );
   const fetcher = dependencies.fetcher ?? fetch;
+  let cache = preferredModels.get(fetcher);
+  if (!cache) {
+    cache = new Map();
+    preferredModels.set(fetcher, cache);
+  }
+  const cacheKey = createHash("sha256").update(key).digest("hex");
+  const preferred = !pinned ? cache.get(cacheKey) : undefined;
+  if (preferred && preferred.expires > Date.now()) model = preferred.name;
   const signal = AbortSignal.timeout(dependencies.timeoutMs ?? 45000);
   const headers = { "Content-Type": "application/json", "x-goog-api-key": key };
   let generationConfig = { ...config };
+  if (
+    preferred &&
+    preferred.expires > Date.now() &&
+    preferred.outputTokenLimit &&
+    typeof generationConfig.maxOutputTokens === "number"
+  )
+    generationConfig.maxOutputTokens = Math.min(
+      generationConfig.maxOutputTokens,
+      preferred.outputTokenLimit,
+    );
   let requestContents = contents;
   let discovered = false;
   const alternatives: ListedModel[] = [];
   const tried = new Set([model]);
   let lastError: DesignError | undefined;
+  let transientRetries = 0;
   const attachSpecification = () => {
     if (!config.responseSchema) return contents;
     const instruction = {
@@ -178,21 +212,48 @@ export async function requestGemini(
       const compatibleConfig = { ...generationConfig };
       if (!/^gemini-2\.5-flash(?:-\d+)?$/.test(model))
         delete compatibleConfig.thinkingConfig;
-      const response = await fetcher(
-        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-        {
-          method: "POST",
-          headers,
-          signal,
-          body: JSON.stringify({
-            contents: requestContents,
-            generationConfig: compatibleConfig,
-          }),
-        },
-      );
+      let response: Response;
+      try {
+        response = await fetcher(
+          `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+          {
+            method: "POST",
+            headers,
+            signal,
+            body: JSON.stringify({
+              contents: requestContents,
+              generationConfig: compatibleConfig,
+            }),
+          },
+        );
+      } catch (error) {
+        if (
+          !signal.aborted &&
+          transientRetries++ === 0 &&
+          !(
+            error instanceof Error &&
+            ["AbortError", "TimeoutError"].includes(error.name)
+          )
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, 200));
+          continue;
+        }
+        throw error;
+      }
       if (response.ok) {
         try {
           const result = await response.json();
+          if (!pinned) {
+            if (cache.size >= 64) cache.delete(cache.keys().next().value!);
+            cache.set(cacheKey, {
+              name: model,
+              outputTokenLimit:
+                alternatives.find(
+                  (candidate) => candidate.name === `models/${model}`,
+                )?.outputTokenLimit ?? preferred?.outputTokenLimit,
+              expires: Date.now() + 5 * 60_000,
+            });
+          }
           recordUsage("google", model, result.usageMetadata);
           return result;
         } catch {
@@ -200,6 +261,16 @@ export async function requestGemini(
             "Google returned an unreadable planning response. Your saved image can be reused.",
           );
         }
+      }
+      if (
+        response.status >= 500 &&
+        response.status <= 599 &&
+        !signal.aborted &&
+        transientRetries++ === 0
+      ) {
+        await response.body?.cancel().catch(() => {});
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        continue;
       }
       let provider: { error?: { message?: string; status?: string } } = {};
       try {
@@ -230,7 +301,9 @@ export async function requestGemini(
       if (response.status === 404 && (await nextModel())) continue;
       if (
         response.status === 400 &&
-        ["response-schema", "response-format"].includes(reason)
+        ["response-schema", "response-format", "request-argument"].includes(
+          reason,
+        )
       ) {
         if (generationConfig.responseSchema) {
           delete generationConfig.responseSchema;
@@ -275,6 +348,7 @@ export async function requestGemini(
         ? "Planning reached its time limit before Google finished. Your image is saved; retry the plan from this design."
         : "The planning server could not connect to Google. Your image is saved; retry the plan shortly.",
       timedOut ? 504 : 502,
+      timedOut ? "planning_timeout" : "planning_connection",
     );
   }
 }

@@ -52,12 +52,19 @@ export async function loadProjectImages(
       throw new DesignError("A saved photo could not load. Try again.", 503);
     return `data:${data.type || "image/jpeg"};base64,${Buffer.from(await data.arrayBuffer()).toString("base64")}`;
   }
+  const [originalImage, generatedImage, referenceImages, materialImages] =
+    await Promise.all([
+      image(p.originalImage),
+      image(p.generatedImage),
+      Promise.all((p.referenceImages || []).map(image)),
+      Promise.all((p.materialImages || []).map(image)),
+    ]);
   return {
     ...p,
-    originalImage: await image(p.originalImage),
-    generatedImage: await image(p.generatedImage),
-    referenceImages: await Promise.all((p.referenceImages || []).map(image)),
-    materialImages: await Promise.all((p.materialImages || []).map(image)),
+    originalImage,
+    generatedImage,
+    referenceImages,
+    materialImages,
   };
 }
 const uploadCache = new WeakMap<SupabaseClient, Map<string, string>>();
