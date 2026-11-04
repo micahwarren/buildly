@@ -162,8 +162,14 @@ export async function executeJob(
                 ...loaded,
                 ...input,
                 // Omitted optional measurements do not erase known dimensions.
-                width: data.width == null ? loaded.width : input.width!,
-                length: data.length == null ? loaded.length : input.length!,
+                width:
+                  data.width == null
+                    ? loaded.width
+                    : (input as Partial<Project>).width!,
+                length:
+                  data.length == null
+                    ? loaded.length
+                    : (input as Partial<Project>).length!,
                 id: source!,
                 title: project!.title,
                 generatedImage: loaded.generatedImage,
