@@ -1,7 +1,12 @@
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function purchaseEvent(
   event: Record<string, unknown> | null,
-  config: { product: string; app?: string; sandbox: boolean },
+  config: {
+    product: string;
+    products?: Record<string, number>;
+    app?: string;
+    sandbox: boolean;
+  },
 ) {
   if (
     !event ||
@@ -13,9 +18,16 @@ export function purchaseEvent(
     !(config.sandbox && event.environment === "SANDBOX")
   )
     return null;
+  const product = String(event.product_id);
+  const credits =
+    config.products && Object.hasOwn(config.products, product)
+      ? config.products[product]
+      : product === config.product
+        ? 1
+        : 0;
   if (
     event.store !== "APP_STORE" ||
-    event.product_id !== config.product ||
+    ![1, 2, 4].includes(credits) ||
     (config.app && event.app_id !== config.app)
   )
     return null;
@@ -35,5 +47,6 @@ export function purchaseEvent(
     user: event.app_user_id,
     transaction: `${event.environment}:${event.transaction_id}`,
     refund: event.type === "CANCELLATION",
+    credits,
   };
 }

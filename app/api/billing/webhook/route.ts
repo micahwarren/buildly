@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { adminClient } from "@/lib/billing/server";
 import { purchaseEvent } from "@/lib/billing/events";
+import { projectProducts } from "@/lib/billing/products";
 export async function POST(req: Request) {
   const secret = process.env.REVENUECAT_WEBHOOK_SECRET;
   const actual = Buffer.from(req.headers.get("authorization") || "");
@@ -20,6 +21,11 @@ export async function POST(req: Request) {
         product:
           process.env.REVENUECAT_PROJECT_PRODUCT_ID ||
           "sightsaw.project.single",
+        products: Object.fromEntries(
+          projectProducts(process.env.REVENUECAT_PROJECT_PRODUCT_ID).map(
+            (p) => [p.productId, p.credits],
+          ),
+        ),
         app: process.env.REVENUECAT_APP_ID,
         sandbox: process.env.BILLING_ALLOW_SANDBOX === "true",
       });
@@ -34,10 +40,11 @@ export async function POST(req: Request) {
         status: 503,
       });
     if (!account.data.user) return Response.json({ ignored: true });
-    const { error } = await db.rpc("buildly_purchase", {
+    const { error } = await db.rpc("buildly_purchase_pack", {
       p_user: event.user,
       p_transaction: event.transaction,
       p_refund: event.refund,
+      p_units: event.credits,
     });
     if (error)
       return new Response("Purchase not recorded; retry delivery", {

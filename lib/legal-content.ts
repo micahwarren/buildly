@@ -22,7 +22,7 @@ export const legal = {
     { heading: true, text: "Purchases" },
     {
       heading: false,
-      text: "Apple processes App Store payments. RevenueCat receives your account identifier, account email, purchase and transaction details, and technical app/device information to validate purchases and help us support your account. We store verified purchase records and project-credit balances. We do not receive your payment-card details. Photos and project descriptions are not sent to RevenueCat. Purchase records may be retained by providers for legal or financial requirements.",
+      text: "Apple processes App Store payments. RevenueCat receives your account identifier, account email, purchase and transaction details, and technical app/device information to validate purchases and help us support your account. We store verified purchase records and project-token balances. We do not receive your payment-card details. Photos and project descriptions are not sent to RevenueCat. Purchase records may be retained by providers for legal or financial requirements.",
     },
     { heading: true, text: "Device storage" },
     {
@@ -66,7 +66,7 @@ export const legal = {
     { heading: true, text: "Project purchases" },
     {
       heading: false,
-      text: "When purchases are available, the App Store shows the price and currency before confirmation. A one-time consumable purchase adds one project credit: one AI design with its materials and plan, plus three successful design revisions for that project. It is not a subscription. Retrying an incomplete plan does not use a revision. A request that fails before a design is saved releases its reserved credit or revision; a saved design uses it even if its plan still needs a retry. Unused credits do not expire and follow the same account; used credits are not restored as new credits. Saved projects remain readable without another purchase. Apple handles payment and refund requests under its applicable terms. A refunded purchase cannot fund further generation. Deleting your account removes its unused credits and does not automatically request a refund. These terms do not limit applicable consumer rights.",
+      text: "The App Store shows the price and currency before confirmation. One-time packs contain 1, 2 or 4 project tokens. Each token unlocks one AI design with its materials and plan, plus three successful design revisions for that project. Packs can be purchased repeatedly and tokens add to your balance. There is no subscription. Retrying a plan does not use a revision. A request that fails before a design is saved releases its reserved token or revision; a saved design uses it even if its plan still needs a retry. Unused tokens do not expire and stay with the same account; used tokens are not restored as new tokens. Saved projects remain readable without another purchase. Apple handles payment and refund requests under its terms. A refunded pack removes its unused tokens and cannot fund further revisions of projects made with its tokens. Deleting your account removes unused tokens and does not automatically request a refund. These terms do not limit applicable consumer rights.",
     },
     { heading: true, text: "Service availability" },
     {

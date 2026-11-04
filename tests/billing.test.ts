@@ -24,6 +24,7 @@ test("only the configured Apple consumable and environment create credits; only 
     user: event.app_user_id,
     transaction: "PRODUCTION:100000001",
     refund: false,
+    credits: 1,
   });
   for (const changes of [
     { product_id: "other" },
@@ -430,7 +431,7 @@ test("verified webhook delivery records only the authenticated account's receipt
           : { user: { id: user, email: "owner@example.com" } },
         { status: deleted ? 404 : 200 },
       );
-    if (url.endsWith("/rest/v1/rpc/buildly_purchase"))
+    if (url.endsWith("/rest/v1/rpc/buildly_purchase_pack"))
       return Response.json(
         fail
           ? { message: "Fixture database unavailable", code: "fixture_failure" }
@@ -459,6 +460,7 @@ test("verified webhook delivery records only the authenticated account's receipt
     assert.deepEqual(calls.find((x) => x.url.includes("/rpc/"))?.body, {
       p_user: user,
       p_transaction: "PRODUCTION:apple-123",
+      p_units: 1,
       p_refund: false,
     });
     fail = true;
