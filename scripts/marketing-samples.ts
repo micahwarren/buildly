@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { planProject } from "../lib/services/project-planning";
 import { createDesignPlan } from "../lib/services/design-plan";
@@ -19,7 +20,7 @@ const ideas = [
   ],
 ];
 const projects = await Promise.all(
-  ideas.map(async ([slug, description]) => {
+  ideas.slice(0, process.env.SITEAI_MARKETING_ARTIFACT_EXPORT === "1" ? 1 : ideas.length).map(async ([slug, description]) => {
     let p = await planProject({
       originalImage: before,
       description,
@@ -40,13 +41,13 @@ const projects = await Promise.all(
     const image = /^data:image\/(\w+);base64,([\s\S]+)$/.exec(p.generatedImage);
     if (!image) throw Error("Marketing design image missing");
     await writeFile(
-      `public/appstore/${slug}.${image[1]}`,
-      Buffer.from(image[2], "base64"),
+      `public/appstore/${slug}.jpg`,
+      await sharp(Buffer.from(image[2], "base64")).resize({width:1200,withoutEnlargement:true}).jpeg({quality:92}).toBuffer(),
     );
     p = {
       ...p,
       originalImage: "/appstore/space.jpg",
-      generatedImage: `/appstore/${slug}.${image[1]}`,
+      generatedImage: `/appstore/${slug}.jpg`,
     };
     console.log(
       "Marketing example created:",
@@ -60,6 +61,12 @@ const projects = await Promise.all(
   }),
 );
 await writeFile("public/appstore/projects.json", JSON.stringify(projects));
+if(process.env.SITEAI_MARKETING_ARTIFACT_EXPORT === "1") {
+ for(const file of ["projects.json", ...projects.map(p=>p.generatedImage.split("/").pop()!)]) {
+ const data=(await readFile(`public/appstore/${file}`)).toString("base64");
+ for(let offset=0;offset<data.length;offset+=6000) console.log(`SITEAI_PUBLIC_ARTIFACT ${file} ${offset} ${data.slice(offset,offset+6000)}`);
+ }
+}
 
 }
 main().catch(error => { console.error(error); process.exitCode=1; });
