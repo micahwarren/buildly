@@ -54,6 +54,80 @@ test("only the configured Apple consumable and environment create credits; only 
   );
 });
 
+test("saved beta projects retain plan recovery without credits; new projects and paid allowances remain protected", async () => {
+  const db = new PGlite();
+  try {
+    await db.exec(
+      "create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key);create table public.projects(id text primary key,user_id uuid,payload jsonb,created_at timestamptz,deleted_at timestamptz);",
+    );
+    await db.exec(
+      await readFile(
+        new URL("../supabase/billing.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    const user = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    await db.query("insert into auth.users values($1)", [user]);
+    await db.query(
+      "insert into projects values('old',$1,'{}','2026-11-01',null),('new',$1,'{}','2026-11-05',null),('paid',$1,'{}','2026-11-01',null),('deleted',$1,'{}','2026-11-01','2026-11-02')",
+      [user],
+    );
+    await db.query(
+      "insert into buildly_project_access values('paid',$1,'paid',1,null)",
+      [user],
+    );
+    const migration = await readFile(
+      new URL("../supabase/billing-beta-access.sql", import.meta.url),
+      "utf8",
+    );
+    await db.exec(migration);
+    await db.exec(migration);
+    assert.equal(
+      (await db.query("select * from buildly_credits")).rows.length,
+      0,
+    );
+    assert.equal(
+      (await db.query("select * from buildly_receipts")).rows.length,
+      0,
+    );
+    assert.deepEqual(
+      (
+        await db.query(
+          "select id,revisions from buildly_project_access order by id",
+        )
+      ).rows,
+      [
+        { id: "old", revisions: 3 },
+        { id: "paid", revisions: 1 },
+      ],
+    );
+    const reservation = (
+      await db.query<{ id: string }>(
+        "select buildly_reserve($1,'old','plan') as id",
+        [user],
+      )
+    ).rows[0].id;
+    await db.query("select buildly_finish($1,$2,true,'old')", [
+      user,
+      reservation,
+    ]);
+    assert.equal(
+      (
+        await db.query<{ revisions: number }>(
+          "select revisions from buildly_project_access where id='old'",
+        )
+      ).rows[0].revisions,
+      3,
+    );
+    await assert.rejects(
+      db.query("select buildly_reserve($1,'new','design')", [user]),
+      /PAYMENT_REQUIRED/,
+    );
+  } finally {
+    await db.close();
+  }
+});
+
 test("durable image checkpoints do not regain credits on stale cleanup, and refunded spent purchases cannot fund more revisions", async () => {
   const db = new PGlite();
   try {
