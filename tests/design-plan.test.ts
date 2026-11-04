@@ -240,11 +240,13 @@ test("corrects a rejected plan once, retaining both photos and the requested sco
         );
         const plan = fixture();
         if (calls === 1) plan.steps[0].materials = ["Unlisted screws"];
-        else
+        else {
+          assert.equal(body.generationConfig.maxOutputTokens, 32000);
           assert.match(
             body.contents[0].parts.at(-1).text,
             /references must match/,
           );
+        }
         return Response.json({
           candidates: [
             {
@@ -398,6 +400,88 @@ test("staged planning preserves purchased equipment and installation scope acros
   assert.equal(result.materials![0].quantity, 1);
   assert.equal(result.materials![0].unitCost, 5500);
   assert.equal(result.estimatedCostLow, Math.round((5500 + 212 * 4) * 0.8));
+});
+
+test("harmless reference formatting is canonicalized, while different products remain invalid", () => {
+  const plan = fixture();
+  plan.steps[0].materials = ["  concrete   PAVERS ", "Base aggregate"];
+  plan.steps[0].tools = ["tape measure"];
+  const result = validatePlan(plan);
+  assert.deepEqual(result.steps[0].materials, [
+    "Concrete pavers",
+    "Base aggregate",
+  ]);
+  assert.deepEqual(result.steps[0].tools, ["Tape measure"]);
+  const different = fixture();
+  different.steps[0].materials = ["Concrete pavers 2 inch"];
+  assert.throws(() => validatePlan(different), /phase 1: material references/);
+});
+
+test("a malformed instruction section is repaired without discarding the accepted catalog or other phases", async () => {
+  const bytes = await sharp({
+    create: { width: 20, height: 20, channels: 3, background: "white" },
+  })
+    .jpeg()
+    .toBuffer();
+  const image = `data:image/jpeg;base64,${bytes.toString("base64")}`;
+  const plan = fixture();
+  const sections = new Map<number, number>();
+  let outlines = 0;
+  const result = await createDesignPlan(
+    makeDemo({ originalImage: image, generatedImage: image }),
+    {
+      apiKey: "test",
+      fetcher: async (_url, init) => {
+        const body = JSON.parse(init!.body as string);
+        let payload;
+        if (body.generationConfig.responseSchema.properties.stepTitles) {
+          outlines++;
+          const { steps, ...outline } = plan;
+          payload = { ...outline, stepTitles: steps.map((s) => s.title) };
+        } else {
+          const prompt = body.contents[0].parts.at(-1).text;
+          const range = /Expand ONLY phases (\d+)–(\d+)/.exec(prompt)!;
+          const first = Number(range[1]),
+            count = (sections.get(first) || 0) + 1;
+          sections.set(first, count);
+          const props =
+            body.generationConfig.responseSchema.properties.steps.items
+              .properties;
+          assert.deepEqual(
+            props.materials.items.enum,
+            plan.materials.map((m) => m.item),
+          );
+          assert.deepEqual(props.tools.items.enum, plan.tools);
+          assert.equal(props.actions.minItems, 3);
+          assert.equal(props.checks.minItems, 1);
+          const steps = structuredClone(
+            plan.steps.slice(first - 1, Number(range[2])),
+          );
+          if (first === 1 && count === 1)
+            steps[0].actions = ["Incomplete action"];
+          if (first === 1 && count === 2) {
+            assert.match(prompt, /Correct this section only/);
+            assert.match(prompt, /needs 3–12 concrete actions/);
+            assert.equal(body.generationConfig.maxOutputTokens, 10000);
+          }
+          payload = { steps };
+        }
+        return Response.json({
+          candidates: [
+            {
+              finishReason: "STOP",
+              content: { parts: [{ text: JSON.stringify(payload) }] },
+            },
+          ],
+        });
+      },
+    },
+  );
+  assert.equal(outlines, 1);
+  assert.deepEqual([...sections.values()], [2, 1, 1]);
+  assert.deepEqual(result.materials, plan.materials);
+  assert.deepEqual(result.steps, plan.steps);
+  assert.equal(result.estimatedCostLow, Math.round(212 * 4 * 0.8));
 });
 
 test("recommendations preserve design-specific guidance and reject malformed model values", () => {
