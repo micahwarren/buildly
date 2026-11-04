@@ -159,6 +159,8 @@ test("revision planning recovers automatically from its saved image and never re
     authorize: f.authorize,
     design: f.design,
   });
+  f.projects.get(key)!.width = 2;
+  f.projects.get(key)!.length = 4;
   const parent = structuredClone(f.projects.get(key)!);
   const revision = "66666666-6666-4666-8666-666666666666";
   let images = 0,
@@ -171,6 +173,16 @@ test("revision planning recovers automatically from its saved image and never re
       hooks?: { onDesign?: (p: Project) => Promise<void> },
     ) => {
       images++;
+      assert.equal(
+        p.width,
+        2,
+        "Omitted revision measurements preserve the original width",
+      );
+      assert.equal(
+        p.length,
+        4,
+        "Omitted revision measurements preserve the original length",
+      );
       const next = {
         ...p,
         ...unavailablePlan("Temporary planner failure"),
