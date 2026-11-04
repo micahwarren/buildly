@@ -35,7 +35,9 @@ export async function GET(req: Request) {
       throw new DesignError("Invalid request.", 400);
     let query = db
       .from("buildly_jobs")
-      .select("id,kind,state,result_id,created_at,expires_at")
+      .select(
+        "id,kind,state,result_id,created_at,expires_at,failure_code,failure_message",
+      )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(20);

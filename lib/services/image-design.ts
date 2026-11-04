@@ -6,6 +6,7 @@ export class DesignError extends Error {
   constructor(
     message: string,
     public status = 502,
+    public code?: string,
   ) {
     super(message);
     this.name = "DesignError";
@@ -325,6 +326,7 @@ export async function createDesign(
     throw new DesignError(
       "The image service could not process this photo or description. Please try a different photo or rephrase your idea.",
       422,
+      "image_not_processed",
     );
   const encoded =
     provider === "gemini"

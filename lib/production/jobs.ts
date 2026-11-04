@@ -102,7 +102,12 @@ export async function executeJob(
         state: job.state,
         project: await ownedProject(db, user.id, job.result_id),
       };
-    return { jobId: id, state: job.state };
+    return {
+      jobId: id,
+      state: job.state,
+      failure_message: job.failure_message || undefined,
+      failure_code: job.failure_code || undefined,
+    };
   }
   const started = Date.now();
   let confirmDelivered: ((id: string) => Promise<void>) | null = null;
@@ -190,13 +195,22 @@ export async function executeJob(
     await update({
       state: "failed",
       failure_code:
-        error instanceof DesignError ? String(error.status) : "internal",
+        error instanceof DesignError
+          ? error.code || String(error.status)
+          : "internal",
+      failure_message:
+        error instanceof DesignError ? error.message.slice(0, 1200) : null,
     }).catch(() => {});
     console.warn("sightsaw_job", {
       id,
       kind,
       state: "failed",
       durationMs: Date.now() - started,
+      // Codes identify the failing stage without logging photos or user text.
+      failure:
+        error instanceof DesignError
+          ? error.code || String(error.status)
+          : "internal",
     });
     throw error;
   }

@@ -246,3 +246,46 @@ test("requests fail closed before generation and malformed bodies are rejected",
   );
   assert.equal(f.calls(), 0);
 });
+
+test("revision clarification survives a lost response without another AI call or leaking internal errors", async () => {
+  const f = await fixture();
+  await executeJob(f.request(), "design", true, {
+    authorize: f.authorize,
+    design: f.design,
+  });
+  const id = "44444444-4444-4444-8444-444444444444";
+  const retry = () => f.request({ id: key, change: "Make it bigger" }, id);
+  let calls = 0;
+  const dependencies = {
+    authorize: f.authorize,
+    refine: async () => {
+      calls++;
+      throw new DesignError(
+        "Please clarify the change: How wide should it be?",
+        422,
+        "revision_clarification",
+      );
+    },
+  };
+  await assert.rejects(
+    executeJob(retry(), "refine", true, dependencies),
+    /How wide/,
+  );
+  const recovered = await executeJob(retry(), "refine", true, dependencies);
+  assert.equal(recovered.state, "failed");
+  assert.equal(recovered.failure_code, "revision_clarification");
+  assert.match(recovered.failure_message, /How wide/);
+  assert.equal(calls, 1);
+  assert.ok(f.projects.has(key), "The previous design stays saved");
+  const internalId = "55555555-5555-4555-8555-555555555555";
+  await assert.rejects(
+    executeJob(f.request({}, internalId), "design", true, {
+      authorize: f.authorize,
+      design: async () => {
+        throw Error("private infrastructure error");
+      },
+    }),
+  );
+  assert.equal(f.jobs.get(internalId)?.failure_message, null);
+  assert.equal(f.jobs.get(internalId)?.failure_code, "internal");
+});

@@ -32,6 +32,7 @@ export async function interpretRefinement(
     throw new DesignError(
       `Please clarify the change: ${data.clarification.slice(0, 1000)}`,
       422,
+      "revision_clarification",
     );
   if (
     typeof data?.description !== "string" ||
@@ -50,6 +51,7 @@ export async function interpretRefinement(
     throw new DesignError(
       "The requested revision could not be interpreted. Please state the desired dimensions and changes explicitly.",
       422,
+      "revision_not_interpreted",
     );
   return {
     description: data.description,

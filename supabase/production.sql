@@ -13,10 +13,12 @@ create table if not exists public.buildly_jobs (
  state text not null default 'running' check(state in ('running','image_saved','complete','failed','interrupted')),
  result_id text,
  failure_code text,
+ failure_message text,
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now(),
  expires_at timestamptz not null default now()+interval '7 minutes'
 );
+alter table public.buildly_jobs add column if not exists failure_message text;
 create index if not exists buildly_jobs_user_created on public.buildly_jobs(user_id,created_at desc);
 create index if not exists buildly_jobs_created on public.buildly_jobs(created_at);
 alter table public.buildly_account_state enable row level security;
