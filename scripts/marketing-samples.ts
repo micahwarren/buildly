@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { planProject } from "../lib/services/project-planning";
 import { createDesignPlan } from "../lib/services/design-plan";
+async function main() {
 if (process.env.SITEAI_MARKETING_SAMPLES !== "1")
   throw Error("Explicit marketing generation opt-in required");
 const before =
@@ -59,3 +60,6 @@ const projects = await Promise.all(
   }),
 );
 await writeFile("public/appstore/projects.json", JSON.stringify(projects));
+
+}
+main().catch(error => { console.error(error); process.exitCode=1; });
