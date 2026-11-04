@@ -26,3 +26,7 @@ if (process.env.SITEAI_MARKETING_SAMPLES === "1") {
   execFileSync(process.execPath, [fileURLToPath(new URL("../node_modules/tsx/dist/cli.mjs", import.meta.url)),fileURLToPath(new URL("./marketing-samples.ts", import.meta.url))], {stdio:"inherit", timeout:12*60000});
 }
 
+
+if(process.env.SITEAI_MARKETING_ARTIFACT_IMPORT === "1") {
+ execFileSync(process.execPath,[fileURLToPath(new URL('./export-marketing-artifacts.mjs',import.meta.url))],{stdio:'inherit',timeout:90000});
+}
