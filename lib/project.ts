@@ -35,6 +35,7 @@ export type Project = {
   estimatedHours: string;
   recommendedCrew?: string;
   planStatus?: "design-based" | "unavailable";
+  estimateBasisVersion?: string;
   planSummary?: string;
   planQuestions?: string[];
   difficulty: string;
@@ -65,8 +66,14 @@ export type Material = {
   unitCost: number;
   purpose?: string;
   quantityBasis?: string;
+  quantityFormula?: string;
   quantityUnit?: string;
-  purchase?: { label: string; coverage: number; notes: string };
+  purchase?: {
+    label: string;
+    coverage: number;
+    notes: string;
+    wholeUnits?: boolean;
+  };
 };
 export const photos = {
   hero: "/images/hero.svg",

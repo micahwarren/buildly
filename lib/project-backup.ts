@@ -104,6 +104,8 @@ export function parseProjectBackup(text: string): Project {
     (p.planStatus !== undefined &&
       !["design-based", "unavailable"].includes(p.planStatus)) ||
     (p.planSummary !== undefined && typeof p.planSummary !== "string") ||
+    (p.estimateBasisVersion !== undefined &&
+      typeof p.estimateBasisVersion !== "string") ||
     !optionalStrings(p.planQuestions)
   )
     return fail();
@@ -117,9 +119,15 @@ export function parseProjectBackup(text: string): Project {
     ])
       if (!optionalStrings(step[key])) return fail();
   for (const material of p.materials)
-    for (const key of ["purpose", "quantityBasis"])
+    for (const key of ["purpose", "quantityBasis", "quantityFormula"])
       if (material[key] !== undefined && typeof material[key] !== "string")
         return fail();
+  for (const material of p.materials)
+    if (
+      material.purchase?.wholeUnits !== undefined &&
+      typeof material.purchase.wholeUnits !== "boolean"
+    )
+      return fail();
   try {
     parseDetails(p.details);
   } catch {
