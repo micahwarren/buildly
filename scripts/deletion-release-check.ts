@@ -12,7 +12,7 @@ assert.ok(created.data.user&&!created.error,'Isolated account could not be creat
 const id=created.data.user.id,base=`https://api.revenuecat.com/v2/projects/${process.env.REVENUECAT_PROJECT_ID}/customers/${id}`;
 const headers={Authorization:`Bearer ${process.env.REVENUECAT_SECRET_API_KEY}`,'Content-Type':'application/json'};
 try {
- const rc=await fetch(base.slice(0,base.lastIndexOf('/')),{method:'POST',headers,body:JSON.stringify({id})});assert.ok(rc.ok,'Provider fixture creation failed');
+ const rc=await fetch(base.slice(0,base.lastIndexOf('/')),{method:'POST',headers,body:JSON.stringify({id})});if (!rc.ok) { const body=await rc.json().catch(()=>({})); throw Error(`Provider fixture creation failed: HTTP ${rc.status}, ${String(body.type||'unknown')}`); }
  const file=await db.storage.from('project-images').upload(`${id}/profile/deletion-check.png`,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=','base64'),{contentType:'image/png'});assert.equal(file.error,null);
  const signed=await db.auth.signInWithPassword({email,password});assert.ok(signed.data.session&&!signed.error);
  const result=await DELETE(new Request('https://siteai.test/api/account',{method:'DELETE',headers:{Authorization:`Bearer ${signed.data.session.access_token}`}}));
