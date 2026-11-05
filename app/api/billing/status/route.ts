@@ -6,18 +6,19 @@ export async function GET(req: Request) {
     if (process.env.BILLING_ENABLED !== "true")
       throw new DesignError("Project purchases are not available yet.", 503);
     const { db, user } = await authenticatedUser(req);
-    const { data, error } = await db
-      .from("buildly_credits")
-      .select("balance")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    if (error) throw new DesignError("Purchase balance is unavailable.", 503);
-    const receipts = await db
-      .from("buildly_receipts")
-      .select("transaction_id", { count: "exact", head: true })
-      .eq("user_id", user.id);
-    if (receipts.error)
-      throw new DesignError("Purchase history is unavailable.", 503);
+    const [credits, receipts] = await Promise.all([
+      db
+        .from("buildly_credits")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      db
+        .from("buildly_receipts")
+        .select("transaction_id", { count: "exact", head: true })
+        .eq("user_id", user.id),
+    ]);
+    if (credits.error || receipts.error)
+      throw new DesignError("Purchase balance is unavailable.", 503);
     const projectId = new URL(req.url).searchParams.get("projectId");
     let access:
       | { projectAccess: boolean; revisions?: number; revoked?: boolean }
@@ -74,7 +75,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.json(
       {
-        credits: data?.balance || 0,
+        credits: credits.data?.balance || 0,
         receiptCount: receipts.count || 0,
         ...access,
       },

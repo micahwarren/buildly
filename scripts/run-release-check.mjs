@@ -38,3 +38,7 @@ if(process.env.SITEAI_APPSTORE_ASSET_UPLOAD === "1") {
 if(process.env.SITEAI_MAIL_DELIVERY_CHECK === "1") {
  execFileSync(process.execPath,[fileURLToPath(new URL('./mail-delivery-check.mjs',import.meta.url))],{stdio:'inherit',timeout:210000});
 }
+
+if(process.env.SITEAI_BILLING_SYNC_CHECK === "1") {
+ execFileSync(process.execPath,[fileURLToPath(new URL('../node_modules/tsx/dist/cli.mjs',import.meta.url)),fileURLToPath(new URL('./billing-sync-check.ts',import.meta.url))],{stdio:'inherit',timeout:90000});
+}
