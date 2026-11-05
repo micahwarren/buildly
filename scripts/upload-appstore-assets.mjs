@@ -4,8 +4,8 @@ if(process.env.SITEAI_APPSTORE_ASSET_UPLOAD!=='1')throw Error('Explicit Apple as
 const assets=JSON.parse(process.env.SITEAI_APPSTORE_UPLOAD_OPERATIONS||'null');
 if(!Array.isArray(assets)||assets.length!==5)throw Error('Five owned listing assets required');
 for(const asset of assets){
- if(!/^site-ai-0[1-5]-[a-z]+\.png$/.test(asset.fileName))throw Error('Unexpected listing filename');
- const bytes=await readFile('public/appstore/listing/'+asset.fileName.replace(/^site-ai-/,''));
+ if(!/^site-ai-(?:v[0-9]{1,4}-)?0[1-5]-[a-z]+\.png$/.test(asset.fileName))throw Error('Unexpected listing filename');
+ const bytes=await readFile('public/appstore/listing/'+asset.fileName.replace(/^site-ai-(?:v[0-9]{1,4}-)?/,''));
  if(bytes.length!==asset.fileSize||createHash('md5').update(bytes).digest('hex')!==asset.checksum)throw Error('Listing bytes changed after Apple reservation');
  let total=0;
  for(const op of asset.operations){
