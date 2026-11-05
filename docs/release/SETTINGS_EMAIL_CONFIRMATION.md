@@ -4,7 +4,7 @@ This release changes the Expo app and adds an authenticated pending-photo-deleti
 
 ## Email provider: configuration still required
 
-Live Supabase Auth project: `fewhurddrzmnqabeelyi` (SightSaw). Email confirmation is enabled, the minimum new-password length is eight, and the redirect allowlist contains `buildly://auth/confirm` and `buildly://auth/callback`.
+Live Supabase Auth project: `fewhurddrzmnqabeelyi` (Site AI). Email confirmation is enabled, the minimum new-password length is eight, and the redirect allowlist contains `buildly://auth/confirm` and `buildly://auth/callback`.
 
 The project currently uses Supabase's default mail sender with **no custom SMTP configured**. Its confirmation subject is still **Confirm your email address**. On November 2, 2026 UTC, Supabase rejected the actual management-API template/subject update with HTTP 400: “Email template modification is not available for free tier projects using the default email provider. Please upgrade your plan or configure a custom SMTP provider.” It separately rejected the sender-name update because custom SMTP is absent. No plan was upgraded and no partial sender/template update was applied.
 
@@ -23,12 +23,18 @@ Google hosting the support inbox does not by itself provide a configured transac
 
 After SMTP is configured, set **Authentication → Email Templates → Confirm signup**:
 
-- Subject: **Confirm your SightSaw account**.
+- Subject: **Confirm your Site AI account**.
 - HTML: `supabase/templates/confirmation.html` in the service repository.
 - Keep every `{{ .ConfirmationURL }}` expression intact. Supabase must generate the real verification URL; do not substitute a hardcoded app link or remove verification tokens.
-- Sender display name: **SightSaw** through SMTP settings, not only the HTML.
+- Sender display name: **Site AI** through SMTP settings, not only the HTML.
 
 The prepared template has the exact welcome copy, a prominent **Confirm email** button, a fallback confirmation URL and no Supabase promotional branding. It is **not yet active**. Live inbox appearance, From/Subject, spam delivery, confirmation and reset messages remain unverified until the sender is configured. The default provider currently allows only two email sends per hour project-wide and is unsuitable as a production sender. The app's 60-second resend cooldown does not override provider limits; it handles HTTP 429 without pretending a message was sent.
+
+## Recovery email
+
+The service repository also provides `supabase/templates/recovery.html`. Activate it only after real custom SMTP is configured, with subject **Reset your Site AI password**. Preserve the real `{{ .ConfirmationURL }}` in every link; do not replace it with a hardcoded app route.
+
+The current setup path reuses the owner's Google support mailbox if Workspace app passwords are available: `smtp.gmail.com`, port 465, sender/username `support@nomappsllc.com`, sender name `Site AI`, and a Google app password entered directly in Supabase's SMTP settings. The normal Google password must not be used. No SMTP host is currently configured; this is a pending setup, not verified delivery. The connected Supabase account exposes only Site AI, so the other app's sender could not be inspected.
 
 ## App behavior
 
