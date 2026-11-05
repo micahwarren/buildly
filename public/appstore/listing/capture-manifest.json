@@ -1,7 +1,14 @@
 {
-  "capturedAt": "2026-11-05T19:58:06.988Z",
-  "sourceCommit": "9b882cba42a10cc7e551f1f3bed91daef8428374",
-  "method": "Before/after company-owned photo and genuine Gemini result, with enlarged unaltered shared React Native Web screen captures; isolated account transport. Marketing framing; not physical-iPhone captures.",
+  "capturedAt": "2026-11-05T20:26:45.989Z",
+  "sourceCommit": "5d66d824110f09d13838a99c0e5d253738fa763e",
+  "device": "iPhone 6.7-inch",
+  "method": "Company-owned photo and genuine Gemini result; unaltered shared React Native Web UI captured at the stated device viewport, with marketing framing. Not a physical-device or simulator capture.",
+  "viewport": {
+    "width": 430,
+    "height": 932,
+    "deviceScaleFactor": 3,
+    "mobile": true
+  },
   "dimensions": {
     "width": 1290,
     "height": 2796
@@ -9,9 +16,12 @@
   "listingAssets": [
     "01-design.jpg",
     "02-projects.jpg",
-    "03-materials.jpg",
-    "04-plan.jpg",
-    "05-measurements.jpg"
+    "03-details.jpg",
+    "04-materials.jpg",
+    "05-plan.jpg",
+    "06-measurements.jpg",
+    "07-tools.jpg",
+    "08-revisions.jpg"
   ],
   "nativePurchaseReviewScreenshot": "Requires real iOS capture; no web purchase screen submitted as native."
 }

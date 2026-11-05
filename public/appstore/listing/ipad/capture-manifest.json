@@ -1,0 +1,27 @@
+{
+  "capturedAt": "2026-11-05T20:28:58.780Z",
+  "sourceCommit": "5d66d824110f09d13838a99c0e5d253738fa763e",
+  "device": "iPad 13-inch",
+  "method": "Company-owned photo and genuine Gemini result; unaltered shared React Native Web UI captured at the stated device viewport, with marketing framing. Not a physical-device or simulator capture.",
+  "viewport": {
+    "width": 1032,
+    "height": 1376,
+    "deviceScaleFactor": 2,
+    "mobile": true
+  },
+  "dimensions": {
+    "width": 2064,
+    "height": 2752
+  },
+  "listingAssets": [
+    "01-design.jpg",
+    "02-projects.jpg",
+    "03-details.jpg",
+    "04-materials.jpg",
+    "05-plan.jpg",
+    "06-measurements.jpg",
+    "07-tools.jpg",
+    "08-revisions.jpg"
+  ],
+  "nativePurchaseReviewScreenshot": "Requires real iOS capture; no web purchase screen submitted as native."
+}

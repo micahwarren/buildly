@@ -2,10 +2,11 @@ import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 if(process.env.SITEAI_APPSTORE_ASSET_UPLOAD!=='1')throw Error('Explicit Apple asset upload opt-in required');
 const assets=JSON.parse(process.env.SITEAI_APPSTORE_UPLOAD_OPERATIONS||'null');
-if(!Array.isArray(assets)||assets.length!==5)throw Error('Five owned listing assets required');
+if(!Array.isArray(assets)||assets.length!==16)throw Error('Eight owned iPhone and eight owned iPad listing assets required');
 for(const asset of assets){
- if(!/^site-ai-(?:v[0-9]{1,4}-)?0[1-5]-[a-z]+\.(?:png|jpg)$/.test(asset.fileName))throw Error('Unexpected listing filename');
- const bytes=await readFile('public/appstore/listing/'+asset.fileName.replace(/^site-ai-(?:v[0-9]{1,4}-)?/,''));
+ const match=/^site-ai-v[0-9]{1,4}-(ipad-)?(0[1-8]-[a-z]+\.jpg)$/.exec(asset.fileName);
+ if(!match)throw Error('Unexpected listing filename');
+ const bytes=await readFile('public/appstore/listing/'+(match[1]?'ipad/':'')+match[2]);
  if(bytes.length!==asset.fileSize||createHash('md5').update(bytes).digest('hex')!==asset.checksum)throw Error('Listing bytes changed after Apple reservation');
  let total=0;
  for(const op of asset.operations){
