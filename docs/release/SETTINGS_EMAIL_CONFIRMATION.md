@@ -1,3 +1,9 @@
+# Current status — November 5, 2026
+
+Google SMTP and Site AI confirmation/recovery subjects and templates are now configured and read back. Real inbox delivery, resend and native confirmation/reset acceptance remain unverified because the cloud test could not start. See [SMTP_STATUS.md](SMTP_STATUS.md). The older default-provider rejection and setup notes below are historical.
+
+---
+
 # Settings and email confirmation release
 
 This release changes the Expo app and adds an authenticated pending-photo-deletion count to the existing service. It changes no payment code or database schema.
