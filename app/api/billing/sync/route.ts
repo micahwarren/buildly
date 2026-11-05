@@ -30,10 +30,18 @@ export async function POST(req: Request) {
       .eq("user_id", user.id);
     if (recorded.error)
       throw new DesignError("Purchase history is unavailable.", 503);
+    const matched = new Set<string>();
     const known = new Set((recorded.data || []).map((x) => x.transaction_id));
     // A caller may only recover their own verified purchases; the existing atomic
     // ledger deduplicates this path against webhook delivery, including refunds.
     await reconcilePurchases(user.id, async (receipt) => {
+      if (
+        transaction &&
+        (receipt.providerId === transaction ||
+          receipt.transaction.slice(receipt.transaction.indexOf(":") + 1) ===
+            transaction)
+      )
+        matched.add(receipt.transaction);
       if (known.has(receipt.transaction)) return;
       const result = await db.rpc("buildly_purchase_pack", {
         p_user: user.id,
@@ -64,6 +72,7 @@ export async function POST(req: Request) {
             .eq("user_id", user.id)
             .eq("refunded", false)
             .in("transaction_id", [
+              ...matched,
               `PRODUCTION:${transaction}`,
               `SANDBOX:${transaction}`,
             ])

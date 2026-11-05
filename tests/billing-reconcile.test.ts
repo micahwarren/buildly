@@ -168,3 +168,108 @@ test("provider failure and missing customer never fabricate credits", async () =
     cleanup();
   }
 });
+
+test("recovery endpoint ignores forged owners and amounts, supports native transaction aliases, and deduplicates the ledger", async () => {
+  const cleanup = setup(),
+    originalFetch = globalThis.fetch;
+  const names = [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "BILLING_ENABLED",
+  ];
+  const old = Object.fromEntries(names.map((k) => [k, process.env[k]]));
+  Object.assign(process.env, {
+    NEXT_PUBLIC_SUPABASE_URL: "https://billing-fixture.supabase.co",
+    SUPABASE_SERVICE_ROLE_KEY: "fixture-service",
+    BILLING_ENABLED: "true",
+  });
+  let recorded = false,
+    refunded = false,
+    writes = 0;
+  globalThis.fetch = async (input, init) => {
+    const url = new URL(String(input));
+    if (url.hostname === "api.revenuecat.com") {
+      assert.ok(url.pathname.includes(user));
+      return Response.json({
+        items: [
+          { ...purchase, id: "rc_pch_sdk", product_id: "prode8cc5fe6d1" },
+        ],
+        next_page: null,
+      });
+    }
+    if (url.pathname === "/auth/v1/user")
+      return Response.json({ id: user, email: "fixture@example.invalid" });
+    if (url.pathname.endsWith("/rpc/buildly_purchase_pack")) {
+      assert.deepEqual(JSON.parse(String(init?.body)), {
+        p_user: user,
+        p_transaction: "SANDBOX:20000001",
+        p_units: 2,
+        p_refund: false,
+      });
+      writes++;
+      recorded = true;
+      return Response.json(null);
+    }
+    if (url.pathname.endsWith("/buildly_credits"))
+      return Response.json([{ balance: recorded ? 2 : 0 }]);
+    if (url.pathname.endsWith("/buildly_receipts")) {
+      assert.equal(url.searchParams.get("user_id"), "eq." + user);
+      if (init?.method === "HEAD")
+        return new Response(null, {
+          headers: { "Content-Range": `0-0/${recorded ? 1 : 0}` },
+        });
+      const proof = url.searchParams.has("refunded");
+      return Response.json(
+        recorded && (!proof || !refunded)
+          ? [{ transaction_id: "SANDBOX:20000001" }]
+          : [],
+      );
+    }
+    throw Error("Unexpected billing fixture request");
+  };
+  try {
+    const { POST } = await import("../app/api/billing/sync/route");
+    const req = () =>
+      new Request("https://siteai.test/api/billing/sync", {
+        method: "POST",
+        headers: { authorization: "Bearer fixture-session" },
+        body: JSON.stringify({
+          transaction: "rc_pch_sdk",
+          user: other,
+          credits: 1000,
+        }),
+      });
+    let result = await POST(req());
+    assert.equal(result.status, 200);
+    assert.deepEqual(await result.json(), {
+      credits: 2,
+      receiptCount: 1,
+      verified: true,
+    });
+    assert.equal(writes, 1);
+    result = await POST(req());
+    assert.equal(result.status, 200);
+    assert.equal(writes, 1, "Existing server receipts are never reissued");
+    refunded = true;
+    result = await POST(req());
+    assert.equal(
+      (await result.json()).verified,
+      false,
+      "A refunded ledger receipt cannot complete checkout",
+    );
+    const bad = await POST(
+      new Request("https://siteai.test/api/billing/sync", {
+        method: "POST",
+        headers: { authorization: "Bearer fixture-session" },
+        body: "{",
+      }),
+    );
+    assert.equal(bad.status, 400);
+  } finally {
+    globalThis.fetch = originalFetch;
+    cleanup();
+    for (const k of names)
+      if (old[k] === undefined) delete process.env[k];
+      else process.env[k] = old[k];
+  }
+});

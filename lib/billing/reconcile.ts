@@ -2,6 +2,7 @@ import { projectProducts } from "./products";
 import { DesignError } from "../services/image-design";
 
 type StorePurchase = {
+  id?: string;
   customer_id: string;
   product_id: string;
   store_purchase_identifier: string;
@@ -18,7 +19,11 @@ const catalogs = new Map<
 /** Only RevenueCat's server response can authorize a receipt. Never trust client amounts or identities. */
 export async function reconcilePurchases(
   user: string,
-  apply: (receipt: { transaction: string; credits: number }) => Promise<void>,
+  apply: (receipt: {
+    transaction: string;
+    credits: number;
+    providerId?: string;
+  }) => Promise<void>,
   request: typeof fetch = fetch,
 ) {
   const key = process.env.REVENUECAT_SECRET_API_KEY,
@@ -94,6 +99,7 @@ export async function reconcilePurchases(
   let page = first;
   for (let n = 0; n < 10; n++) {
     for (const p of page.items as StorePurchase[]) {
+      if (!p || typeof p !== "object") continue;
       const units = packs.get(catalog.value.get(p.product_id) || "");
       if (
         p.customer_id !== user ||
@@ -120,6 +126,7 @@ export async function reconcilePurchases(
       await apply({
         transaction: `${p.environment.toUpperCase()}:${p.store_purchase_identifier}`,
         credits: units,
+        ...(typeof p.id === "string" ? { providerId: p.id } : {}),
       });
     }
     if (!page.next_page) return;
