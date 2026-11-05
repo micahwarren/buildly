@@ -34,3 +34,7 @@ if(process.env.SITEAI_MARKETING_ARTIFACT_IMPORT === "1") {
 if(process.env.SITEAI_APPSTORE_ASSET_UPLOAD === "1") {
  execFileSync(process.execPath,[fileURLToPath(new URL('./upload-appstore-assets.mjs',import.meta.url))],{stdio:'inherit',timeout:8*60000});
 }
+
+if(process.env.SITEAI_MAIL_DELIVERY_CHECK === "1") {
+ execFileSync(process.execPath,[fileURLToPath(new URL('./mail-delivery-check.mjs',import.meta.url))],{stdio:'inherit',timeout:210000});
+}
