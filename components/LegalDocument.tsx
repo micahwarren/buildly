@@ -33,7 +33,7 @@ export function LegalDocument({ kind }: { kind: "privacy" | "terms" }) {
           ))}
         </ul>
       </aside>
-      <p className="legal-intro">{items[0].text}</p>
+      <p className="legal-intro">{items[0].text.replace(/^Last updated [^.]+\.\s*/, "")}</p>
       {sections.map((x, i) => (
         <section key={x.title}>
           <h2>

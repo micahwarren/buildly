@@ -33,6 +33,18 @@ export const legal = {
       text: "Supabase handles accounts and private file/project storage. Our hosting provider runs the app APIs. Apple and Google handle their sign-in services. The disclosed AI provider processes generation inputs and outputs. Apple and RevenueCat handle purchase verification. These providers may process data in the United States or other countries where they operate. Contact us if you need more information about a provider before using the service.",
     },
     {
+      heading: false,
+      text: "Supabase and its configured email-delivery service process your email address and confirmation/reset links to send account-access messages. These messages are for account access and security, not marketing.",
+    },
+    {
+      heading: true,
+      text: "Google sign-in",
+    },
+    {
+      heading: false,
+      text: "If you choose Google sign-in, Google's native sign-in software declares name, email, phone number, approximate location, user and device identifiers, usage data and other account/technical data. Its declared purposes include sign-in and its own analytics. Site AI uses the returned identity/profile to sign you in. We do not ask for your phone number or request GPS permission. Google's processing follows its own privacy terms.",
+    },
+    {
       heading: true,
       text: "Purchases and RevenueCat",
     },
@@ -46,7 +58,7 @@ export const legal = {
     },
     {
       heading: false,
-      text: "We use request identifiers, status, duration and model-usage records for operation, recovery, security and troubleshooting. Share error reports is optional and off by default. If enabled, it sends the app release, platform and a one-way error fingerprint linked to your account, rather than readable error text or your photos. Eligible optional reports are removed after up to 30 days by the cleanup service.",
+      text: "We use request identifiers, status, duration and model-usage records for operation, recovery, security and troubleshooting. Share error reports is optional and off by default. If enabled, it sends the app release, platform and a one-way error fingerprint linked to your account, rather than readable error text or your photos. Eligible optional reports are removed after up to 30 days by the cleanup service. This switch controls Site AI reports; it does not disable Google sign-in processing or its declared analytics.",
     },
     {
       heading: false,
