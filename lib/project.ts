@@ -56,6 +56,7 @@ export type Project = {
   assumptions: string[];
   warnings: string[];
   completed: number;
+  completedSteps?: number[];
   createdAt: string;
   updatedAt: string;
   status: string;

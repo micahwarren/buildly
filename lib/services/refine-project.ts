@@ -89,6 +89,7 @@ export async function refineProject(
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     completed: 0,
+    completedSteps: [],
     conversation: [],
     shopping: [],
     review: undefined,
