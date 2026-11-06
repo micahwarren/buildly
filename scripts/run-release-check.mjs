@@ -50,3 +50,7 @@ if (process.env.SITEAI_IAP_REVIEW_UPLOAD === "1") {
 if (process.env.SITEAI_SECURITY_QA === "1") {
   execFileSync(process.execPath, [fileURLToPath(new URL("../node_modules/tsx/dist/cli.mjs", import.meta.url)), fileURLToPath(new URL("./security-release-check.ts", import.meta.url))], { stdio: "inherit", timeout: 180000 });
 }
+
+if (process.env.SITEAI_APPLE_CONFIG_QA === "1") {
+  execFileSync(process.execPath, [fileURLToPath(new URL("../node_modules/tsx/dist/cli.mjs", import.meta.url)), fileURLToPath(new URL("./apple-config-check.ts", import.meta.url))], { stdio: "inherit", timeout: 45000 });
+}
