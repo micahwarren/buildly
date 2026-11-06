@@ -97,11 +97,14 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error:
-          e instanceof Error
+          e instanceof DesignError
             ? e.message
             : "Purchase verification could not finish.",
       },
-      { status: e instanceof DesignError ? e.status : 500 },
+      {
+        status: e instanceof DesignError ? e.status : 503,
+        headers: { "Cache-Control": "no-store" },
+      },
     );
   }
 }

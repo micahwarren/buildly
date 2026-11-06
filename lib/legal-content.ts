@@ -2,7 +2,7 @@ export const legal = {
   privacy: [
     {
       heading: false,
-      text: "Last updated November 4, 2026. Site AI: Visualize & DIY is operated by Nom Apps LLC. Privacy contact: support@nomappsllc.com.",
+      text: "Last updated November 5, 2026. Site AI: Visualize & DIY is operated by Nom Apps LLC. Privacy contact: support@nomappsllc.com.",
     },
     {
       heading: true,
@@ -30,11 +30,11 @@ export const legal = {
     },
     {
       heading: false,
-      text: "Supabase handles accounts and private file/project storage. Our hosting provider runs the app APIs. Apple and Google handle their sign-in services. The disclosed AI provider processes generation inputs and outputs. Apple and RevenueCat handle purchase verification. These providers may process data in the United States or other countries where they operate. Contact us if you need more information about a provider before using the service.",
+      text: "Supabase handles accounts and private file/project storage. Vercel hosts our website and runs the app APIs. Apple and Google handle their sign-in services. The disclosed AI provider processes generation inputs and outputs. Apple and RevenueCat handle purchase verification. These providers may process data in the United States or other countries where they operate. Contact us if you need more information about a provider before using the service.",
     },
     {
       heading: false,
-      text: "Supabase and its configured email-delivery service process your email address and confirmation/reset links to send account-access messages. These messages are for account access and security, not marketing.",
+      text: "Supabase and Google Workspace/Gmail, our configured email-delivery service, process your email address and confirmation/reset links to send account-access messages. These messages are for account access and security, not marketing.",
     },
     {
       heading: true,
@@ -74,7 +74,7 @@ export const legal = {
     },
     {
       heading: false,
-      text: "Account deletion removes the account, saved projects, private files and unused token balance, and removes its RevenueCat customer profile. If provider cleanup cannot complete, deletion is not reported as finished; retry it in the app or contact support. Apple may retain purchase records under its own legal and financial obligations. Deletion does not cancel an Apple order or automatically request a refund.",
+      text: "Account deletion removes the account, saved projects, private files and unused token balance, and removes its RevenueCat customer profile. If provider cleanup cannot complete, deletion is not reported as finished; retry it in the app or contact support. For accounts linked to Sign in with Apple, we request revocation of Apple’s authorization before completing deletion. Apple may retain purchase records under its own legal and financial obligations. Deletion does not cancel an Apple order or automatically request a refund.",
     },
     {
       heading: false,
@@ -100,7 +100,15 @@ export const legal = {
   terms: [
     {
       heading: false,
-      text: "Last updated November 4, 2026. These terms cover Site AI: Visualize & DIY, operated by Nom Apps LLC. Support: support@nomappsllc.com.",
+      text: "Last updated November 5, 2026. These terms cover Site AI: Visualize & DIY, operated by Nom Apps LLC. Support: support@nomappsllc.com.",
+    },
+    {
+      heading: true,
+      text: "App license",
+    },
+    {
+      heading: false,
+      text: "The iOS app is licensed under Apple’s Standard End User License Agreement: https://www.apple.com/legal/internet-services/itunes/appstore/dev/stdeula/. These Site AI terms describe our project-generation service and purchases; they do not replace Apple’s app license or mandatory rights under applicable law.",
     },
     {
       heading: true,
@@ -144,7 +152,7 @@ export const legal = {
     },
     {
       heading: false,
-      text: "If a purchase or plan is missing, use Check purchase or contact support@nomappsllc.com so we can investigate and help complete the service. Apple handles App Store payment/refund requests under its rules. If a complete paid project cannot be delivered, contact us for help and use Apple’s refund process where appropriate. These terms do not exclude mandatory consumer remedies.",
+      text: "If a purchase or plan is missing, open Project tokens to check your balance, or contact support@nomappsllc.com so we can investigate and help complete the service. Apple handles App Store payment/refund requests under its rules. If a complete paid project cannot be delivered, contact us for help and use Apple’s refund process where appropriate. These terms do not exclude mandatory consumer remedies.",
     },
     {
       heading: false,

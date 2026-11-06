@@ -83,8 +83,14 @@ export async function GET(req: Request) {
     );
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Could not load purchases." },
-      { status: e instanceof DesignError ? e.status : 500 },
+      {
+        error:
+          e instanceof DesignError ? e.message : "Could not load purchases.",
+      },
+      {
+        status: e instanceof DesignError ? e.status : 503,
+        headers: { "Cache-Control": "no-store" },
+      },
     );
   }
 }

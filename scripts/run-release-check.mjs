@@ -46,3 +46,7 @@ if(process.env.SITEAI_BILLING_SYNC_CHECK === "1") {
 if (process.env.SITEAI_IAP_REVIEW_UPLOAD === "1") {
   execFileSync(process.execPath, [fileURLToPath(new URL("./upload-iap-review.mjs", import.meta.url))], { stdio: "inherit", timeout: 6 * 60000 });
 }
+
+if (process.env.SITEAI_SECURITY_QA === "1") {
+  execFileSync(process.execPath, [fileURLToPath(new URL("../node_modules/tsx/dist/cli.mjs", import.meta.url)), fileURLToPath(new URL("./security-release-check.ts", import.meta.url))], { stdio: "inherit", timeout: 180000 });
+}

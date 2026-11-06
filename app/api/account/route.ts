@@ -3,16 +3,33 @@ import { authenticatedUser } from "@/lib/billing/server";
 import { requireRecentLogin } from "@/lib/production/access";
 import { jobError } from "@/lib/production/errors";
 import { DesignError } from "@/lib/services/image-design";
+import { prepareAppleRevocation } from "@/lib/accounts/apple-revocation";
 export const maxDuration = 120;
 export async function DELETE(req: Request) {
   try {
     const { db, user } = await authenticatedUser(req);
     requireRecentLogin(user);
+    const raw = await req.text();
+    if (raw.length > 8192)
+      throw new DesignError("Invalid deletion request.", 400);
+    let body;
+    try {
+      body = raw ? JSON.parse(raw) : {};
+    } catch {
+      throw new DesignError("Invalid deletion request.", 400);
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body))
+      throw new DesignError("Invalid deletion request.", 400);
+    const revokeApple = prepareAppleRevocation(
+      user,
+      body.appleAuthorizationCode,
+    );
     const deletion = await db.rpc("buildly_begin_deletion", {
       p_user: user.id,
     });
     if (deletion.error) throw jobError(deletion.error.message);
     // Keep the auth account and deletion fence available for retry if provider cleanup fails.
+    await revokeApple();
     await deletePurchaseCustomer(user.id);
     const bucket = db.storage.from("project-images");
     async function empty(prefix: string): Promise<void> {
