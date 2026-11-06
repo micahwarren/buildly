@@ -48,7 +48,8 @@ export async function POST(req: Request) {
       const prunedReports = await db
         .from("buildly_diagnostics")
         .delete()
-        .lt("created_at", old);
+        // Leave one daily-run interval of headroom for the stated 30-day retention.
+        .lt("created_at", new Date(Date.now() - 29 * 86400000).toISOString());
       if (prunedReports.error) throw prunedReports.error;
       return Response.json({ ...result, failedUploads });
     }

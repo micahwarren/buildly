@@ -206,7 +206,7 @@ for (const status of [400, 401, 403, 404, 429, 500])
       (e) =>
         e instanceof DesignError && !e.message.includes("private diagnostic"),
     );
-    assert.equal(calls, 1);
+    assert.equal(calls, status === 500 ? 2 : 1);
   });
 test("Gemini text-only response cannot be presented as an image", async () => {
   const fetcher: typeof fetch = async () =>
@@ -257,5 +257,103 @@ test("provider selection defaults to Gemini and never reuses the other provider 
   assert.equal(
     imageProviderConfig({ IMAGE_PROVIDER: "invalid" }).provider,
     null,
+  );
+});
+
+test("a transient Gemini outage or empty non-refusal gets one bounded retry in the same generation", async () => {
+  for (const first of [
+    new Response(null, { status: 503 }),
+    Response.json({
+      candidates: [{ finishReason: "NO_IMAGE", content: { parts: [] } }],
+    }),
+  ]) {
+    let calls = 0;
+    const result = await createDesign(input, false, {
+      provider: "gemini",
+      apiKey: "test-only",
+      timeoutMs: 20_000,
+      fetcher: async () =>
+        calls++ === 0
+          ? first
+          : Response.json({
+              candidates: [
+                {
+                  finishReason: "STOP",
+                  content: {
+                    parts: [
+                      {
+                        inlineData: {
+                          mimeType: "image/jpeg",
+                          data: edited.toString("base64"),
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            }),
+    });
+    assert.equal(calls, 2);
+    assert.match(result.generatedImage, /^data:image\/jpeg/);
+  }
+});
+test("image retries are bounded and never repeat quota, safety or text refusals", async () => {
+  for (const response of [
+    () => new Response(null, { status: 429 }),
+    () => Response.json({ candidates: [{ finishReason: "IMAGE_SAFETY" }] }),
+    () =>
+      Response.json({
+        candidates: [
+          {
+            finishReason: "STOP",
+            content: { parts: [{ text: "Unable to help with this request" }] },
+          },
+        ],
+      }),
+  ]) {
+    let calls = 0;
+    await assert.rejects(
+      createDesign(input, false, {
+        provider: "gemini",
+        apiKey: "test-only",
+        fetcher: async () => {
+          calls++;
+          return response();
+        },
+      }),
+      DesignError,
+    );
+    assert.equal(calls, 1);
+  }
+  let calls = 0;
+  await assert.rejects(
+    createDesign(input, false, {
+      provider: "gemini",
+      apiKey: "test-only",
+      fetcher: async () => {
+        calls++;
+        return new Response(null, { status: 503 });
+      },
+    }),
+    DesignError,
+  );
+  assert.equal(calls, 2);
+  calls = 0;
+  await assert.rejects(
+    createDesign(input, false, {
+      provider: "gemini",
+      apiKey: "test-only",
+      timeoutMs: 1000,
+      fetcher: async () => {
+        calls++;
+        return new Response(null, { status: 503 });
+      },
+    }),
+    DesignError,
+  );
+  assert.equal(
+    calls,
+    1,
+    "A nearly exhausted deadline must not start another provider request",
   );
 });

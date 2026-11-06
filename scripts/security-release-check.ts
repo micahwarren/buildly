@@ -14,6 +14,25 @@ async function main() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   assert.ok(url && service && publishable, "QA environment is incomplete");
+  assert.ok(process.env.CRON_SECRET, "Cron authentication is missing");
+  assert.equal(
+    process.env.CRON_SECRET,
+    process.env.BUILDLY_MAINTENANCE_TOKEN,
+    "Vercel Cron and the maintenance route must use the same secret",
+  );
+  console.info("siteai_security_qa_operations", {
+    cronAuthenticationMatches: true,
+    billingEnabled: process.env.BILLING_ENABLED === "true",
+    sandboxForReview: process.env.BILLING_ALLOW_SANDBOX === "true",
+    dailyUserLimit:
+      process.env.SIGHTSAW_DAILY_REQUESTS ||
+      process.env.BUILDLY_DAILY_REQUESTS ||
+      "20",
+    dailyServiceLimit:
+      process.env.SIGHTSAW_GLOBAL_DAILY_REQUESTS ||
+      process.env.BUILDLY_GLOBAL_DAILY_REQUESTS ||
+      "50",
+  });
   const options = { auth: { persistSession: false, autoRefreshToken: false } };
   const admin = createClient(url, service, options);
   const users: string[] = [];

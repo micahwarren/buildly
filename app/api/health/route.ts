@@ -12,11 +12,13 @@ export async function GET() {
       .abortSignal(AbortSignal.timeout(5000));
     database = !result.error;
   } catch {}
-  const generationEnabled = process.env.BUILDLY_GENERATION_ENABLED !== "false";
+  const generationEnabled =
+    (process.env.SIGHTSAW_GENERATION_ENABLED ??
+      process.env.BUILDLY_GENERATION_ENABLED) !== "false";
   return Response.json(
     {
-      service: "sightsaw",
-      version: "non-payment-release-v1",
+      service: "site-ai",
+      version: "release-v1",
       commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || "local",
       status: database
         ? generationEnabled && imageProviderConfig().apiKey

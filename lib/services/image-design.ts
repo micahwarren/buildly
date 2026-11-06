@@ -29,6 +29,7 @@ type Dependencies = {
   fetcher?: typeof fetch;
   provider?: ImageProvider;
   timeoutMs?: number;
+  imageAttempt?: 0 | 1;
 };
 export function designPrompt(input: DesignInput) {
   return `Edit the supplied photograph of the homeowner's actual property. Produce a realistic architectural PHOTOGRAPH, never an illustration, diagram, split screen, collage, or a different property.
@@ -44,7 +45,11 @@ export async function createDesign(
   input: DesignInput,
   demo = false,
   dependencies: Dependencies = {},
-) {
+): Promise<{
+  originalImage: string;
+  generatedImage: string;
+  mode: "ai" | "demo";
+}> {
   if (demo) {
     const key = input.projectType.toLowerCase() as keyof typeof photos;
     return {
@@ -54,6 +59,7 @@ export async function createDesign(
     };
   }
   const configured = imageProviderConfig();
+  const deadline = Date.now() + (dependencies.timeoutMs ?? 240_000);
   const provider = dependencies.provider ?? configured.provider;
   if (!provider)
     throw new DesignError(
@@ -242,12 +248,31 @@ export async function createDesign(
     body = form;
   }
   let response: Response;
+  const retryTransient = () => {
+    const remaining = deadline - Date.now();
+    if (
+      provider !== "gemini" ||
+      dependencies.imageAttempt === 1 ||
+      remaining < 15_000
+    )
+      return null;
+    // Same provider, inputs and paid operation; never retry a saved image,
+    // safety refusal, quota rejection or malformed image. One shared deadline.
+    return createDesign(input, false, {
+      ...dependencies,
+      provider,
+      apiKey,
+      model,
+      timeoutMs: remaining,
+      imageAttempt: 1,
+    });
+  };
   try {
     response = await (dependencies.fetcher ?? fetch)(url, {
       method: "POST",
       headers,
       body,
-      signal: AbortSignal.timeout(dependencies.timeoutMs ?? 240_000),
+      signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
     });
   } catch {
     throw new DesignError(
@@ -256,6 +281,10 @@ export async function createDesign(
     );
   }
   if (!response.ok) {
+    if ([500, 502, 503, 504].includes(response.status)) {
+      const retry = retryTransient();
+      if (retry) return retry;
+    }
     if (response.status === 400 && provider === "gemini")
       throw new DesignError(
         "Google could not accept the image request. The site owner should check the Gemini API key, model, and billing configuration; you can also try another photo or description.",
@@ -298,6 +327,7 @@ export async function createDesign(
         parts?: {
           inlineData?: { mimeType?: string; data?: unknown };
           thought?: boolean;
+          text?: unknown;
         }[];
       };
     }[];
@@ -348,10 +378,22 @@ export async function createDesign(
         ? candidate!.finishReason
         : "unspecified",
       parts: candidate?.content?.parts?.length || 0,
+      attempt: dependencies.imageAttempt || 0,
       responseFields: Object.keys(data || {})
         .filter((key) => /^[A-Za-z]{1,60}$/.test(key))
         .slice(0, 12),
     });
+    if (
+      !encoded &&
+      !data?.promptFeedback?.blockReason &&
+      ["NO_IMAGE", "STOP"].includes(candidate?.finishReason || "") &&
+      !candidate?.content?.parts?.some(
+        (part) => typeof part.text === "string" && part.text.trim(),
+      )
+    ) {
+      const retry = retryTransient();
+      if (retry) return retry;
+    }
     throw new DesignError(
       "The image service did not return a usable preview. Please try again.",
       502,

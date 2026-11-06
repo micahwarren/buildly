@@ -5,6 +5,11 @@ async function main() {
   const pem = process.env.APPLE_SIGN_IN_PRIVATE_KEY?.replace(/\\n/g, "\n");
   const kid = process.env.APPLE_SIGN_IN_KEY_ID;
   const team = process.env.APPLE_SIGN_IN_TEAM_ID || "47LP6F2JXD";
+  console.info("siteai_apple_config_shape", {
+    pemHeader: /^-----BEGIN PRIVATE KEY-----/.test(pem?.trim() || ""),
+    pemFooter: /-----END PRIVATE KEY-----$/.test(pem?.trim() || ""),
+    keyIdValid: /^[A-Z0-9]{10}$/.test(kid || ""),
+  });
   assert.ok(
     pem && kid && /^[A-Z0-9]{10}$/.test(kid),
     "Apple sign-in key configuration is missing or malformed",
@@ -12,6 +17,7 @@ async function main() {
   const key = createPrivateKey(pem);
   assert.equal(key.asymmetricKeyType, "ec");
   assert.equal(key.asymmetricKeyDetails?.namedCurve, "prime256v1");
+  console.info("siteai_apple_config_signing", { validP256Key: true });
   const now = Math.floor(Date.now() / 1000),
     client = "com.nomapps.buildly";
   const enc = (x: object) =>
@@ -31,6 +37,7 @@ async function main() {
       code: "siteai-deliberately-invalid-configuration-check",
     }),
   });
+  console.info("siteai_apple_config_http", { status: response.status });
   const result = await response.json();
   const outcome = [
     "invalid_grant",
