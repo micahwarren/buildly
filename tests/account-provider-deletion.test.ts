@@ -22,6 +22,10 @@ test("account removal waits for provider deletion, keeps retry possible and igno
     const u = new URL(String(input));
     if (u.hostname === "api.revenuecat.com") {
       assert.ok(u.pathname.endsWith("/" + owner));
+      if (init?.method === "GET")
+        return new Response(null, {
+          status: providerStatus === 200 ? 404 : providerStatus,
+        });
       assert.equal(init?.method, "DELETE");
       return providerStatus === 200
         ? Response.json({ id: owner, deleted_at: Date.now() })

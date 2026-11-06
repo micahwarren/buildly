@@ -281,6 +281,13 @@ export async function createDesign(
     );
   }
   if (!response.ok) {
+    // Operational codes only: never log provider text, uploaded images or credentials.
+    console.warn("siteai_image_provider_status", {
+      provider,
+      model,
+      status: response.status,
+      attempt: dependencies.imageAttempt || 0,
+    });
     if ([500, 502, 503, 504].includes(response.status)) {
       const retry = retryTransient();
       if (retry) return retry;
@@ -313,7 +320,9 @@ export async function createDesign(
         429,
       );
     throw new DesignError(
-      "We could not create this photo preview. Please try again with a different description or photo.",
+      "Image generation could not finish. Your idea is saved; please try again shortly.",
+      502,
+      `image_provider_${response.status}`,
     );
   }
   type ProviderResponse = {

@@ -17,6 +17,7 @@ export async function backgroundFixture() {
     "production.sql",
     "background-jobs.sql",
     "project-notifications.sql",
+    "project-families.sql",
   ])
     await pg.exec(
       await readFile(

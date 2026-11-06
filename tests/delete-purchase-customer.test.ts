@@ -13,8 +13,13 @@ test("provider deletion is owner-scoped, idempotent, and refuses unconfirmed fai
         url,
         `https://api.revenuecat.com/v2/projects/proj_fixture/customers/${user}`,
       );
+      if (init?.method === "GET") return new Response(null, { status: 404 });
       assert.equal(init?.method, "DELETE");
-      return Response.json({ id: user, deleted_at: Date.now() });
+      return Response.json({
+        object: "customer",
+        id: "canonical-provider-id",
+        deleted_at: Date.now(),
+      });
     });
     await deletePurchaseCustomer(
       user,
@@ -28,11 +33,29 @@ test("provider deletion is owner-scoped, idempotent, and refuses unconfirmed fai
         ),
         /could not be removed/,
       );
+    let polls = 0;
+    await deletePurchaseCustomer(
+      user,
+      async (_url, init) => {
+        if (init?.method === "DELETE")
+          return Response.json({ object: "customer", id: "provider-receipt" });
+        polls++;
+        return new Response(null, { status: polls < 3 ? 200 : 404 });
+      },
+      { pause: async () => {} },
+    );
+    assert.equal(
+      polls,
+      3,
+      "Queued deletion is confirmed without asking for another password",
+    );
     await assert.rejects(
-      deletePurchaseCustomer(user, async () =>
-        Response.json({ id: "other", deleted_at: 1 }),
+      deletePurchaseCustomer(
+        user,
+        async () => Response.json({ object: "customer", id: user }),
+        { pause: async () => {} },
       ),
-      /not confirmed/,
+      /still being removed/,
     );
     delete process.env.REVENUECAT_SECRET_API_KEY;
     await assert.rejects(

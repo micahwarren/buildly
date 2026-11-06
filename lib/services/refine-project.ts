@@ -85,7 +85,7 @@ export async function refineProject(
     details: parseDetails(project.details),
     id: dependencies.id || crypto.randomUUID(),
     parentProjectId: project.id,
-    title: `${project.title.slice(0, 170)} · revised`,
+    title: project.title,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     completed: 0,
@@ -109,7 +109,7 @@ export async function refineProject(
         (dependencies.deadline ?? Date.now() + 120_000) - Date.now(),
       ),
     });
-    return { ...next, ...fields, title: fields.suggestedTitle || next.title };
+    return { ...next, ...fields, title: project.title };
   } catch (error) {
     return {
       ...next,

@@ -227,7 +227,9 @@ export async function runPreparedJob(
                 p = {
                   ...p,
                   ...fields,
-                  title: fields.suggestedTitle || p.title,
+                  title: p.parentProjectId
+                    ? p.title
+                    : fields.suggestedTitle || p.title,
                 };
               } catch (error) {
                 p = {
