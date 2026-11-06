@@ -31,6 +31,8 @@ its own FCM configuration before real-device push delivery can be accepted.
 
 Tests cover durable acceptance, concurrent leases, crash recovery, image/plan
 checkpoints, billing, complete-only delivery, account switching/deletion, RLS,
-HMAC expiry and one-use nonces. Physical iOS delivery after closing the app still
-requires acceptance on the new TestFlight build; successful Expo/APNs receipts
-alone are not proof the user saw an alert.
+HMAC expiry and one-use nonces. On TestFlight build 48, the owner confirmed that
+the ready alert arrives after closing the app and the complete image, materials
+and plan are available on reopening. This records owner-reported real-iPhone
+acceptance, beyond successful Expo/APNs receipts. Notification-tap navigation and
+physical Android delivery have not been separately confirmed.
