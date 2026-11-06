@@ -6,7 +6,8 @@ The private queue stores validated inputs before the create API acknowledges the
 request. A worker leases each job for 320 seconds, longer than its 300-second
 function limit. Up to three attempts recover transient errors; a saved image
 resumes only its matching plan. Billing reservation reconciliation and the
-existing request ID prevent duplicate charges or images during recovery.
+existing request ID prevent duplicate charges. Once the design is checkpointed,
+recovery completes its matching plan without regenerating that saved image.
 
 On the existing Supabase project, enable pg_cron, pg_net and Vault. Save a dedicated
 random credential in Vault as `siteai_background_worker_token` and as the Vercel
