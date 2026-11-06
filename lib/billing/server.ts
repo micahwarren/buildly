@@ -26,9 +26,25 @@ export async function reservePurchase(
 ) {
   if (process.env.BILLING_ENABLED !== "true" || demo)
     return { finish: async () => {} };
+  return reservePurchaseForAccount(
+    await authenticatedUser(req),
+    kind,
+    projectId,
+    demo,
+    requestId,
+  );
+}
+export async function reservePurchaseForAccount(
+  { db, user }: Awaited<ReturnType<typeof authenticatedUser>>,
+  kind: "design" | "plan" | "chat",
+  projectId: string,
+  demo = false,
+  requestId?: string,
+) {
+  if (process.env.BILLING_ENABLED !== "true" || demo)
+    return { finish: async () => {} };
   if (typeof projectId !== "string" || !/^[a-zA-Z0-9-]{1,80}$/.test(projectId))
     throw new DesignError("Open a saved project first.", 400);
-  const { db, user } = await authenticatedUser(req);
   const { data, error } = await db.rpc("buildly_reserve_job", {
     p_user: user.id,
     p_project: projectId,
@@ -95,8 +111,27 @@ export async function billed<T extends { id?: string }>(
   demo = false,
   requestId?: string,
 ): Promise<T> {
-  const reservation = await reservePurchase(
-    req,
+  if (process.env.BILLING_ENABLED !== "true" || demo)
+    return work(async () => {});
+  return billedForAccount(
+    await authenticatedUser(req),
+    kind,
+    projectId,
+    work,
+    demo,
+    requestId,
+  );
+}
+export async function billedForAccount<T extends { id?: string }>(
+  account: Awaited<ReturnType<typeof authenticatedUser>>,
+  kind: "design" | "plan" | "chat",
+  projectId: string,
+  work: (delivered: (result: string) => Promise<void>) => Promise<T>,
+  demo = false,
+  requestId?: string,
+): Promise<T> {
+  const reservation = await reservePurchaseForAccount(
+    account,
     kind,
     projectId,
     demo,

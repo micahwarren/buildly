@@ -1,6 +1,6 @@
 import { withOperation } from "./telemetry";
 import { createHash } from "node:crypto";
-import { billed } from "../billing/server";
+import { billedForAccount } from "../billing/server";
 import { generationUser } from "./access";
 import { jobError } from "./errors";
 import { ownedProject, loadProjectImages, persistProject } from "./projects";
@@ -18,16 +18,16 @@ const limit = (value: string | undefined, fallback: number, max: number) =>
   value && /^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= max
     ? Number(value)
     : fallback;
-export async function executeJob(
+export type JobDependencies = {
+  authorize?: typeof generationUser;
+  design?: typeof planProject;
+  refine?: typeof refineProject;
+  plan?: typeof createDesignPlan;
+};
+export async function prepareJob(
   req: Request,
   kind: JobKind,
-  consent = true,
-  dependencies: {
-    authorize?: typeof generationUser;
-    design?: typeof planProject;
-    refine?: typeof refineProject;
-    plan?: typeof createDesignPlan;
-  } = {},
+  dependencies: JobDependencies = {},
 ) {
   const { db, user } = await (dependencies.authorize || generationUser)(
     req,
@@ -75,6 +75,23 @@ export async function executeJob(
   const hash = createHash("sha256")
     .update(kind + "\n" + text)
     .digest("hex");
+  return { db, user, kind, id, source, project, input, text, hash };
+}
+export type PreparedJob = Awaited<ReturnType<typeof prepareJob>>;
+export async function executeJob(
+  req: Request,
+  kind: JobKind,
+  consent = true,
+  dependencies: JobDependencies = {},
+): Promise<{
+  jobId: string;
+  state: string;
+  project?: Project;
+  failure_code?: string;
+  failure_message?: string;
+}> {
+  const prepared = await prepareJob(req, kind, dependencies);
+  const { db, user, id, source, hash } = prepared;
   const claim = await db.rpc("buildly_claim_job", {
     p_user: user.id,
     p_id: id,
@@ -111,6 +128,15 @@ export async function executeJob(
       failure_code: job.failure_code || undefined,
     };
   }
+  return runPreparedJob(prepared, consent, dependencies);
+}
+export async function runPreparedJob(
+  prepared: PreparedJob,
+  consent = true,
+  dependencies: JobDependencies = {},
+) {
+  const { db, user, id, kind, source, project, input } = prepared;
+  const data = JSON.parse(prepared.text);
   const started = Date.now();
   let confirmDelivered: ((id: string) => Promise<void>) | null = null;
   async function update(values: object) {
@@ -137,8 +163,8 @@ export async function executeJob(
   }
   try {
     const result = await withOperation(id, () =>
-      billed(
-        req,
+      billedForAccount(
+        { db, user },
         kind === "plan" ? "plan" : "design",
         source || id,
         async (delivered) => {
@@ -221,6 +247,7 @@ export async function executeJob(
           await update({
             state: finished ? "complete" : "image_saved",
             result_id: p.id,
+            failure_message: null,
             failure_code: finished
               ? null
               : p.planRetryable === false

@@ -402,7 +402,7 @@ test("revision clarification survives a lost response without another AI call or
   const recovered = await executeJob(retry(), "refine", true, dependencies);
   assert.equal(recovered.state, "failed");
   assert.equal(recovered.failure_code, "revision_clarification");
-  assert.match(recovered.failure_message, /How wide/);
+  assert.match(recovered.failure_message || "", /How wide/);
   assert.equal(calls, 1);
   assert.ok(f.projects.has(key), "The previous design stays saved");
   const internalId = "55555555-5555-4555-8555-555555555555";

@@ -64,6 +64,15 @@ export const legal = {
       heading: false,
       text: "The offer flag and one-way claim records may remain after account deletion or app reinstallation to prevent the same starter offer being claimed again. The account link in the claim record is cleared when the account is deleted. These fingerprints are pseudonymous security data; they are not a promise of complete anonymity. Contact support if you believe an eligibility check is incorrect.",
     },
+    { heading: true, text: "Background projects and optional notifications" },
+    {
+      heading: false,
+      text: "After you tap Create project or Apply changes, our server stores the submitted photos and instructions in a private work queue so generation can continue when you close the app. We automatically retry eligible interrupted requests and finish the plan for the saved design without charging another token or revision. Queue inputs are cleared when processing succeeds or stops; saved projects remain in your account until you delete them. Turning off AI processing stops new requests and further retry attempts after the server checks your choice; work already submitted to a provider may finish.",
+    },
+    {
+      heading: false,
+      text: "If you enable project notifications, we collect your app push token, platform and account identifier to send a project-ready alert. Expo's push service and Apple Push Notification service or Firebase Cloud Messaging process the push token, generic notification text and account/job/project identifiers used to open your own saved result. We do not include your project photos, description or project title in the notification. You can disable alerts in device settings. Signing out disables this installation's registration when the service can be reached; deleting your account removes its saved push registrations and delivery records. Notifications are optional and not required for projects to finish.",
+    },
     { heading: true, text: "Diagnostics and device storage" },
     {
       heading: false,

@@ -3,6 +3,12 @@ import { authenticatedUser } from "../billing/server";
 import { DesignError } from "../services/image-design";
 export const consentVersion = "2026-10-29";
 export async function generationUser(req: Request, consent = false) {
+  return generationAccount(await authenticatedUser(req), consent);
+}
+export async function generationAccount(
+  account: Awaited<ReturnType<typeof authenticatedUser>>,
+  consent = false,
+) {
   if (
     (process.env.SIGHTSAW_GENERATION_ENABLED ??
       process.env.BUILDLY_GENERATION_ENABLED) === "false"
@@ -11,7 +17,6 @@ export async function generationUser(req: Request, consent = false) {
       "New designs are temporarily paused. Your saved projects are still available.",
       503,
     );
-  const account = await authenticatedUser(req);
   if (
     consent &&
     account.user.user_metadata.ai_consent_version !==
