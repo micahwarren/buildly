@@ -54,3 +54,7 @@ if (process.env.SITEAI_SECURITY_QA === "1") {
 if (process.env.SITEAI_APPLE_CONFIG_QA === "1") {
   execFileSync(process.execPath, [fileURLToPath(new URL("../node_modules/tsx/dist/cli.mjs", import.meta.url)), fileURLToPath(new URL("./apple-config-check.ts", import.meta.url))], { stdio: "inherit", timeout: 45000 });
 }
+
+if (process.env.SITEAI_PUBLIC_HOST_QA === "1") {
+  execFileSync(process.execPath, [fileURLToPath(new URL("./public-host-check.mjs", import.meta.url))], { stdio: "inherit", timeout: 90000 });
+}

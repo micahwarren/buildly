@@ -178,6 +178,10 @@ export function Paywall({
         <a href="/terms" target="_blank" rel="noreferrer">
           Terms
         </a>
+        {" · "}
+        <a href="/refunds" target="_blank" rel="noreferrer">
+          Refunds
+        </a>
       </p>
     </dialog>
   );

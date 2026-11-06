@@ -2,7 +2,7 @@ export const legal = {
   privacy: [
     {
       heading: false,
-      text: "Last updated November 5, 2026. Site AI: Visualize & DIY is operated by Nom Apps LLC. Privacy contact: support@nomappsllc.com.",
+      text: "Last updated November 6, 2026. Site AI: Visualize & DIY is operated by Nom Apps LLC. Privacy contact: support@nomappsllc.com.",
     },
     {
       heading: true,
@@ -97,10 +97,50 @@ export const legal = {
       text: "Site AI is not designed for children under 13. We do not knowingly collect their personal information; contact us if you believe such information was provided so we can investigate and remove it. We will update this notice when practices change. Material changes will be described in the app or through an appropriate notice before they apply to new processing.",
     },
   ],
+  refunds: [
+    {
+      heading: false,
+      text: "Last updated November 6, 2026. This Refund Policy covers Site AI: Visualize & DIY, operated by Nom Apps LLC. Contact: support@nomappsllc.com.",
+    },
+    { heading: true, text: "Request a refund from Apple" },
+    {
+      heading: false,
+      text: "Apple processes all purchases made in the iPhone and iPad app. To request a refund, visit https://reportaproblem.apple.com, sign in with the Apple Account used for the purchase, select the purchase and follow Apple’s instructions. Apple determines eligibility under its policies and applicable law; we cannot promise approval or an automatic refund.",
+    },
+    { heading: true, text: "Missing tokens or duplicate charges" },
+    {
+      heading: false,
+      text: "If Apple confirms a purchase but your tokens are missing, reopen Project tokens while signed into the same Site AI account. Do not buy again to recover that purchase. If the balance is still wrong, contact support@nomappsllc.com with the purchase date and Apple transaction reference. Do not send payment-card details or your Apple password. Apple can help with duplicate or unrecognized charges.",
+    },
+    { heading: true, text: "If generation fails" },
+    {
+      heading: false,
+      text: "A failed request before its design image is saved releases the reserved token or design revision. Once the image is saved, its token or revision is used while we complete the matching materials and plan. Recovering that plan does not use another token or revision. Check the saved project before starting a new one.",
+    },
+    {
+      heading: false,
+      text: "If we cannot deliver a complete paid project, contact support so we can investigate and help complete the service. You can request a refund through Apple. AI designs and estimates can be inaccurate and need verification; that disclosure does not remove your rights when the service is faulty or not delivered as required by law.",
+    },
+    { heading: true, text: "What happens after a refund" },
+    {
+      heading: false,
+      text: "A refunded pack removes its unused tokens. Projects funded by that pack cannot use further paid design revisions, but saved results remain readable. Restoring purchases does not turn used tokens into new unused tokens.",
+    },
+    { heading: true, text: "Unused tokens and account deletion" },
+    {
+      heading: false,
+      text: "Tokens are one-time purchases, do not expire and are not a subscription. Deleting a project, deleting your Site AI account or uninstalling the app does not automatically request a refund from Apple. Account deletion removes the unused balance; contact us about a purchase problem before deleting the account where possible.",
+    },
+    { heading: true, text: "Your consumer rights" },
+    {
+      heading: false,
+      text: "This policy does not limit refund rights, consumer guarantees or other remedies that applicable law does not allow us to exclude. Refund eligibility and available remedies can depend on where you live. Contact support@nomappsllc.com if you need help finding the right process.",
+    },
+  ],
   terms: [
     {
       heading: false,
-      text: "Last updated November 5, 2026. These terms cover Site AI: Visualize & DIY, operated by Nom Apps LLC. Support: support@nomappsllc.com.",
+      text: "Last updated November 6, 2026. These terms cover Site AI: Visualize & DIY, operated by Nom Apps LLC. Support: support@nomappsllc.com.",
     },
     {
       heading: true,
@@ -152,7 +192,7 @@ export const legal = {
     },
     {
       heading: false,
-      text: "If a purchase or plan is missing, open Project tokens to check your balance, or contact support@nomappsllc.com so we can investigate and help complete the service. Apple handles App Store payment/refund requests under its rules. If a complete paid project cannot be delivered, contact us for help and use Apple’s refund process where appropriate. These terms do not exclude mandatory consumer remedies.",
+      text: "If a purchase or plan is missing, open Project tokens to check your balance, or contact support@nomappsllc.com so we can investigate and help complete the service. Apple handles App Store payment/refund requests under its rules. If a complete paid project cannot be delivered, contact us for help and use Apple’s refund process where appropriate. Our Refund Policy explains missing purchases and failed projects in more detail. These terms do not exclude mandatory consumer remedies.",
     },
     {
       heading: false,
