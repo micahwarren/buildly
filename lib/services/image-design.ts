@@ -339,11 +339,25 @@ export async function createDesign(
             typeof part.inlineData?.data === "string",
         )?.inlineData?.data
       : data?.data?.[0]?.b64_json;
-  if (typeof encoded !== "string" || !encoded || encoded.length > 25_000_000)
+  if (typeof encoded !== "string" || !encoded || encoded.length > 25_000_000) {
+    console.warn("sightsaw_image_unavailable", {
+      provider,
+      model,
+      candidates: data?.candidates?.length || 0,
+      finishReason: /^[A-Z_]{1,60}$/.test(candidate?.finishReason || "")
+        ? candidate!.finishReason
+        : "unspecified",
+      parts: candidate?.content?.parts?.length || 0,
+      responseFields: Object.keys(data || {})
+        .filter((key) => /^[A-Za-z]{1,60}$/.test(key))
+        .slice(0, 12),
+    });
     throw new DesignError(
       "The image service did not return a usable preview. Please try again.",
       502,
+      "image_unavailable",
     );
+  }
   try {
     // Normalize both sides to the source frame so comparison cannot independently crop the images.
     const rendered = await sharp(Buffer.from(encoded, "base64"), {
