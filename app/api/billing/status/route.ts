@@ -6,7 +6,7 @@ export async function GET(req: Request) {
     if (process.env.BILLING_ENABLED !== "true")
       throw new DesignError("Project purchases are not available yet.", 503);
     const { db, user } = await authenticatedUser(req);
-    const [credits, receipts] = await Promise.all([
+    const [credits, receipts, starter] = await Promise.all([
       db
         .from("buildly_credits")
         .select("balance")
@@ -15,10 +15,28 @@ export async function GET(req: Request) {
       db
         .from("buildly_receipts")
         .select("transaction_id", { count: "exact", head: true })
+        .or("transaction_id.like.PRODUCTION:%,transaction_id.like.SANDBOX:%")
         .eq("user_id", user.id),
+      db
+        .from("siteai_starter_claims")
+        .select("id,state,device_linked")
+        .eq("user_id", user.id)
+        .maybeSingle(),
     ]);
     if (credits.error || receipts.error)
       throw new DesignError("Purchase balance is unavailable.", 503);
+    let starterAvailable = false;
+    if (!starter.error && starter.data?.state === "granted") {
+      const unit = await db
+        .from("buildly_purchase_units")
+        .select("allocated_to")
+        .eq("user_id", user.id)
+        .eq("transaction_id", `STARTER:${starter.data.id}`)
+        .eq("unit_index", 1)
+        .maybeSingle();
+      starterAvailable =
+        !unit.error && !!unit.data && unit.data.allocated_to === null;
+    }
     const projectId = new URL(req.url).searchParams.get("projectId");
     let access:
       | { projectAccess: boolean; revisions?: number; revoked?: boolean }
@@ -77,6 +95,15 @@ export async function GET(req: Request) {
       {
         credits: credits.data?.balance || 0,
         receiptCount: receipts.count || 0,
+        starter:
+          !starter.error && starter.data
+            ? {
+                status:
+                  starter.data.state === "granted" ? "granted" : "pending",
+                deviceLinked: starter.data.device_linked,
+                available: starterAvailable,
+              }
+            : undefined,
         ...access,
       },
       { headers: { "Cache-Control": "no-store" } },

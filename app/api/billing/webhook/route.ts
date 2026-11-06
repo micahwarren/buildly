@@ -46,6 +46,8 @@ export async function POST(req: Request) {
       p_refund: event.refund,
       p_units: event.credits,
     });
+    if (error?.message.includes("RECEIPT_RETIRED"))
+      return Response.json({ ignored: true });
     if (error)
       return new Response("Purchase not recorded; retry delivery", {
         status: 503,

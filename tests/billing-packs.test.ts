@@ -125,3 +125,91 @@ test("packs stack, allocate individual tokens, survive retries, and refunds pres
     await db.close();
   }
 });
+
+test("receipt binding survives account deletion without retaining readable account/transaction IDs", async () => {
+  const db = new PGlite(),
+    other = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  try {
+    await db.exec(
+      "create role anon;create role authenticated;create role service_role;create schema auth;create table auth.users(id uuid primary key);",
+    );
+    await db.exec(
+      await readFile(
+        new URL("../supabase/billing.sql", import.meta.url),
+        "utf8",
+      ),
+    );
+    await db.query("insert into auth.users values($1),($2)", [user, other]);
+    // Backfill a pre-upgrade receipt; do not change its balance.
+    await db.query(
+      "select buildly_purchase_pack($1,'fixture-before-upgrade',2,false)",
+      [user],
+    );
+    const migration = await readFile(
+      new URL("../supabase/receipt-fingerprints.sql", import.meta.url),
+      "utf8",
+    );
+    await db.exec(migration);
+    await db.exec(migration);
+    await db.query(
+      "select buildly_purchase_pack($1,'fixture-before-upgrade',2,false)",
+      [user],
+    );
+    assert.equal(
+      (
+        await db.query<{ balance: number }>(
+          "select balance from buildly_credits where user_id=$1",
+          [user],
+        )
+      ).rows[0].balance,
+      2,
+    );
+    await db.query(
+      "select buildly_purchase_pack($1,'fixture-after-upgrade',1,false)",
+      [user],
+    );
+    await db.query("delete from auth.users where id=$1", [user]);
+    assert.equal(
+      (await db.query("select * from buildly_receipts")).rows.length,
+      0,
+    );
+    for (const receipt of ["fixture-before-upgrade", "fixture-after-upgrade"])
+      await assert.rejects(
+        db.query("select buildly_purchase_pack($1,$2,1,false)", [
+          other,
+          receipt,
+        ]),
+        /RECEIPT_RETIRED/,
+      );
+    await db.query(
+      "select buildly_purchase_pack($1,'genuinely-new-purchase',4,false)",
+      [other],
+    );
+    assert.equal(
+      (
+        await db.query<{ balance: number }>(
+          "select balance from buildly_credits where user_id=$1",
+          [other],
+        )
+      ).rows[0].balance,
+      4,
+    );
+    const columns = await db.query<{ column_name: string }>(
+      "select column_name from information_schema.columns where table_name='siteai_purchase_fingerprints' order by ordinal_position",
+    );
+    assert.deepEqual(
+      columns.rows.map((x) => x.column_name),
+      ["transaction_hash", "account_hash"],
+    );
+    assert.equal(
+      (
+        await db.query<{ allowed: boolean }>(
+          "select has_table_privilege('authenticated','siteai_purchase_fingerprints','SELECT') as allowed",
+        )
+      ).rows[0].allowed,
+      false,
+    );
+  } finally {
+    await db.close();
+  }
+});

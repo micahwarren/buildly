@@ -23,3 +23,13 @@ Use the Supabase project you created. Connecting a GitHub repository does not au
 - If an earlier project was never saved before the old app refreshed, this update cannot reconstruct its photo or generated result. Browser storage from explicit old saves can migrate.
 
 Live signup, email delivery, database/storage policies, and cross-device sync must be verified against your actual configured Supabase project. Automated local tests use isolated service mocks and do not establish live service readiness.
+
+After billing setup, apply `receipt-fingerprints.sql`. It preserves deployed reservation upgrades, backfills one-way receipt/account bindings without changing balances, and prevents receipt reuse after account deletion. Its private RLS table intentionally has no client policies. Do not remove this binding during account deletion.
+
+### One-time free starter projects
+
+After the billing and receipt-fingerprint migrations, apply `starter-tokens.sql` once. It fixes the launch-account cutoff, creates private RLS-protected grant/identity tables and service-only claim functions, and does not change balances by itself. Keep the stable `STARTER_TOKEN_HASH_KEY`, DeviceCheck P-256 key/Key ID and Apple team configured only on the server. Do not rotate the hash key without a migration plan.
+
+Deploy the Store-only receipt counters before running the explicitly gated `SITEAI_SEED_STARTERS=1` maintenance build. The seed adds exactly one complimentary token to each account at the fixed cutoff; reruns are idempotent and create no Apple/RevenueCat transactions. Then enable `STARTER_TOKENS_ENABLED=true` when the signed native DeviceCheck client is delivered. DeviceCheck bit 0 is reserved for this app's offer; leave the developer's bit 1 unchanged. The API fails closed on Apple/configuration errors and limits repeated attempts. A free token uses the existing reservation, failed-image recovery and three-revision logic.
+
+Verify a fresh physical iPhone claim and same-device second-account rejection before public release. Identity/device protection limits repeated offers; it cannot establish one human across every possible device and identity. Claim fingerprints remain after deletion with the readable account link cleared, as disclosed in the privacy policy. Native iOS is the supported future-account claim path; do not promise web/Android starter claims.

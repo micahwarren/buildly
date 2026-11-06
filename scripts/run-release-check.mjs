@@ -58,3 +58,11 @@ if (process.env.SITEAI_APPLE_CONFIG_QA === "1") {
 if (process.env.SITEAI_PUBLIC_HOST_QA === "1") {
   execFileSync(process.execPath, [fileURLToPath(new URL("./public-host-check.mjs", import.meta.url))], { stdio: "inherit", timeout: 90000 });
 }
+
+if (process.env.SITEAI_SEED_STARTERS === "1") {
+  execFileSync(process.execPath, [fileURLToPath(new URL("../node_modules/tsx/dist/cli.mjs", import.meta.url)), fileURLToPath(new URL("./seed-starter-tokens.ts", import.meta.url))], { stdio: "inherit", timeout: 180000 });
+}
+
+if (process.env.SITEAI_DEVICECHECK_QA === "1") {
+  execFileSync(process.execPath, [fileURLToPath(new URL("../node_modules/tsx/dist/cli.mjs", import.meta.url)), fileURLToPath(new URL("./devicecheck-config-check.ts", import.meta.url))], { stdio: "inherit", timeout: 45000 });
+}

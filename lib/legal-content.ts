@@ -54,8 +54,17 @@ export const legal = {
     },
     {
       heading: true,
-      text: "Diagnostics and device storage",
+      text: "Free starter projects and abuse prevention",
     },
+    {
+      heading: false,
+      text: "For the free starter offer on supported iPhones, Apple DeviceCheck supplies a temporary device token so our server can check and mark whether that device has used the offer. We send that token to Apple for this check and do not save the readable token in our database. Apple maintains the device-level offer flag. We also store keyed, one-way fingerprints of your account and verified sign-in identities, including a normalized email address, to prevent repeated claims. These are limited security records, not advertising identifiers or project content.",
+    },
+    {
+      heading: false,
+      text: "The offer flag and one-way claim records may remain after account deletion or app reinstallation to prevent the same starter offer being claimed again. The account link in the claim record is cleared when the account is deleted. These fingerprints are pseudonymous security data; they are not a promise of complete anonymity. Contact support if you believe an eligibility check is incorrect.",
+    },
+    { heading: true, text: "Diagnostics and device storage" },
     {
       heading: false,
       text: "We use request identifiers, status, duration and model-usage records for operation, recovery, security and troubleshooting. Share error reports is optional and off by default. If enabled, it sends the app release, platform and a one-way error fingerprint linked to your account, rather than readable error text or your photos. Eligible optional reports are removed after up to 30 days by the cleanup service. This switch controls Site AI reports; it does not disable Google sign-in processing or its declared analytics.",
@@ -78,7 +87,7 @@ export const legal = {
     },
     {
       heading: false,
-      text: "Saved projects remain until deleted. Minimal operational records and provider records may remain where needed for security, legal or financial obligations. Copies in backups, where configured, expire under their retention settings rather than being erased instantly. We do not promise an unverified universal backup-retention period.",
+      text: "Saved projects remain until deleted. We retain one-way purchase and account fingerprints to prevent the same Apple transaction from granting tokens again, including after account deletion. These limited fraud-prevention records contain no readable account ID, transaction reference, email, profile or project content. Minimal operational records and provider records may remain where needed for security, legal or financial obligations. Copies in backups, where configured, expire under their retention settings rather than being erased instantly. We do not promise an unverified universal backup-retention period.",
     },
     {
       heading: true,
@@ -130,6 +139,14 @@ export const legal = {
     {
       heading: false,
       text: "Tokens are one-time purchases, do not expire and are not a subscription. Deleting a project, deleting your Site AI account or uninstalling the app does not automatically request a refund from Apple. Account deletion removes the unused balance; contact us about a purchase problem before deleting the account where possible.",
+    },
+    {
+      heading: true,
+      text: "Complimentary tokens",
+    },
+    {
+      heading: false,
+      text: "A free starter or support token is not an Apple purchase, has no cash value and cannot be refunded for money. The same generation-failure and plan-recovery rules apply. This does not affect rights relating to an actual paid purchase or mandatory consumer remedies.",
     },
     { heading: true, text: "Your consumer rights" },
     {
@@ -188,8 +205,13 @@ export const legal = {
     },
     {
       heading: true,
-      text: "Purchase problems and refunds",
+      text: "Your first project free",
     },
+    {
+      heading: false,
+      text: "Eligible new accounts on supported iPhones can claim one free starter token for one project, including its design, materials, plan and up to three design revisions. No purchase or subscription is required for this token. The offer is limited to one per verified sign-in identity and iPhone; creating another account, changing an email or reinstalling does not renew the offer. Apple DeviceCheck and limited one-way identity records enforce eligibility. A one-time launch token is also added to accounts existing at the launch-grant cutoff. Complimentary tokens do not expire, cannot be transferred or exchanged for cash, and are removed with the account. Contact support if the check fails or you need help completing your free project.",
+    },
+    { heading: true, text: "Purchase problems and refunds" },
     {
       heading: false,
       text: "If a purchase or plan is missing, open Project tokens to check your balance, or contact support@nomappsllc.com so we can investigate and help complete the service. Apple handles App Store payment/refund requests under its rules. If a complete paid project cannot be delivered, contact us for help and use Apple’s refund process where appropriate. Our Refund Policy explains missing purchases and failed projects in more detail. These terms do not exclude mandatory consumer remedies.",

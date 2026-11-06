@@ -49,6 +49,7 @@ export async function POST(req: Request) {
         p_units: receipt.credits,
         p_refund: false,
       });
+      if (result.error?.message.includes("RECEIPT_RETIRED")) return;
       if (result.error)
         throw new DesignError(
           "Your purchase is saved. Balance update is still pending.",
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
       db
         .from("buildly_receipts")
         .select("transaction_id", { count: "exact", head: true })
+        .or("transaction_id.like.PRODUCTION:%,transaction_id.like.SANDBOX:%")
         .eq("user_id", user.id),
       transaction
         ? db

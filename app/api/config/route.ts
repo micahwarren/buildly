@@ -2,6 +2,7 @@ import { imageProviderConfig } from "@/lib/image-provider";
 import { consentVersion } from "@/lib/production/access";
 import { NextResponse } from "next/server";
 import { projectProducts } from "@/lib/billing/products";
+import { starterConfigured } from "@/lib/starter/device-check";
 export const dynamic = "force-dynamic";
 export function GET() {
   return NextResponse.json(
@@ -19,6 +20,7 @@ export function GET() {
         null,
       billingEnabled: process.env.BILLING_ENABLED === "true",
       billing: {
+        starterTokensAvailable: starterConfigured(),
         products: projectProducts(process.env.REVENUECAT_PROJECT_PRODUCT_ID),
         productId:
           process.env.REVENUECAT_PROJECT_PRODUCT_ID ||
