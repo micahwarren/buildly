@@ -1,0 +1,30 @@
+{
+  "purpose": "Private Apple In-App Purchase review reference",
+  "source": "Actual shared React Native token-shop UI rendered in a browser with fixture account data; not a native device or StoreKit capture",
+  "mobile_source": "e2891199b37820d8b054632df0ee35486f5e78e6",
+  "captured_at": "2026-11-06T00:08:15.282230+00:00",
+  "file": "project-tokens.png",
+  "dimensions": [
+    1290,
+    2796
+  ],
+  "md5": "81e76560e612127a1159dd2fa39594e3",
+  "products": [
+    {
+      "id": "sightsaw.project.single",
+      "tokens": 1,
+      "usd_price": 2.99
+    },
+    {
+      "id": "sightsaw.project.two",
+      "tokens": 2,
+      "usd_price": 4.99
+    },
+    {
+      "id": "sightsaw.project.four",
+      "tokens": 4,
+      "usd_price": 8.99
+    }
+  ],
+  "requirement": "https://developer.apple.com/help/app-store-connect/reference/in-app-purchase-information/"
+}
