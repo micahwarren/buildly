@@ -1,3 +1,4 @@
+import { adultEligibilityChoice } from "../lib/eligibility";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createClient, type User } from "@supabase/supabase-js";
@@ -29,18 +30,24 @@ test("generation requires renewed consent for the current disclosure and provide
     created_at: new Date().toISOString(),
   };
   try {
+    for (const acknowledgement of [{}, { adult_eligibility: false }, { ...adultEligibilityChoice(), adult_eligibility_version: "old" }]) {
+      user.user_metadata = { ...acknowledgement, ai_consent_version: `${consentVersion}:gemini` };
+      await assert.rejects(generationAccount({ db, user }, true),
+        (error: unknown) => error instanceof DesignError && error.status === 403 && error.code === "adult_eligibility_required");
+    }
+    assert.equal(reads, 0, "AI permission alone cannot bypass adult eligibility");
     for (const consent of [undefined, null, "2026-10-29:gemini", `${consentVersion}:openai`]) {
-      user.user_metadata = { ai_consent_version: consent };
+      user.user_metadata = { ...adultEligibilityChoice(), ai_consent_version: consent };
       await assert.rejects(
         generationAccount({ db, user }, true),
         (error: unknown) => error instanceof DesignError && error.status === 403,
       );
     }
     assert.equal(reads, 0, "Rejected permissions cannot reach account work or generation");
-    user.user_metadata = { ai_consent_version: `${consentVersion}:gemini` };
+    user.user_metadata = { ...adultEligibilityChoice(), ai_consent_version: `${consentVersion}:gemini` };
     assert.equal((await generationAccount({ db, user }, true)).user.id, user.id);
     assert.equal(reads, 1);
-    user.user_metadata = { ai_consent_version: null };
+    user.user_metadata = { ...adultEligibilityChoice(), ai_consent_version: null };
     await assert.rejects(generationAccount({ db, user }, true));
     assert.equal(reads, 1, "Revocation stops later generation requests");
   } finally {

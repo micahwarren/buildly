@@ -1,3 +1,4 @@
+import { adultEligibilityChoice } from "../../lib/eligibility";
 import { PGlite } from "@electric-sql/pglite";
 import { readFile } from "node:fs/promises";
 import sharp from "sharp";
@@ -45,7 +46,7 @@ export async function backgroundFixture() {
     email_confirmed_at: new Date().toISOString(),
     aud: "authenticated",
     app_metadata: {},
-    user_metadata: { ai_consent_version: `${consentVersion}:gemini` },
+    user_metadata: { ...adultEligibilityChoice(), ai_consent_version: `${consentVersion}:gemini` },
     created_at: new Date().toISOString(),
   };
   const tables = new Set([

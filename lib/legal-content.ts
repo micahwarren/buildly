@@ -2,7 +2,7 @@ export const legal = {
   privacy: [
     {
       heading: false,
-      text: "Last updated November 6, 2026. Site AI: Visualize & DIY is operated by Nom Apps LLC. Privacy contact: support@nomappsllc.com.",
+      text: "Last updated November 7, 2026. Site AI: Visualize & DIY is operated by Nom Apps LLC. Privacy contact: support@nomappsllc.com.",
     },
     {
       heading: true,
@@ -10,7 +10,7 @@ export const legal = {
     },
     {
       heading: false,
-      text: "We collect your account email and identifier, and profile information supplied by Apple or Google when present. We store the photos, project descriptions, optional measurements, inspiration/material images, generated designs and plans you choose to save. An optional profile photo is also linked to your account. We record the version and time of your terms acceptance and AI-processing choices. Upload only images you have permission to use; avoid sensitive documents and unnecessary personal information.",
+      text: "We collect your account email and identifier, and profile information supplied by Apple or Google when present. We store the photos, project descriptions, optional measurements, inspiration/material images, generated designs and plans you choose to save. An optional profile photo is also linked to your account. We record the version and time of your terms acceptance, your acknowledgement that you are 18 or older, and your AI-processing choices. We do not ask for your date of birth; an acknowledgement is not identity or age verification. Upload only images you have permission to use; avoid sensitive documents and unnecessary personal information.",
     },
     {
       heading: true,
@@ -112,13 +112,13 @@ export const legal = {
     },
     {
       heading: false,
-      text: "Site AI is not designed for children under 13. We do not knowingly collect their personal information; contact us if you believe such information was provided so we can investigate and remove it. We will update this notice when practices change. Material changes will be described in the app or through an appropriate notice before they apply to new processing.",
+      text: "Site AI is intended for adults 18 or older. Do not create an account, submit content or make purchases if you are under 18. We do not knowingly collect children’s personal information; contact us if you believe a minor provided information so we can investigate and remove it. We will update this notice when practices change. Material changes will be described in the app or through an appropriate notice before they apply to new processing.",
     },
   ],
   refunds: [
     {
       heading: false,
-      text: "Last updated November 6, 2026. This Refund Policy covers Site AI: Visualize & DIY, operated by Nom Apps LLC. Contact: support@nomappsllc.com.",
+      text: "Last updated November 7, 2026. This Refund Policy covers Site AI: Visualize & DIY, operated by Nom Apps LLC. Contact: support@nomappsllc.com.",
     },
     { heading: true, text: "Request a refund from Apple" },
     {
@@ -166,7 +166,7 @@ export const legal = {
   terms: [
     {
       heading: false,
-      text: "Last updated November 6, 2026. These terms cover Site AI: Visualize & DIY, operated by Nom Apps LLC. Support: support@nomappsllc.com.",
+      text: "Last updated November 7, 2026. These terms cover Site AI: Visualize & DIY, operated by Nom Apps LLC. Support: support@nomappsllc.com.",
     },
     {
       heading: true,
@@ -182,7 +182,7 @@ export const legal = {
     },
     {
       heading: false,
-      text: "Site AI provides AI design concepts and project-planning guidance. Use the service only if you can agree to these terms under applicable law. If you are below the legal age of majority, obtain permission from a parent or guardian, including for purchases. The service is not designed for children under 13. Keep your sign-in details secure.",
+      text: "Site AI provides AI design concepts and project-planning guidance. You must be at least 18 and legally able to agree to these terms to use the service, generate projects or buy tokens. Permission from a parent or guardian does not replace this minimum age. You must acknowledge adult eligibility before new generation, starter claims or token purchases. Existing account data remains accessible for viewing or deletion. Keep your sign-in details secure.",
     },
     {
       heading: true,

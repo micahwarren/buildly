@@ -1,6 +1,7 @@
 import { imageProviderConfig } from "../image-provider";
 import { authenticatedUser } from "../billing/server";
 import { DesignError } from "../services/image-design";
+import { hasAdultEligibility } from "../eligibility";
 export const consentVersion = "2026-11-06";
 export async function generationUser(req: Request, consent = false) {
   return generationAccount(await authenticatedUser(req), consent);
@@ -16,6 +17,12 @@ export async function generationAccount(
     throw new DesignError(
       "New designs are temporarily paused. Your saved projects are still available.",
       503,
+    );
+  if (!hasAdultEligibility(account.user.user_metadata))
+    throw new DesignError(
+      "Confirm you are 18 or older in the latest Site AI app before creating a project.",
+      403,
+      "adult_eligibility_required",
     );
   if (
     consent &&

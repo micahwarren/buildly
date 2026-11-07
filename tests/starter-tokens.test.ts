@@ -1,3 +1,4 @@
+import { adultEligibilityChoice } from "../lib/eligibility";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -25,6 +26,7 @@ const owner = (id: string, email = id.slice(0, 1) + "@example.test") =>
     email,
     email_confirmed_at: "2026-01-01T00:00:00Z",
     identities: [],
+    user_metadata: adultEligibilityChoice(),
   }) as unknown as User;
 
 function config() {
@@ -131,6 +133,23 @@ test("launch gifts add one token to every existing account, are idempotent and d
       3,
       "Linking an existing gift to a device does not add another gift",
     );
+  } finally {
+    await db.close();
+  }
+});
+
+test("an unacknowledged account cannot begin device checks or receive a starter token", async () => {
+  const { db, client, balance } = await fixture();
+  let checks = 0;
+  try {
+    const user = owner(a);
+    user.user_metadata = {};
+    await assert.rejects(claimStarter(client, user, "fixture", {
+      used: async () => { checks++; return false; },
+      markUsed: async () => { checks++; },
+    }), /18 or older/);
+    assert.equal(checks, 0);
+    assert.equal(await balance(a), 0);
   } finally {
     await db.close();
   }

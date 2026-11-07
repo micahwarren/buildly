@@ -1,3 +1,4 @@
+import { adultEligibilityChoice } from "../lib/eligibility";
 import test from "node:test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
@@ -105,7 +106,7 @@ async function fixture() {
       app_metadata: {},
       aud: "authenticated",
       created_at: new Date().toISOString(),
-      user_metadata: { ai_consent_version: `${consentVersion}:gemini` },
+      user_metadata: { ...adultEligibilityChoice(), ai_consent_version: `${consentVersion}:gemini` },
     },
   })) as typeof generationUser;
   const design: NonNullable<

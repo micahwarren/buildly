@@ -14,5 +14,5 @@ test("refund disclosures preserve Apple's process, recovery without repurchase a
     /Apple’s Standard End User License Agreement/,
   );
   for (const document of Object.values(legal))
-    assert.match(document[0].text, /^Last updated November 6, 2026\./);
+    assert.match(document[0].text, /^Last updated November 7, 2026\./);
 });

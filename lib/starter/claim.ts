@@ -3,6 +3,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { DesignError } from "../services/image-design";
 import { starterIdentity } from "./identity";
 import { deviceCheckClient, starterConfigured } from "./device-check";
+import { hasAdultEligibility } from "../eligibility";
 
 export async function claimStarter(
   db: SupabaseClient,
@@ -10,6 +11,8 @@ export async function claimStarter(
   deviceToken: string,
   checker = deviceCheckClient(),
 ) {
+  if (!hasAdultEligibility(user.user_metadata))
+    throw new DesignError("Confirm you are 18 or older in the latest Site AI app before claiming a starter token.", 403, "adult_eligibility_required");
   if (!starterConfigured())
     throw new DesignError(
       "Starter tokens are not ready yet. Please try again shortly.",
