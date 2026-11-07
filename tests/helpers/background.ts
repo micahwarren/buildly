@@ -4,6 +4,7 @@ import sharp from "sharp";
 import { createClient } from "@supabase/supabase-js";
 import { makeDemo } from "../../lib/project";
 import type { JobDependencies } from "../../lib/production/jobs";
+import { consentVersion } from "../../lib/production/access";
 export const owner = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   other = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
   jobId = "11111111-1111-4111-8111-111111111111";
@@ -44,7 +45,7 @@ export async function backgroundFixture() {
     email_confirmed_at: new Date().toISOString(),
     aud: "authenticated",
     app_metadata: {},
-    user_metadata: { ai_consent_version: "2026-10-29:gemini" },
+    user_metadata: { ai_consent_version: `${consentVersion}:gemini` },
     created_at: new Date().toISOString(),
   };
   const tables = new Set([

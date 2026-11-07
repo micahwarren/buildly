@@ -10,7 +10,7 @@ export const legal = {
     },
     {
       heading: false,
-      text: "We collect your account email and identifier, and profile information supplied by Apple or Google when present. We store the photos, project descriptions, optional measurements, inspiration/material images, generated designs and plans you choose to save. An optional profile photo is also linked to your account. Upload only images you have permission to use; avoid sensitive documents and unnecessary personal information.",
+      text: "We collect your account email and identifier, and profile information supplied by Apple or Google when present. We store the photos, project descriptions, optional measurements, inspiration/material images, generated designs and plans you choose to save. An optional profile photo is also linked to your account. We record the version and time of your terms acceptance and AI-processing choices. Upload only images you have permission to use; avoid sensitive documents and unnecessary personal information.",
     },
     {
       heading: true,
@@ -58,7 +58,7 @@ export const legal = {
     },
     {
       heading: false,
-      text: "For the free starter offer on supported iPhones, Apple DeviceCheck supplies a temporary device token so our server can check and mark whether that device has used the offer. We send that token to Apple for this check and do not save the readable token in our database. Apple maintains the device-level offer flag. We also store keyed, one-way fingerprints of your account and verified sign-in identities, including a normalized email address, to prevent repeated claims. These are limited security records, not advertising identifiers or project content.",
+      text: "For the free starter offer on supported iPhones and iPads, Apple DeviceCheck supplies a temporary device token so our server can check and mark whether that device has used the offer. We send that token to Apple for this check and do not save the readable token in our database. Apple maintains the device-level offer flag. We also store keyed, one-way fingerprints of your account and verified sign-in identities, including a normalized email address, to prevent repeated claims. These are limited security records, not advertising identifiers or project content.",
     },
     {
       heading: false,
@@ -218,7 +218,7 @@ export const legal = {
     },
     {
       heading: false,
-      text: "Eligible new accounts on supported iPhones can claim one free starter token for one project, including its design, materials, plan and up to three design revisions. No purchase or subscription is required for this token. The offer is limited to one per verified sign-in identity and iPhone; creating another account, changing an email or reinstalling does not renew the offer. Apple DeviceCheck and limited one-way identity records enforce eligibility. A one-time launch token is also added to accounts existing at the launch-grant cutoff. Complimentary tokens do not expire, cannot be transferred or exchanged for cash, and are removed with the account. Contact support if the check fails or you need help completing your free project.",
+      text: "Eligible new accounts on supported iPhones and iPads can claim one free starter token for one project, including its design, materials, plan and up to three design revisions. No purchase or subscription is required for this token. The offer is limited to one per verified sign-in identity and supported device; creating another account, changing an email or reinstalling does not renew the offer. Apple DeviceCheck and limited one-way identity records enforce eligibility. A one-time launch token is also added to accounts existing at the launch-grant cutoff. Complimentary tokens do not expire, cannot be transferred or exchanged for cash, and are removed with the account. Contact support if the check fails or you need help completing your free project.",
     },
     { heading: true, text: "Purchase problems and refunds" },
     {

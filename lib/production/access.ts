@@ -1,7 +1,7 @@
 import { imageProviderConfig } from "../image-provider";
 import { authenticatedUser } from "../billing/server";
 import { DesignError } from "../services/image-design";
-export const consentVersion = "2026-10-29";
+export const consentVersion = "2026-11-06";
 export async function generationUser(req: Request, consent = false) {
   return generationAccount(await authenticatedUser(req), consent);
 }

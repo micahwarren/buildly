@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import sharp from "sharp";
 import { createClient } from "@supabase/supabase-js";
 import { executeJob } from "../lib/production/jobs";
-import { generationUser } from "../lib/production/access";
+import { consentVersion, generationUser } from "../lib/production/access";
 import { makeDemo, type Project } from "../lib/project";
 import { DesignError } from "../lib/services/image-design";
 import { unavailablePlan } from "../lib/services/design-plan";
@@ -105,7 +105,7 @@ async function fixture() {
       app_metadata: {},
       aud: "authenticated",
       created_at: new Date().toISOString(),
-      user_metadata: { ai_consent_version: "2026-10-29:gemini" },
+      user_metadata: { ai_consent_version: `${consentVersion}:gemini` },
     },
   })) as typeof generationUser;
   const design: NonNullable<

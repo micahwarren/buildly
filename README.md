@@ -1,4 +1,4 @@
-> **Active release:** The current iPhone client is the Expo app in `micahwarren/expo-starter`. This repository provides its service. Follow [the non-payment release prerequisites](docs/release/NON_PAYMENT_RELEASE.md) before deployment. The older native/purchase instructions below are historical and are not the current release path.
+> **Current service:** The active iPhone/iPad client is `micahwarren/expo-starter`; this repository provides its Next.js API. Production Supabase accounts/private storage, RevenueCat purchases, Gemini generation and durable background jobs are connected. Use the Expo repository’s `docs/release/FINAL_RELEASE_AUDIT.md`, `READINESS.md` and `RELEASE_RUNBOOK.md` for current launch evidence and holds. Older sample-only/non-payment/legacy native notes below are historical and do not describe the current release. Never upload the retained SwiftUI/Capacitor client as the Expo release.
 
 # Site AI
 
