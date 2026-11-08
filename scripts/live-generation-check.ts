@@ -4,29 +4,18 @@ import { planProject } from "../lib/services/project-planning";
 import { refineProject } from "../lib/services/refine-project";
 import { createDesignPlan } from "../lib/services/design-plan";
 import type { Project } from "../lib/project";
+import { readFile, mkdir, writeFile } from "node:fs/promises";
+import sharp from "sharp";
 
 async function main() {
   if (process.env.SIGHTSAW_LIVE_RELEASE_CHECK !== "1")
     throw Error("Live QA requires explicit opt-in.");
   const start = Date.now();
-  // Public OpenCV sample, not a customer's property photo. No accounts or data writes.
-  const response = await fetch(
-    "https://api.github.com/repos/opencv/opencv/contents/samples/data/building.jpg?ref=4.x",
-    {
-      headers: {
-        "User-Agent": "SightSaw release check",
-        Accept: "application/vnd.github+json",
-      },
-      signal: AbortSignal.timeout(20_000),
-    },
-  );
-  assert.ok(
-    response.ok,
-    `Public test fixture unavailable (${response.status})`,
-  );
-  const fixture = (await response.json()) as { content?: string };
-  assert.ok(fixture.content, "Public fixture has no image content");
-  const originalImage = `data:image/jpeg;base64,${Buffer.from(fixture.content, "base64").toString("base64")}`;
+  // Original generated example with a recorded source; never a customer photo.
+  // A prior public-stock fixture was restricted by the provider. Do not retry
+  // that blocked input or weaken the provider's content restrictions.
+  const fixture = await readFile(new URL("../tests/fixtures/siteai-original-space.png", import.meta.url));
+  const originalImage = `data:image/png;base64,${fixture.toString("base64")}`;
   const hash = (value: unknown) =>
     createHash("sha256").update(JSON.stringify(value)).digest("hex");
   async function complete(p: Project) {
@@ -38,6 +27,7 @@ async function main() {
       "design-based",
       p.planSummary || "Planning did not finish",
     );
+    assert.equal(p.visualizationMode, "ai", "Live QA must never pass using a demo design");
     assert.ok(
       p.generatedImage.startsWith("data:image/") &&
         p.generatedImage.length > 1000,
@@ -97,6 +87,22 @@ async function main() {
     "Revision must create a matching new plan",
   );
   assert.match(JSON.stringify(revision.materials), /plywood/i);
+  if (process.env.SITEAI_LIVE_SAMPLE_EXPORT === "1") {
+    // Only this original synthetic example is exported. No account, customer
+    // image or session data enters the artifact. JPEG delivery uses the same
+    // normalization as ordinary app inputs; the original PNG is retained.
+    await mkdir("public/appstore", { recursive: true });
+    const original = await sharp(fixture).resize({ width: 1200, withoutEnlargement: true }).jpeg({ quality: 90 }).toBuffer();
+    const edited = Buffer.from(project.generatedImage.split(",")[1], "base64");
+    const sample = { ...project, originalImage: "/appstore/space.jpg", generatedImage: "/appstore/patio.jpg" };
+    const files: [string, Buffer][] = [["space.jpg", original], ["patio.jpg", edited], ["projects.json", Buffer.from(JSON.stringify([sample]))]];
+    for (const [name, bytes] of files) {
+      await writeFile("public/appstore/" + name, bytes);
+      const encoded = bytes.toString("base64");
+      for (let offset = 0; offset < encoded.length; offset += 6000)
+        console.info(`SITEAI_QA_PUBLIC_ARTIFACT ${name} ${offset} ${encoded.slice(offset, offset + 6000)}`);
+    }
+  }
   console.info(
     "sightsaw_live_release_check",
     JSON.stringify({
@@ -112,7 +118,7 @@ async function main() {
       materialsChanged: true,
       planChanged: true,
       allFixtureMaterialsPriced: true,
-      source: "Public OpenCV samples/data/building.jpg",
+      source: "Original generated example space; see tests/fixtures/siteai-original-space.source.json",
       customerDataWrites: 0,
     }),
   );

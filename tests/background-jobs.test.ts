@@ -7,8 +7,37 @@ import {
   deliverNotifications,
 } from "../lib/production/notifications";
 import { backgroundFixture, owner, other, jobId } from "./helpers/background";
+import { DesignError } from "../lib/services/image-design";
 const token = "ExpoPushToken[fixture-token-1234567890]",
   deviceHash = createHash("sha256").update(token).digest("hex");
+test("a restricted image stops the durable job, releases its token and does not send a ready alert", async () => {
+  const f = await backgroundFixture();
+  process.env.BILLING_ENABLED = "true";
+  let attempts = 0;
+  f.dependencies.design = async () => {
+    attempts++;
+    throw new DesignError("Choose a different photo you have permission to use.", 422, "image_not_processed");
+  };
+  try {
+    await enqueueJob(f.request(), "design", () => {}, f.dependencies);
+    await processQueuedJob(jobId, f.db, f.dependencies);
+    await processQueuedJob(jobId, f.db, f.dependencies);
+    assert.equal(attempts, 1, "A provider restriction cannot be retried by the background worker");
+    assert.equal(await f.balance(), 2, "A request with no saved image cannot consume a token");
+    const row = (await f.pg.query<{ state: string; status: string; payload_text: string | null; failure_message: string }>(
+      "select j.state,j.failure_message,q.status,q.payload_text from buildly_jobs j join siteai_job_queue q on q.job_id=j.id"
+    )).rows[0];
+    assert.equal(row.state, "failed");
+    assert.equal(row.status, "failed");
+    assert.equal(row.payload_text, null);
+    assert.match(row.failure_message, /different photo/);
+    assert.equal((await f.pg.query("select * from projects")).rows.length, 0);
+    assert.equal((await f.pg.query("select * from siteai_push_outbox")).rows.length, 0);
+  } finally {
+    await f.pg.close();
+    delete process.env.BILLING_ENABLED;
+  }
+});
 test("acceptance persists the request before returning; worker completes without the original phone request", async () => {
   const f = await backgroundFixture();
   process.env.BILLING_ENABLED = "true";

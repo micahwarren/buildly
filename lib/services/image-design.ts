@@ -358,12 +358,14 @@ export async function createDesign(
   if (
     provider === "gemini" &&
     (data?.promptFeedback?.blockReason ||
-      ["SAFETY", "IMAGE_SAFETY", "PROHIBITED_CONTENT", "RECITATION"].includes(
+      ["SAFETY", "IMAGE_SAFETY", "PROHIBITED_CONTENT", "IMAGE_PROHIBITED_CONTENT", "RECITATION", "IMAGE_RECITATION"].includes(
         candidate?.finishReason || "",
       ))
   )
     throw new DesignError(
-      "The image service could not process this photo or description. Please try a different photo or rephrase your idea.",
+      candidate?.finishReason === "IMAGE_RECITATION"
+        ? "The image service restricted this preview. Please choose a different photo you have permission to use."
+        : "The image service could not process this photo or description. Please try a different photo or rephrase your idea.",
       422,
       "image_not_processed",
     );

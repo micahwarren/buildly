@@ -237,6 +237,16 @@ test("Gemini safety-blocked image does not fall back to artwork", async () => {
   );
 });
 
+for (const finishReason of ["IMAGE_RECITATION", "IMAGE_PROHIBITED_CONTENT"])
+  test(`Gemini ${finishReason} stops with actionable feedback instead of a retryable outage`, async () => {
+    let calls = 0;
+    await assert.rejects(createDesign(input, false, {
+      provider: "gemini", apiKey: "test-only",
+      fetcher: async () => { calls++; return Response.json({ candidates: [{ finishReason }] }); },
+    }), (error) => error instanceof DesignError && error.status === 422 && error.code === "image_not_processed" && error.message.includes("photo"));
+    assert.equal(calls, 1, "A content restriction cannot trigger another image request or provider fallback");
+  });
+
 test("provider selection defaults to Gemini and never reuses the other provider key", () => {
   const defaults = imageProviderConfig({ OPENAI_API_KEY: "unused-test-value" });
   assert.equal(defaults.provider, "gemini");
