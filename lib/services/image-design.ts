@@ -2,6 +2,7 @@ import { recordUsage } from "../production/telemetry";
 import { imageProviderConfig, type ImageProvider } from "../image-provider";
 import sharp from "sharp";
 import { photos, type Project } from "../project";
+import { MAX_ORIGINAL_IMAGE_CHARS } from "../image-limits";
 export class DesignError extends Error {
   constructor(
     message: string,
@@ -85,6 +86,8 @@ export async function createDesign(
       "Photo previews are not connected yet. The site owner needs to enable image generation. You can still explore an explicitly labeled sample plan.",
       503,
     );
+  if (input.originalImage.length > MAX_ORIGINAL_IMAGE_CHARS)
+    throw new DesignError("That photo is too large. Please choose a smaller photo.", 413, "image_too_large");
   const match = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=\s]+)$/.exec(
     input.originalImage,
   );
@@ -361,7 +364,11 @@ export async function createDesign(
       ["SAFETY", "IMAGE_SAFETY", "PROHIBITED_CONTENT", "IMAGE_PROHIBITED_CONTENT", "RECITATION", "IMAGE_RECITATION"].includes(
         candidate?.finishReason || "",
       ))
-  )
+  ) {
+    console.warn("siteai_image_restricted", {
+      provider, model,
+      reason: candidate?.finishReason && /^[A-Z_]{1,60}$/.test(candidate.finishReason) ? candidate.finishReason : "PROMPT_RESTRICTED",
+    });
     throw new DesignError(
       candidate?.finishReason === "IMAGE_RECITATION"
         ? "The image service restricted this preview. Please choose a different photo you have permission to use."
@@ -369,6 +376,7 @@ export async function createDesign(
       422,
       "image_not_processed",
     );
+  }
   const encoded =
     provider === "gemini"
       ? candidate?.content?.parts?.find(

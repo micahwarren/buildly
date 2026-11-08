@@ -6,6 +6,7 @@ import { createDesignPlan } from "../lib/services/design-plan";
 import type { Project } from "../lib/project";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import sharp from "sharp";
+import { readProjectRequest } from "../lib/project-request";
 
 async function main() {
   if (process.env.SIGHTSAW_LIVE_RELEASE_CHECK !== "1")
@@ -15,7 +16,8 @@ async function main() {
   // A prior public-stock fixture was restricted by the provider. Do not retry
   // that blocked input or weaken the provider's content restrictions.
   const fixture = await readFile(new URL("../tests/fixtures/siteai-original-space.png", import.meta.url));
-  const originalImage = `data:image/png;base64,${fixture.toString("base64")}`;
+  const originalJpeg = await sharp(fixture).rotate().resize({ width: 1280, height: 1280, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 85 }).toBuffer();
+  const originalImage = `data:image/jpeg;base64,${originalJpeg.toString("base64")}`;
   const hash = (value: unknown) =>
     createHash("sha256").update(JSON.stringify(value)).digest("hex");
   async function complete(p: Project) {
@@ -48,8 +50,8 @@ async function main() {
     return p;
   }
   const firstStart = Date.now();
-  const project = await complete(
-    await planProject({
+  const { input } = await readProjectRequest(new Request("https://site-ai-nomapps.vercel.app/api/jobs", {
+    method: "POST", body: JSON.stringify({
       description:
         "Build two freestanding cedar planter boxes on the ground near the entrance. Each box is 4 feet long, 2 feet wide and 18 inches tall. Keep the building, windows, entrance, landscaping and existing features unchanged. Include the box bottoms, drainage and compatible fasteners. Leave them empty; do not buy plants or include unrelated equipment. These are two new boxes, not changes to the building.",
       projectType: "Something else",
@@ -59,7 +61,8 @@ async function main() {
       experienceLevel: "Beginner",
       budget: "Not sure",
     }),
-  );
+  }));
+  const project = await complete(await planProject(input));
   const projectMs = Date.now() - firstStart;
   const revisionStart = Date.now();
   const revision = await complete(
@@ -92,10 +95,10 @@ async function main() {
     // image or session data enters the artifact. JPEG delivery uses the same
     // normalization as ordinary app inputs; the original PNG is retained.
     await mkdir("public/appstore", { recursive: true });
-    const original = await sharp(fixture).resize({ width: 1200, withoutEnlargement: true }).jpeg({ quality: 90 }).toBuffer();
     const edited = Buffer.from(project.generatedImage.split(",")[1], "base64");
     const sample = { ...project, originalImage: "/appstore/space.jpg", generatedImage: "/appstore/patio.jpg" };
-    const files: [string, Buffer][] = [["space.jpg", original], ["patio.jpg", edited], ["projects.json", Buffer.from(JSON.stringify([sample]))]];
+    const changed = { ...revision, originalImage: "/appstore/space.jpg", generatedImage: "/appstore/revision.jpg" };
+    const files: [string, Buffer][] = [["space.jpg", originalJpeg], ["patio.jpg", edited], ["projects.json", Buffer.from(JSON.stringify([sample]))], ["revision.jpg", Buffer.from(revision.generatedImage.split(",")[1], "base64")], ["revision.json", Buffer.from(JSON.stringify(changed))]];
     for (const [name, bytes] of files) {
       await writeFile("public/appstore/" + name, bytes);
       const encoded = bytes.toString("base64");

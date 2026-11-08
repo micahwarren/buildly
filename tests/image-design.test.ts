@@ -38,6 +38,13 @@ test("missing key returns setup error; never substitutes a sample", async () => 
     (e) => e instanceof DesignError && e.status === 503,
   );
 });
+test("oversized original images are rejected before a paid provider request", async () => {
+  let calls = 0;
+  await assert.rejects(createDesign({ ...input, originalImage: "data:image/png;base64," + "A".repeat(3_500_000) }, false, {
+    provider: "gemini", apiKey: "test-only", fetcher: async () => { calls++; return Response.json({}); },
+  }), (error) => error instanceof DesignError && error.status === 413 && error.code === "image_too_large");
+  assert.equal(calls, 0);
+});
 test("explicit demo mode returns an identified illustration", async () => {
   const result = await createDesign(input, true, {
     provider: "openai",

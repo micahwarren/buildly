@@ -1,6 +1,7 @@
 import { parseDetails } from "./project-details";
 import type { Project } from "./project";
 import { DesignError } from "./services/image-design";
+import { MAX_ORIGINAL_IMAGE_CHARS } from "./image-limits";
 export async function readProjectRequest(
   req: Request,
 ): Promise<{ input: Partial<Project>; demo: boolean }> {
@@ -23,7 +24,7 @@ export async function readProjectRequest(
     !/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=\s]+$/.test(
       data.originalImage,
     ) ||
-    data.originalImage.length > 3_500_000 ||
+    data.originalImage.length > MAX_ORIGINAL_IMAGE_CHARS ||
     typeof data.description !== "string" ||
     !data.description.trim() ||
     data.description.length > 2000

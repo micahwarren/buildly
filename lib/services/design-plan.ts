@@ -4,6 +4,7 @@ import type { Project } from "../project";
 import { DesignError } from "./image-design";
 import { materialPurchase } from "../material-purchase";
 import { quantityFormula } from "../quantity-formula";
+import { MAX_PLAN_IMAGE_CHARS } from "../image-limits";
 
 const string = { type: "STRING" };
 const strings = { type: "ARRAY", items: string };
@@ -306,7 +307,7 @@ async function photoPart(dataUrl: string) {
   const match = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=\s]+)$/.exec(
     dataUrl,
   );
-  if (!match || dataUrl.length > 4_000_000)
+  if (!match || dataUrl.length > MAX_PLAN_IMAGE_CHARS)
     throw new DesignError(
       "A saved original photo and generated design are required to build a matching plan.",
       400,
