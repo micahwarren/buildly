@@ -94,7 +94,8 @@ test("region rejection cannot queue or charge; accepted work finishes after the 
     assert.equal(f.calls().designs, 1);
     assert.equal(await f.balance(), 1);
     assert.equal(
-      (await f.pg.query("select state from buildly_jobs")).rows[0].state,
+      (await f.pg.query<{ state: string }>("select state from buildly_jobs"))
+        .rows[0].state,
       "complete",
     );
   } finally {
