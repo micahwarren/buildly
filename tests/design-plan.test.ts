@@ -77,6 +77,7 @@ test("planner sends both actual photos, description and structured response sche
   });
   const result = await createDesignPlan(project, {
     apiKey: "test",
+    audit: async (_project, plan) => plan,
     fetcher: async (_url, init) => {
       const body = JSON.parse(init!.body as string);
       assert.equal(
@@ -208,6 +209,7 @@ test("truncated, blocked and provider-error responses cannot become a usable pla
     await assert.rejects(
       createDesignPlan(project, {
         apiKey: "test",
+        audit: async (_project, plan) => plan,
         fetcher: async () => response,
       }),
     );
@@ -229,6 +231,7 @@ test("corrects a rejected plan once, retaining both photos and the requested sco
     }),
     {
       apiKey: "test",
+      audit: async (_project, plan) => plan,
       fetcher: async (_url, init) => {
         calls++;
         const body = JSON.parse(init!.body as string);
@@ -275,6 +278,7 @@ test("retries truncated output with a larger output budget but never accepts the
     makeDemo({ originalImage: image, generatedImage: image }),
     {
       apiKey: "test",
+      audit: async (_project, plan) => plan,
       fetcher: async (_url, init) => {
         calls++;
         const body = JSON.parse(init!.body as string);
@@ -342,6 +346,7 @@ test("staged planning preserves purchased equipment and installation scope acros
     }),
     {
       apiKey: "test",
+      audit: async (_project, plan) => plan,
       fetcher: async (_url, init) => {
         calls++;
         const body = JSON.parse(init!.body as string);
@@ -431,6 +436,7 @@ test("a malformed instruction section is repaired without discarding the accepte
     makeDemo({ originalImage: image, generatedImage: image }),
     {
       apiKey: "test",
+      audit: async (_project, plan) => plan,
       fetcher: async (_url, init) => {
         const body = JSON.parse(init!.body as string);
         let payload;

@@ -39,6 +39,7 @@ export type Project = {
   planFailureCode?: string;
   planRetryable?: boolean;
   estimateBasisVersion?: string;
+  materialsAuditVersion?: string;
   planSummary?: string;
   planQuestions?: string[];
   difficulty: string;

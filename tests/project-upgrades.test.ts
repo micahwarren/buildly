@@ -152,6 +152,7 @@ test("refinement updates dimensions and stores a separate version while clearing
   const project = base();
   const before = structuredClone(project);
   const result = await refineProject(project, "Make it two feet wider", {
+    review: async () => ({ approved: true, issues: [] }),
     interpret: async () => ({
       description: "14 × 16 wooden patio and pergola",
       width: 14,

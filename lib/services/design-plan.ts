@@ -1,15 +1,15 @@
 import { requestGemini, parseModelJson } from "./gemini-request";
-import sharp from "sharp";
 import type { Project } from "../project";
 import { DesignError } from "./image-design";
 import { materialPurchase } from "../material-purchase";
 import { quantityFormula } from "../quantity-formula";
-import { MAX_PLAN_IMAGE_CHARS } from "../image-limits";
+import { photoPart } from "./vision-input";
+import { auditMaterials, MaterialAuditError } from "./material-audit";
 
 const string = { type: "STRING" };
 const strings = { type: "ARRAY", items: string };
 const number = { type: "NUMBER" };
-const object = (properties: Record<string, unknown>) => ({
+const object = <T extends Record<string, unknown>>(properties: T) => ({
   type: "OBJECT",
   properties,
   required: Object.keys(properties),
@@ -303,38 +303,6 @@ STEPS: 8–18 chronological steps (6 minimum for a genuinely simple job), specif
 NAME: projectTitle is a concise, professional 2–6 word project name (60 characters maximum), such as "White Panel Door" or "Cedar Patio Pergola". Describe the actual design. Do not use "My", first-person requests, emojis, marketing slogans or revision suffixes.
 TIME: laborLow/laborHigh are TOTAL person-hours for this scope and experience level (not days). Explain scope/crew assumptions and excluded waiting for concrete cure, inspections, permits, weather and delivery. Difficulty must reflect actual structural and physical complexity, not just project category. Questions are unresolved scope/design inputs, not generic disclaimers. Summary describes exactly what this plan covers and excludes.`;
 }
-async function photoPart(dataUrl: string) {
-  const match = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=\s]+)$/.exec(
-    dataUrl,
-  );
-  if (!match || dataUrl.length > MAX_PLAN_IMAGE_CHARS)
-    throw new DesignError(
-      "A saved original photo and generated design are required to build a matching plan.",
-      400,
-    );
-  try {
-    const data = await sharp(Buffer.from(match[2], "base64"), {
-      limitInputPixels: 24_000_000,
-    })
-      .rotate()
-      .resize({
-        width: 1000,
-        height: 1000,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .jpeg({ quality: 80 })
-      .toBuffer();
-    return {
-      inlineData: { mimeType: "image/jpeg", data: data.toString("base64") },
-    };
-  } catch {
-    throw new DesignError(
-      "One of the project photos could not be read. Your saved project has not been changed.",
-      400,
-    );
-  }
-}
 export async function createDesignPlan(
   project: Project,
   dependencies: {
@@ -342,8 +310,9 @@ export async function createDesignPlan(
     model?: string;
     fetcher?: typeof fetch;
     timeoutMs?: number;
+    audit?: typeof auditMaterials;
   } = {},
-) {
+): Promise<Partial<Project>> {
   const photos = await Promise.all([
     photoPart(project.originalImage),
     photoPart(project.generatedImage),
@@ -559,7 +528,26 @@ export async function createDesignPlan(
           );
           parsed.steps = batches.flat();
         }
-        return planFields(validatePlan(parsed));
+        const draft = validatePlan(parsed);
+        const timeoutMs = Math.min(35_000, deadline - Date.now());
+        if (timeoutMs < 1000)
+          throw new MaterialAuditError(
+            "final materials audit reached the planning deadline",
+          );
+        const audited = await (dependencies.audit || auditMaterials)(
+          project,
+          draft,
+          {
+            ...dependencies,
+            timeoutMs,
+            parts: baseParts,
+            materialSchema: planSchema.properties.materials.items,
+          },
+        );
+        return {
+          ...planFields(validatePlan(audited)),
+          materialsAuditVersion: "unit-price-review-v1",
+        };
       } catch (error) {
         if (
           error instanceof DesignError &&
@@ -567,12 +555,20 @@ export async function createDesignPlan(
         )
           throw error;
         reason =
-          error instanceof PlanValidationError
-            ? error.reason
+          error instanceof PlanValidationError ||
+          error instanceof MaterialAuditError
+            ? error instanceof PlanValidationError
+              ? error.reason
+              : error.message
             : "response was not valid JSON";
       }
     }
-    console.warn("sightsaw_plan_validation", { attempt: attempt + 1, reason });
+    console.warn("sightsaw_plan_validation", {
+      attempt: attempt + 1,
+      reason: reason.startsWith("final materials audit")
+        ? "final materials audit needs correction"
+        : reason,
+    });
     if (attempt === 1)
       throw new DesignError(
         `Planning could not finish a valid plan: ${reason}. Your image is saved; retry from this design.`,
@@ -636,6 +632,7 @@ export function unavailablePlan(
 ): Partial<Project> {
   return {
     planStatus: "unavailable",
+    materialsAuditVersion: undefined,
     planFailureCode:
       error instanceof DesignError
         ? error.code || String(error.status)
