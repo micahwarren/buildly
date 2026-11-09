@@ -154,6 +154,184 @@ test("a visibly defective revision gets one bounded correction from the prior de
   assert.equal(result.parentProjectId, p.id);
   assert.deepEqual(p, before);
 });
+test("placement/style review receives the homeowner references and only its corrected candidate reaches the plan", async () => {
+  const image = async (color: string) =>
+    "data:image/jpeg;base64," +
+    (
+      await sharp({
+        create: { width: 20, height: 20, channels: 3, background: color },
+      })
+        .jpeg()
+        .toBuffer()
+    ).toString("base64");
+  const [site, current, style, material, wrong, corrected] = await Promise.all(
+    ["blue", "red", "green", "black", "yellow", "purple"].map(image),
+  );
+  const project = makeDemo({
+    originalImage: site,
+    generatedImage: current,
+    referenceImages: [style],
+    materialImages: [material],
+  });
+  const original = structuredClone(project);
+  const change =
+    "Add black vertical-picket railings on the left edge only; keep the stairs open.";
+  const issues = [
+    "Railings are on the right edge instead of the requested left edge",
+    "White solid panels replace the requested black vertical pickets",
+  ];
+  let edits = 0,
+    checks = 0,
+    saves = 0,
+    plans = 0;
+  const result = await refineProject(project, change, {
+    interpret: async () => ({
+      description: project.description + " " + change,
+      width: project.width,
+      length: project.length,
+    }),
+    design: async (input) => {
+      edits++;
+      assert.equal(input.originalImage, current);
+      assert.equal(input.refinement, change);
+      assert.deepEqual(input.referenceImages, [style]);
+      assert.deepEqual(input.materialImages, [material]);
+      assert.deepEqual(input.reviewFeedback, edits === 1 ? [] : issues);
+      return {
+        originalImage: current,
+        generatedImage: edits === 1 ? wrong : corrected,
+        mode: "ai",
+      };
+    },
+    review: (prior, candidate, request) =>
+      reviewRevisionDesign(prior, candidate, request, {
+        apiKey: "fixture",
+        model: "gemini-2.5-flash",
+        fetcher: async (_url, init) => {
+          checks++;
+          const parts = JSON.parse(String(init?.body)).contents[0].parts;
+          const images = parts.filter(
+            (p: { inlineData?: unknown }) => p.inlineData,
+          );
+          assert.equal(
+            images.length,
+            5,
+            "The reviewer receives the three anchors plus style and finish references",
+          );
+          assert.ok(
+            parts.some((p: { text?: string }) =>
+              p.text?.startsWith("INSPIRATION reference"),
+            ),
+          );
+          assert.ok(
+            parts.some((p: { text?: string }) =>
+              p.text?.startsWith("MATERIAL reference"),
+            ),
+          );
+          const stylePixel = await sharp(
+            Buffer.from(images[3].inlineData.data, "base64"),
+          ).stats();
+          const finishPixel = await sharp(
+            Buffer.from(images[4].inlineData.data, "base64"),
+          ).stats();
+          assert.ok(stylePixel.dominant.g > stylePixel.dominant.r);
+          assert.ok(finishPixel.dominant.r < 20 && finishPixel.dominant.g < 20);
+          assert.ok(parts.at(-1).text.includes(change));
+          return Response.json({
+            candidates: [
+              {
+                finishReason: "STOP",
+                content: {
+                  parts: [
+                    {
+                      text: JSON.stringify({
+                        approved: checks === 2,
+                        issues: checks === 1 ? issues : [],
+                      }),
+                    },
+                  ],
+                },
+              },
+            ],
+          });
+        },
+      }),
+    onDesign: async (accepted) => {
+      saves++;
+      assert.equal(accepted.generatedImage, corrected);
+    },
+    plan: async (accepted) => {
+      plans++;
+      assert.equal(accepted.generatedImage, corrected);
+      return { planStatus: "design-based", materials: [], steps: [] };
+    },
+  });
+  assert.equal(edits, 2);
+  assert.equal(checks, 2);
+  assert.equal(saves, 1);
+  assert.equal(plans, 1);
+  assert.equal(result.generatedImage, corrected);
+  assert.deepEqual(project, original);
+});
+
+test("a rejected visual review without a concrete defect does not authorize a blind image retry", async () => {
+  const image =
+    "data:image/jpeg;base64," +
+    (
+      await sharp({
+        create: { width: 20, height: 20, channels: 3, background: "white" },
+      })
+        .jpeg()
+        .toBuffer()
+    ).toString("base64");
+  const project = makeDemo({ originalImage: image, generatedImage: image });
+  for (const issues of [[], [""], ["   "]]) {
+    let edits = 0,
+      saves = 0;
+    await assert.rejects(
+      refineProject(project, "Add railings", {
+        interpret: async () => ({
+          description: project.description,
+          width: project.width,
+          length: project.length,
+        }),
+        design: async () => {
+          edits++;
+          return { originalImage: image, generatedImage: image, mode: "ai" };
+        },
+        review: (prior, candidate, change) =>
+          reviewRevisionDesign(prior, candidate, change, {
+            apiKey: "fixture",
+            model: "gemini-2.5-flash",
+            fetcher: async () =>
+              Response.json({
+                candidates: [
+                  {
+                    finishReason: "STOP",
+                    content: {
+                      parts: [
+                        { text: JSON.stringify({ approved: false, issues }) },
+                      ],
+                    },
+                  },
+                ],
+              }),
+          }),
+        onDesign: async () => {
+          saves++;
+        },
+        plan: async () => {
+          assert.fail("An unapproved image must not reach planning");
+        },
+      }),
+      (error) =>
+        error instanceof DesignError &&
+        error.code === "revision_review_unavailable",
+    );
+    assert.equal(edits, 1);
+    assert.equal(saves, 0);
+  }
+});
 test("a revision rejected twice never reaches the saved-image checkpoint or replaces the original", async () => {
   const p = makeDemo({
       originalImage: "site",
