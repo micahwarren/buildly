@@ -3,7 +3,12 @@ import { createHash } from "node:crypto";
 import { billedForAccount } from "../billing/server";
 import { generationUser } from "./access";
 import { jobError } from "./errors";
-import { ownedProject, loadProjectImages, persistProject } from "./projects";
+import {
+  ownedProject,
+  ownedRevisionSource,
+  loadProjectImages,
+  persistProject,
+} from "./projects";
 import { DesignError } from "../services/image-design";
 import { planProject } from "../services/project-planning";
 import { refineProject } from "../services/refine-project";
@@ -54,7 +59,11 @@ export async function prepareJob(
   let project: Project | undefined;
   if (kind !== "design") {
     if (!source) throw new DesignError("Open a saved project first.", 400);
-    project = await ownedProject(db, user.id, source);
+    project = await (kind === "refine" ? ownedRevisionSource : ownedProject)(
+      db,
+      user.id,
+      source,
+    );
   }
   if (
     kind === "refine" &&
@@ -67,7 +76,7 @@ export async function prepareJob(
       400,
     );
   const { input } =
-    kind === "plan"
+    kind !== "design"
       ? { input: {} }
       : await readProjectRequest(
           new Request(req.url, { method: "POST", body: text }),
@@ -75,7 +84,13 @@ export async function prepareJob(
   const hash = createHash("sha256")
     .update(kind + "\n" + text)
     .digest("hex");
-  return { db, user, kind, id, source, project, input, text, hash };
+  // Preserve existing clients' retry hashes, but store no replacement project
+  // fields in revision work. The saved, owner-checked project is authoritative.
+  const savedText =
+    kind === "refine"
+      ? JSON.stringify({ id: source, change: data.change.trim() })
+      : text;
+  return { db, user, kind, id, source, project, input, text: savedText, hash };
 }
 export type PreparedJob = Awaited<ReturnType<typeof prepareJob>>;
 export async function executeJob(
@@ -184,22 +199,7 @@ export async function runPreparedJob(
           } else if (kind === "refine") {
             const loaded = await loadProjectImages(db, user.id, project!);
             p = await (dependencies.refine || refineProject)(
-              {
-                ...loaded,
-                ...input,
-                // Omitted optional measurements do not erase known dimensions.
-                width:
-                  data.width == null
-                    ? loaded.width
-                    : (input as Partial<Project>).width!,
-                length:
-                  data.length == null
-                    ? loaded.length
-                    : (input as Partial<Project>).length!,
-                id: source!,
-                title: project!.title,
-                generatedImage: loaded.generatedImage,
-              },
+              loaded,
               data.change.trim(),
               { id, onDesign: checkpoint, deadline: started + 260_000 },
             );

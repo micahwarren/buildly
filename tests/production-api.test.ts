@@ -3,7 +3,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
 import { createClient } from "@supabase/supabase-js";
-import { executeJob } from "../lib/production/jobs";
+import { executeJob, prepareJob } from "../lib/production/jobs";
 import { consentVersion, generationUser } from "../lib/production/access";
 import { makeDemo, type Project } from "../lib/project";
 import { DesignError } from "../lib/services/image-design";
@@ -106,7 +106,10 @@ async function fixture() {
       app_metadata: {},
       aud: "authenticated",
       created_at: new Date().toISOString(),
-      user_metadata: { ...adultEligibilityChoice(), ai_consent_version: `${consentVersion}:gemini` },
+      user_metadata: {
+        ...adultEligibilityChoice(),
+        ai_consent_version: `${consentVersion}:gemini`,
+      },
     },
   })) as typeof generationUser;
   const design: NonNullable<
@@ -417,4 +420,113 @@ test("revision clarification survives a lost response without another AI call or
   );
   assert.equal(f.jobs.get(internalId)?.failure_message, null);
   assert.equal(f.jobs.get(internalId)?.failure_code, "internal");
+});
+
+test("minimal and legacy revision requests use authoritative saved context and queue only the requested change", async () => {
+  const f = await fixture();
+  const parent = makeDemo({
+    id: key,
+    description: "Cedar patio with a bench",
+    originalImage: f.photo,
+    generatedImage: f.photo,
+    width: 12,
+    length: 16,
+  });
+  f.projects.set(key, parent);
+  const bodies = [
+    { id: key, change: "Add black railings" },
+    {
+      id: key,
+      change: "Add black railings",
+      description: "An unrelated pool",
+      originalImage: "replacement",
+      generatedImage: "replacement",
+      width: 99,
+      length: 199,
+      referenceImages: [],
+      materialImages: [],
+      projectType: "Pool",
+    },
+  ];
+  for (const [index, body] of bodies.entries()) {
+    const id =
+      index === 0
+        ? "77777777-7777-4777-8777-777777777777"
+        : "88888888-8888-4888-8888-888888888888";
+    const request = () =>
+      new Request("https://fixture.test/api/jobs?kind=refine", {
+        method: "POST",
+        headers: { "idempotency-key": id },
+        body: JSON.stringify(body),
+      });
+    const prepared = await prepareJob(request(), "refine", {
+      authorize: f.authorize,
+    });
+    assert.deepEqual(JSON.parse(prepared.text), {
+      id: key,
+      change: body.change,
+    });
+    assert.deepEqual(prepared.input, {});
+    let calls = 0;
+    const deps = {
+      authorize: f.authorize,
+      refine: async (p: Project, change: string) => {
+        calls++;
+        assert.equal(p.description, parent.description);
+        assert.equal(p.projectType, parent.projectType);
+        assert.equal(p.width, 12);
+        assert.equal(p.length, 16);
+        assert.equal(p.originalImage, f.photo);
+        assert.equal(p.generatedImage, f.photo);
+        assert.equal(change, body.change);
+        return {
+          ...p,
+          id,
+          parentProjectId: key,
+          planStatus: "design-based" as const,
+        };
+      },
+    };
+    const result = await executeJob(request(), "refine", true, deps);
+    assert.equal(result.state, "complete");
+    assert.equal(result.project!.parentProjectId, key);
+    await executeJob(request(), "refine", true, deps);
+    assert.equal(calls, 1);
+    assert.deepEqual(f.projects.get(key), parent);
+  }
+});
+
+test("an older selected revision retains its own image while recovering the original project request", async () => {
+  const f = await fixture();
+  const child = "99999999-9999-4999-8999-999999999999";
+  const root = makeDemo({
+    id: key,
+    description: "An accessible cedar patio with a built-in bench",
+    originalImage: f.photo,
+    generatedImage: f.photo,
+  });
+  const selected = makeDemo({
+    id: child,
+    parentProjectId: key,
+    description: "The same patio with black railings",
+    originalImage: f.photo,
+    generatedImage: f.photo,
+  });
+  f.projects.set(key, root);
+  f.projects.set(child, selected);
+  const req = new Request("https://fixture.test/api/jobs?kind=refine", {
+    method: "POST",
+    body: JSON.stringify({ id: child, change: "Make the railings white" }),
+  });
+  const p = (await prepareJob(req, "refine", { authorize: f.authorize }))
+    .project!;
+  assert.equal(p.id, child);
+  assert.equal(p.description, selected.description);
+  assert.equal(p.generatedImage, selected.generatedImage);
+  assert.equal(p.initialDescription, root.description);
+  assert.equal(
+    f.projects.get(child)!.initialDescription,
+    undefined,
+    "Reading legacy context does not rewrite saved versions",
+  );
 });

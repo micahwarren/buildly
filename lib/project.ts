@@ -11,6 +11,8 @@ export type Project = {
   suggestedTitle?: string;
   projectType: string;
   description: string;
+  initialDescription?: string;
+  revisionInstructions?: string[];
   details?: ProjectDetails;
   shopping?: ShoppingEntry[];
   parentProjectId?: string;

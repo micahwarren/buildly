@@ -1,12 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import sharp from "sharp";
-import { makeDemo } from "../lib/project";
+import { makeDemo as makeProject, type Project } from "../lib/project";
+const makeDemo = (input: Partial<Project>) =>
+  makeProject({
+    description: "A cedar patio beside the existing house",
+    ...input,
+  });
 import { refineProject } from "../lib/services/refine-project";
 import { reviewRevisionDesign } from "../lib/services/revision-audit";
 import { createDesign } from "../lib/services/image-design";
 import { DesignError } from "../lib/services/image-design";
-test("the image editor receives the current concept first and the original property as a separate anchor", async () => {
+test("a revision edits the current concept without attaching the original site as a competing base", async () => {
   const image = async (color: string) =>
     (
       await sharp({
@@ -23,6 +28,7 @@ test("the image editor receives the current concept first and the original prope
       ...makeDemo({ originalImage: "data:image/jpeg;base64," + current }),
       siteImage: "data:image/jpeg;base64," + site,
       refinement: "Add railings",
+      previousDescription: "A cedar deck with a built-in bench",
     },
     false,
     {
@@ -31,20 +37,21 @@ test("the image editor receives the current concept first and the original prope
       fetcher: async (_url, init) => {
         const body = JSON.parse(String(init?.body)),
           parts = body.contents[0].parts;
-        assert.equal(
-          parts.filter((p: { inlineData?: unknown }) => p.inlineData).length,
-          2,
+        const photos = parts.filter(
+          (p: { inlineData?: unknown }) => p.inlineData,
         );
-        assert.match(parts[1].text, /ORIGINAL SITE/);
+        assert.equal(photos.length, 1);
         const a = await sharp(
-            Buffer.from(parts[0].inlineData.data, "base64"),
-          ).stats(),
-          b = await sharp(
-            Buffer.from(parts[2].inlineData.data, "base64"),
-          ).stats();
+          Buffer.from(photos[0].inlineData.data, "base64"),
+        ).stats();
         assert.ok(a.dominant.r > 200 && a.dominant.b < 50);
-        assert.ok(b.dominant.b > 200 && b.dominant.r < 50);
-        assert.match(parts.at(-1).text, /Preserve the current design/);
+        assert.match(parts.at(-1).text, /CURRENT SAVED DESIGN/);
+        assert.match(parts.at(-1).text, /A cedar deck with a built-in bench/);
+        assert.match(
+          parts.at(-1).text,
+          /Change only what the latest request explicitly targets/,
+        );
+        assert.doesNotMatch(parts.at(-1).text, /Add the requested project/);
         return Response.json({
           candidates: [
             {
@@ -124,7 +131,8 @@ test("a visibly defective revision gets one bounded correction from the prior de
     design: async (input) => {
       designs++;
       assert.equal(input.originalImage, "existing-deck");
-      assert.equal(input.siteImage, "site");
+      assert.equal(input.siteImage, undefined);
+      assert.equal(input.previousDescription, p.description);
       if (designs === 2)
         assert.deepEqual(input.reviewFeedback, ["Floating rail segment"]);
       return {
@@ -409,4 +417,66 @@ test("a provider-restricted visual review is not a request to regenerate the sam
     },
   );
   assert.equal(calls, 1);
+});
+
+test("successive revisions edit the selected saved version and retain initial and previous instructions", async () => {
+  const initial = makeDemo({
+    description: "Cedar patio with a built-in bench; preserve the brick house",
+    originalImage: "site",
+    generatedImage: "current-patio",
+  });
+  const before = structuredClone(initial);
+  const change1 = "Add black railings on the left only",
+    change2 = "Make those railings white";
+  const inputs: Parameters<typeof createDesign>[0][] = [];
+  const revise = async (p: typeof initial, change: string, edited: string) =>
+    refineProject(p, change, {
+      interpret: async () => ({
+        description: "An intentionally terse consolidated summary",
+        width: p.width,
+        length: p.length,
+      }),
+      design: async (input) => {
+        inputs.push(input);
+        return {
+          originalImage: input.originalImage,
+          generatedImage: edited,
+          mode: "ai",
+        };
+      },
+      review: async () => ({ approved: true, issues: [] }),
+      plan: async (p) => {
+        assert.equal(p.generatedImage, edited);
+        return { planStatus: "design-based", materials: [], steps: [] };
+      },
+    });
+  const first = await revise(initial, change1, "black-railing-patio");
+  const second = await revise(first, change2, "white-railing-patio");
+  assert.equal(inputs[0].originalImage, "current-patio");
+  assert.equal(inputs[1].originalImage, "black-railing-patio");
+  assert.equal(inputs[1].initialDescription, initial.description);
+  assert.deepEqual(inputs[1].revisionInstructions, [change1, change2]);
+  assert.deepEqual(second.revisionInstructions, [change1, change2]);
+  assert.equal(second.initialDescription, initial.description);
+  assert.equal(second.parentProjectId, first.id);
+  assert.deepEqual(initial, before);
+});
+
+test("a missing saved design or prior scope never falls back to new-project generation", async () => {
+  for (const source of [
+    makeDemo({ generatedImage: "" }),
+    makeDemo({ description: "" }),
+  ]) {
+    let calls = 0;
+    await assert.rejects(
+      refineProject(source, "Add rails", {
+        interpret: async () => {
+          calls++;
+          throw Error("must not run");
+        },
+      }),
+      (e) => e instanceof DesignError && e.code === "revision_source_missing",
+    );
+    assert.equal(calls, 0);
+  }
 });

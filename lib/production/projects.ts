@@ -37,6 +37,48 @@ export async function ownedProject(
   if (!data) throw new DesignError("This project could not be found.", 404);
   return { ...data.payload, id } as Project;
 }
+/** Recover the original scope for older saved revisions without changing their snapshots. */
+export async function ownedRevisionSource(
+  db: SupabaseClient,
+  user: string,
+  id: string,
+) {
+  const saved = await ownedProject(db, user, id);
+  const source = {
+    ...saved,
+    revisionInstructions: Array.isArray(saved.revisionInstructions)
+      ? saved.revisionInstructions
+          .filter(
+            (value) =>
+              typeof value === "string" && value.trim() && value.length <= 1000,
+          )
+          .slice(-3)
+      : [],
+  };
+  if (
+    typeof source.initialDescription === "string" &&
+    source.initialDescription.trim()
+  )
+    return source;
+  let ancestor: Project = source;
+  const seen = new Set([source.id]);
+  for (let depth = 0; depth < 3 && ancestor.parentProjectId; depth++) {
+    const parent = ancestor.parentProjectId;
+    if (!/^[a-zA-Z0-9-]{1,80}$/.test(parent) || seen.has(parent)) break;
+    seen.add(parent);
+    try {
+      ancestor = await ownedProject(db, user, parent);
+    } catch (error) {
+      if (error instanceof DesignError && error.status === 404) break;
+      throw error;
+    }
+  }
+  return {
+    ...source,
+    initialDescription:
+      ancestor.initialDescription || ancestor.description || source.description,
+  };
+}
 export async function loadProjectImages(
   db: SupabaseClient,
   user: string,
