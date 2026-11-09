@@ -1,5 +1,7 @@
 # Revisions edit the saved design — November 9, 2026
 
+Deployed runtime: `29e9249162218e371492614f29058c87ce83a5e4`, [hosted checks 42573349915](https://github.com/micahwarren/buildly/actions/runs/42573349915) passed. Production alias `site-ai-nomapps.vercel.app` was independently read back on READY deployment `dpl_GjpgwvXGZPQdZKQk5UdMqrNn5JT8`. An unauthenticated minimal revision request was rejected with HTTP 401, before paid generation. No live-generation build flags were active. This service correction is available to existing build 56; the separate popup UI is not in that binary.
+
 The old revision route reused the new-project request parser and merged client-supplied fields over the saved project. The image service received the current image, but its shared prompt also contained new-project instructions and attached the original site as another visual anchor. That implementation attempted an edit; it did not establish that a particular poor revision was caused by only one of these paths.
 
 Revision requests now need only `{ id, change }`. The server resolves the owner-checked saved version, hydrates its current generated image, and retains its scope, details, dimensions and references. Extra fields from older clients cannot replace that context. Original request hashes remain stable for older retry keys, while durable revision payloads contain only the ID and change. Plan recovery still resumes its saved image without another image call.
