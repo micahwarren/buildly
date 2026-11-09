@@ -24,6 +24,9 @@ async function main() {
   const data = `${enc({ alg: "ES256", kid, typ: "JWT" })}.${enc({ iss: process.env.APPLE_SIGN_IN_TEAM_ID || "47LP6F2JXD", iat: Math.floor(Date.now() / 1000) })}`;
   const jwt = `${data}.${sign("sha256", Buffer.from(data), { key, dsaEncoding: "ieee-p1363" }).toString("base64url")}`;
   async function validate(authorization: string) {
+    const syntheticDeviceToken = Buffer.from(
+      "deliberately invalid device token for configuration check",
+    ).toString("base64");
     const r = await fetch(
       "https://api.devicecheck.apple.com/v1/validate_device_token",
       {
@@ -35,15 +38,26 @@ async function main() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          device_token: Buffer.from(
-            "deliberately invalid device token for configuration check",
-          ).toString("base64"),
+          device_token: syntheticDeviceToken,
           transaction_id: randomUUID(),
           timestamp: Date.now(),
         }),
       },
     );
     const t = (await r.text()).trim();
+    // This opt-in probe sends no real device/customer data. Inspect the error
+    // envelope only after removing anything resembling credentials or tokens.
+    // Live customer verification logs continue to contain fixed labels only.
+    const responseEnvelope = t
+      .replaceAll(authorization, "[redacted-auth]")
+      .replaceAll(syntheticDeviceToken, "[redacted-device]")
+      .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+      .replace(/[A-Za-z0-9+/_=.-]{48,}/g, "[redacted]")
+      .slice(0, 1500);
+    console.info("siteai_devicecheck_synthetic_error_envelope", {
+      status: r.status,
+      responseEnvelope,
+    });
     return {
       httpStatus: r.status,
       outcome: deviceCheckReason(t),
