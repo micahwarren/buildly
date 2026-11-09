@@ -2,8 +2,12 @@ import { imageProviderConfig } from "../image-provider";
 import { authenticatedUser } from "../billing/server";
 import { DesignError } from "../services/image-design";
 import { hasAdultEligibility } from "../eligibility";
+import { requireProviderRegion } from "./provider-region";
 export const consentVersion = "2026-11-06";
 export async function generationUser(req: Request, consent = false) {
+  // All current AI paths use Gemini for plans/questions, even with a different
+  // image provider. Reject before account work, reservations or provider calls.
+  if (consent) requireProviderRegion(req);
   return generationAccount(await authenticatedUser(req), consent);
 }
 export async function generationAccount(
