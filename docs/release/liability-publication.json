@@ -1,0 +1,75 @@
+{
+  "verifiedAt": "2026-11-09T18:25:51.588794+00:00",
+  "website": {
+    "deploymentId": "dpl_FA6xpLew5frFtuNLboFBHsr8QXfw",
+    "routes": [
+      {
+        "url": "https://nomappsllc.com/apps/site-ai/privacy",
+        "status": 200,
+        "htmlSha256": "af05ca6adbe325cd7e69718c74cc050256a96f0a3d0d1169ac2c16db030940ac"
+      },
+      {
+        "url": "https://nomappsllc.com/apps/site-ai/terms",
+        "status": 200,
+        "htmlSha256": "a1b84eb577cb88b946c983b5d5eeb5f4741e3ee1dbad177e04b37a7d54abeec7"
+      },
+      {
+        "url": "https://nomappsllc.com/apps/site-ai/refunds",
+        "status": 200,
+        "htmlSha256": "1ef1d2583323d2623a6cc155dadb3371485a7b470b507857928c3183ea0b96bb"
+      }
+    ],
+    "assets": [
+      {
+        "path": "/assets/index-oSxhnIbn.js",
+        "sha256": "a8073f63c2b6126514a2015055564d3b187f604c8986ab9bbabf7bd01d1bd45b",
+        "matchesLocalBuild": true,
+        "containsCurrentPolicy": false,
+        "containsExplicitRisks": false
+      },
+      {
+        "path": "/assets/SiteAILegal-DFWhp71g.js",
+        "sha256": "1dabeeee73387d2d5f93446a9129ec706bd65fd608b4074fdc975026669fcd56",
+        "matchesLocalBuild": true,
+        "containsCurrentPolicy": true,
+        "containsExplicitRisks": true
+      }
+    ]
+  },
+  "api": {
+    "deploymentId": "dpl_7UduChbRVWpUEQAs4RL91QWwzjpw",
+    "routes": [
+      {
+        "url": "https://site-ai-nomapps.vercel.app/privacy",
+        "status": 200,
+        "htmlSha256": "4a61593d5ed0b5886f3bc2bca372c35f8efadc7b11a2327f0b6880350270cb7e",
+        "containsCurrentPolicyDate": true,
+        "containsInjuryAndBudgetRisk": true
+      },
+      {
+        "url": "https://site-ai-nomapps.vercel.app/terms",
+        "status": 200,
+        "htmlSha256": "e13f25be085aaa2c292a95510cb10d5b194e31448c2fe76648f097f6d836ea5f",
+        "containsCurrentPolicyDate": true,
+        "containsInjuryAndBudgetRisk": true,
+        "containsLawfulLimitAndRights": true
+      },
+      {
+        "url": "https://site-ai-nomapps.vercel.app/refunds",
+        "status": 200,
+        "htmlSha256": "95334d8cabbbb18ac1f203dcc5431fe423c353f063e949fe6c148a18a17dba4a",
+        "containsCurrentPolicyDate": true
+      }
+    ]
+  },
+  "checks": {
+    "mobileNodeTests": 91,
+    "apiNodeTests": 163,
+    "websiteBrowserChecks": 52,
+    "localTypecheckLintAndBuild": "passed",
+    "hostedRuns": "failed before creating jobs; not counted as tests",
+    "testFlight": "build 57 remains; newer native changes not delivered",
+    "newPaidBuildStarted": false,
+    "publicReviewSubmitted": false
+  }
+}
