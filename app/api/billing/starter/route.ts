@@ -24,7 +24,12 @@ export async function POST(req: Request) {
         "Update Site AI on your iPhone to verify the starter token.",
         400,
       );
-    return Response.json(await claimStarter(db, user, body.deviceToken), {
+    const result = await claimStarter(db, user, body.deviceToken);
+    console.info("siteai_starter_claim", {
+      status: result.status,
+      added: "added" in result && result.added === true,
+    });
+    return Response.json(result, {
       headers,
     });
   } catch (error) {
