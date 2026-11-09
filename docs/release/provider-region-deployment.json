@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-11-09T17:23:41.509837+00:00",
+  "source": "b9ce04d3bd9d75dccfb5ab8e6d043b2029a5ca4f",
+  "hostedRun": 42663648106,
+  "hostedConclusion": "SUCCESS",
+  "backendTests": 163,
+  "localTypecheck": "PASS",
+  "localLint": "PASS",
+  "localProductionBuild": "PASS",
+  "deployment": "dpl_23bNGG53szkSCgV1C1b93Aqs9R28",
+  "deploymentState": "READY",
+  "productionAlias": "site-ai-nomapps.vercel.app",
+  "aliasVerified": true,
+  "publicUnauthenticatedAndCountrySpoofProbes": "All 401; no AI call",
+  "actualUnsupportedOriginDeviceTest": "Not performed",
+  "temporaryQaFlagsPresent": false,
+  "additionalExpoBuildStarted": false,
+  "paidModelTestRun": false,
+  "publicAppReviewSubmitted": false
+}
