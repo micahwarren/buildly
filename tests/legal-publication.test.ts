@@ -13,6 +13,26 @@ test("refund disclosures preserve Apple's process, recovery without repurchase a
     legal.terms.map((p) => p.text).join(" "),
     /Apple’s Standard End User License Agreement/,
   );
-  for (const document of Object.values(legal))
-    assert.match(document[0].text, /^Last updated November 7, 2026\./);
+  assert.match(legal.refunds[0].text, /^Last updated November 7, 2026\./);
+  for (const document of [legal.privacy, legal.terms])
+    assert.match(document[0].text, /^Last updated November 9, 2026\./);
+  const terms = legal.terms.map((p) => p.text).join(" ");
+  for (const phrase of [
+    "personal injury",
+    "property damage",
+    "budget overruns",
+    "gross negligence",
+    "mandatory consumer guarantees",
+    "non-waivable protections",
+    "after you accept them",
+  ])
+    assert.ok(terms.includes(phrase));
+  assert.match(
+    terms,
+    /only to the extent such liability may lawfully be excluded or limited/,
+  );
+  assert.match(
+    legal.privacy.map((p) => p.text).join(" "),
+    /do not remove your privacy rights or our duties/,
+  );
 });

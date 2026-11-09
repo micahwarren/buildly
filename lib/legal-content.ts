@@ -2,7 +2,7 @@ export const legal = {
   privacy: [
     {
       heading: false,
-      text: "Last updated November 7, 2026. Site AI: Visualize & DIY is operated by Nom Apps LLC. Privacy contact: support@nomappsllc.com.",
+      text: "Last updated November 9, 2026. Site AI: Visualize & DIY is operated by Nom Apps LLC. Privacy contact: support@nomappsllc.com.",
     },
     {
       heading: true,
@@ -23,6 +23,14 @@ export const legal = {
     {
       heading: false,
       text: "You can turn AI processing off in Settings to stop new requests. A request already submitted may continue. Your projects are private to your account; they are not posted to a public gallery. Processing by our service providers is still necessary to deliver the features you request.",
+    },
+    {
+      heading: true,
+      text: "AI output and project risks",
+    },
+    {
+      heading: false,
+      text: "AI-generated images, plans, material lists, measurements and cost estimates can be inaccurate, incomplete or unsuitable for your property. Relying on incorrect output can cause injury, property damage, wasted purchases, delays or budget overruns. Verify the output and obtain qualified professional advice before hazardous or regulated work. Our Terms & Conditions explain responsibility for project decisions and the limits of liability to the extent permitted by law. These limits do not remove your privacy rights or our duties under data-protection law.",
     },
     {
       heading: true,
@@ -64,7 +72,10 @@ export const legal = {
       heading: false,
       text: "The offer flag and one-way claim records may remain after account deletion or app reinstallation to prevent the same starter offer being claimed again. The account link in the claim record is cleared when the account is deleted. These fingerprints are pseudonymous security data; they are not a promise of complete anonymity. Contact support if you believe an eligibility check is incorrect.",
     },
-    { heading: true, text: "Background projects and optional notifications" },
+    {
+      heading: true,
+      text: "Background projects and optional notifications",
+    },
     {
       heading: false,
       text: "After you tap Create project or Apply changes, our server stores the submitted photos and instructions in a private work queue so generation can continue when you close the app. We automatically retry eligible interrupted requests and finish the plan for the saved design without charging another token or revision. Queue inputs are cleared when processing succeeds or stops; saved projects remain in your account until you delete them. Turning off AI processing stops new requests and further retry attempts after the server checks your choice; work already submitted to a provider may finish.",
@@ -73,7 +84,14 @@ export const legal = {
       heading: false,
       text: "If you enable project notifications, we collect your app push token, platform and account identifier to send a project-ready alert. Expo's push service and Apple Push Notification service or Firebase Cloud Messaging process the push token, generic notification text and account/job/project identifiers used to open your own saved result. We do not include your project photos, description or project title in the notification. You can disable alerts in device settings. Signing out disables this installation's registration when the service can be reached; deleting your account removes its saved push registrations and delivery records. Notifications are optional and not required for projects to finish.",
     },
-    { heading: true, text: "Diagnostics and device storage" },
+    {
+      heading: true,
+      text: "Diagnostics and device storage",
+    },
+    {
+      heading: false,
+      text: "Our hosting provider supplies a coarse country signal derived from the network request so we can limit AI services to supported regions. We do not request GPS permission or add this country signal to your project or work-queue record. Hosting-provider technical logs remain subject to its own applicable settings and retention rules.",
+    },
     {
       heading: false,
       text: "We use request identifiers, status, duration and model-usage records for operation, recovery, security and troubleshooting. Share error reports is optional and off by default. If enabled, it sends the app release, platform and a one-way error fingerprint linked to your account, rather than readable error text or your photos. Eligible optional reports are removed after up to 30 days by the cleanup service. This switch controls Site AI reports; it does not disable Google sign-in processing or its declared analytics.",
@@ -100,6 +118,14 @@ export const legal = {
     },
     {
       heading: true,
+      text: "Project exports",
+    },
+    {
+      heading: false,
+      text: "When you choose Export project, the app prepares a file containing that selected project, including its photos, design, plan, materials and progress. The file is shared or saved only through the destination you choose; we do not create a public download link. Temporary sharing files are removed after the share flow finishes when cleanup succeeds. Copies you intentionally save or send outside Site AI are controlled by you and the destination service, and account deletion cannot remove those outside copies. Select another saved revision to export that version. Contact support for other account-data requests or help with an export.",
+    },
+    {
+      heading: true,
       text: "Your choices and privacy requests",
     },
     {
@@ -120,17 +146,26 @@ export const legal = {
       heading: false,
       text: "Last updated November 7, 2026. This Refund Policy covers Site AI: Visualize & DIY, operated by Nom Apps LLC. Contact: support@nomappsllc.com.",
     },
-    { heading: true, text: "Request a refund from Apple" },
+    {
+      heading: true,
+      text: "Request a refund from Apple",
+    },
     {
       heading: false,
       text: "Apple processes all purchases made in the iPhone and iPad app. To request a refund, visit https://reportaproblem.apple.com, sign in with the Apple Account used for the purchase, select the purchase and follow Apple’s instructions. Apple determines eligibility under its policies and applicable law; we cannot promise approval or an automatic refund.",
     },
-    { heading: true, text: "Missing tokens or duplicate charges" },
+    {
+      heading: true,
+      text: "Missing tokens or duplicate charges",
+    },
     {
       heading: false,
       text: "If Apple confirms a purchase but your tokens are missing, reopen Project tokens while signed into the same Site AI account. Do not buy again to recover that purchase. If the balance is still wrong, contact support@nomappsllc.com with the purchase date and Apple transaction reference. Do not send payment-card details or your Apple password. Apple can help with duplicate or unrecognized charges.",
     },
-    { heading: true, text: "If generation fails" },
+    {
+      heading: true,
+      text: "If generation fails",
+    },
     {
       heading: false,
       text: "A failed request before its design image is saved releases the reserved token or design revision. Once the image is saved, its token or revision is used while we complete the matching materials and plan. Recovering that plan does not use another token or revision. Check the saved project before starting a new one.",
@@ -139,12 +174,18 @@ export const legal = {
       heading: false,
       text: "If we cannot deliver a complete paid project, contact support so we can investigate and help complete the service. You can request a refund through Apple. AI designs and estimates can be inaccurate and need verification; that disclosure does not remove your rights when the service is faulty or not delivered as required by law.",
     },
-    { heading: true, text: "What happens after a refund" },
+    {
+      heading: true,
+      text: "What happens after a refund",
+    },
     {
       heading: false,
       text: "A refunded pack removes its unused tokens. Projects funded by that pack cannot use further paid design revisions, but saved results remain readable. Restoring purchases does not turn used tokens into new unused tokens.",
     },
-    { heading: true, text: "Unused tokens and account deletion" },
+    {
+      heading: true,
+      text: "Unused tokens and account deletion",
+    },
     {
       heading: false,
       text: "Tokens are one-time purchases, do not expire and are not a subscription. Deleting a project, deleting your Site AI account or uninstalling the app does not automatically request a refund from Apple. Account deletion removes the unused balance; contact us about a purchase problem before deleting the account where possible.",
@@ -157,7 +198,10 @@ export const legal = {
       heading: false,
       text: "A free starter or support token is not an Apple purchase, has no cash value and cannot be refunded for money. The same generation-failure and plan-recovery rules apply. This does not affect rights relating to an actual paid purchase or mandatory consumer remedies.",
     },
-    { heading: true, text: "Your consumer rights" },
+    {
+      heading: true,
+      text: "Your consumer rights",
+    },
     {
       heading: false,
       text: "This policy does not limit refund rights, consumer guarantees or other remedies that applicable law does not allow us to exclude. Refund eligibility and available remedies can depend on where you live. Contact support@nomappsllc.com if you need help finding the right process.",
@@ -166,7 +210,7 @@ export const legal = {
   terms: [
     {
       heading: false,
-      text: "Last updated November 7, 2026. These terms cover Site AI: Visualize & DIY, operated by Nom Apps LLC. Support: support@nomappsllc.com.",
+      text: "Last updated November 9, 2026. These terms cover Site AI: Visualize & DIY, operated by Nom Apps LLC. Support: support@nomappsllc.com. These updated terms apply after you accept them; they do not retroactively replace an earlier agreement or remove rights relating to an earlier purchase.",
     },
     {
       heading: true,
@@ -186,19 +230,23 @@ export const legal = {
     },
     {
       heading: true,
-      text: "Designs, measurements and safety",
+      text: "AI designs, plans and safety",
     },
     {
       heading: false,
-      text: "AI images, plans, quantities, prices and suggested measurements can be wrong or incomplete. A photo cannot establish actual dimensions, hidden structure, soil conditions, loads, product specifications or code compliance. Site AI does not provide certified engineering drawings, permits, inspections or a professional approval.",
+      text: "Site AI provides AI-generated visual concepts, planning suggestions, material lists and preliminary estimates. Images, plans, quantities, measurements and product recommendations may be wrong, incomplete, inconsistent or unsuitable for your property. An image is not a measured site survey, proof of feasibility or a safe construction specification. Site AI does not provide certified engineering drawings, permits, inspections or professional approval.",
     },
     {
       heading: false,
-      text: "Verify measurements, quantities, product instructions, local rules and site conditions before buying or building. Review the plan’s questions, checks and stop conditions. Use qualified professionals for structural, electrical, gas, plumbing and other regulated or hazardous work. Do not rely on an AI concept as authorization to start unsafe work.",
+      text: "You are responsible for your project decisions and for independently checking the output before buying materials or starting work. Verify actual measurements, site conditions, materials, quantities, product compatibility, manufacturer instructions, local rules and necessary permits. Review every question, check and stop condition. Do not rely on Site AI as the sole basis for construction or safety decisions.",
     },
     {
       heading: false,
-      text: "Cost and time estimates are planning allowances, not live retailer quotes or guaranteed prices/schedules. Unpriced items may be excluded from partial totals. Labor, taxes, delivery, rentals and permits are excluded unless a plan expressly includes them.",
+      text: "Structural or load-bearing work, decks and guards, stairs, electrical, gas, plumbing, excavation and other regulated or hazardous work require the appropriate qualified professional and any required design, permit or inspection. Do not start or continue such work while specifications or safety conditions remain unresolved. An AI image or plan is not permission to carry out unsafe work.",
+    },
+    {
+      heading: false,
+      text: "Budgets, prices, quantities and timelines are estimates, not live retailer quotes, guaranteed totals or promises that a project will stay within budget. Actual costs can increase because of incorrect quantities, omitted materials, unsuitable products, hidden conditions, local prices, waste, rework, delays or additional professional services. Labor, taxes, shipping, delivery, rentals, permits and other items are excluded unless expressly included. Confirm supplier prices and the complete scope, and plan for contingency costs before committing money.",
     },
     {
       heading: true,
@@ -220,7 +268,10 @@ export const legal = {
       heading: false,
       text: "Eligible new accounts on supported iPhones and iPads can claim one free starter token for one project, including its design, materials, plan and up to three design revisions. No purchase or subscription is required for this token. The offer is limited to one per verified sign-in identity and supported device; creating another account, changing an email or reinstalling does not renew the offer. Apple DeviceCheck and limited one-way identity records enforce eligibility. A one-time launch token is also added to accounts existing at the launch-grant cutoff. Complimentary tokens do not expire, cannot be transferred or exchanged for cash, and are removed with the account. Contact support if the check fails or you need help completing your free project.",
     },
-    { heading: true, text: "Purchase problems and refunds" },
+    {
+      heading: true,
+      text: "Purchase problems and refunds",
+    },
     {
       heading: false,
       text: "If a purchase or plan is missing, open Project tokens to check your balance, or contact support@nomappsllc.com so we can investigate and help complete the service. Apple handles App Store payment/refund requests under its rules. If a complete paid project cannot be delivered, contact us for help and use Apple’s refund process where appropriate. Our Refund Policy explains missing purchases and failed projects in more detail. These terms do not exclude mandatory consumer remedies.",
@@ -246,12 +297,28 @@ export const legal = {
       text: "Do not use the service unlawfully, attempt to access another account, bypass purchase/security/request limits or submit abusive material. We may restrict use that threatens the service or others. Requests depend on third-party availability and may be limited for capacity or abuse prevention. An unfinished local draft is not a promise that work was received or saved by the server.",
     },
     {
+      heading: false,
+      text: "When using Gemini-powered features, you must also comply with the applicable Google APIs Terms of Service (https://developers.google.com/terms), Gemini API Additional Terms (https://aistudio.google.com/docs/terms), and Generative AI Prohibited Use Policy (https://policies.google.com/terms/generative-ai/use-policy). Do not request prohibited uses or attempt to bypass provider safety controls. These requirements do not authorize a use that Google prohibits.",
+    },
+    {
       heading: true,
-      text: "Responsibility and changes",
+      text: "Responsibility and limits of liability",
     },
     {
       heading: false,
-      text: "To the extent permitted by law, the service is provided without a promise of uninterrupted availability or error-free output. Nothing in these terms excludes liability, consumer guarantees, privacy rights or other protections that applicable law does not allow us to exclude. Material term changes will be notified appropriately; the current version is available in the app.",
+      text: "To the fullest extent permitted by applicable law, Site AI is provided without a guarantee of accurate or error-free output, fitness for a particular project, safe or code-compliant construction, uninterrupted availability, completion dates or budget results.",
+    },
+    {
+      heading: false,
+      text: "To the fullest extent permitted by applicable law, Nom Apps LLC is not liable for losses, costs or harm arising from reliance on inaccurate, incomplete or unsuitable AI-generated images, plans, measurements, instructions, material quantities or estimates. This includes personal injury, property damage, financial loss, wasted materials, replacement or rework costs, delays and budget overruns, but only to the extent such liability may lawfully be excluded or limited.",
+    },
+    {
+      heading: false,
+      text: "These limits do not exclude or limit liability that the law does not allow us to exclude or limit, including applicable liability for death or personal injury caused by negligence, fraud, intentional misconduct or gross negligence. They do not remove mandatory consumer guarantees, refund remedies, privacy rights or other non-waivable protections. The limits apply only to the extent permitted in your jurisdiction.",
+    },
+    {
+      heading: false,
+      text: "We will notify you appropriately of material changes and seek acceptance where required before applying revised terms to your future use. Your acceptance record identifies the version you accepted; publishing a new policy does not itself mean you accepted new terms.",
     },
     {
       heading: true,
