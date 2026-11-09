@@ -8,6 +8,41 @@ export function starterConfigured() {
     (process.env.STARTER_TOKEN_HASH_KEY?.length || 0) >= 32
   );
 }
+type Stage = "configuration" | "query_two_bits" | "update_two_bits";
+// Log controlled labels only. Device tokens, authorization headers and response
+// bodies must never enter diagnostics.
+function diagnostic(stage: Stage, reason: string, status?: number) {
+  console.warn("siteai_starter_device_check", {
+    stage,
+    reason,
+    ...(status ? { status } : {}),
+  });
+}
+function responseReason(text: string) {
+  switch (text.trim()) {
+    case "Bad Device Token":
+      return "bad_device_token";
+    case "Invalid Authorization Token":
+    case "Bad Authorization Token":
+      return "invalid_authorization";
+    case "Authorization Token Expired":
+      return "authorization_expired";
+    case "Forbidden":
+      return "forbidden";
+    case "Bad Timestamp":
+      return "bad_timestamp";
+    case "Bad Bits":
+      return "bad_bits";
+    case "Bad Transaction Id":
+      return "bad_transaction_id";
+    case "Too Many Requests":
+      return "rate_limited";
+    case "Bit State Not Found":
+      return "bit_state_not_found";
+    default:
+      return "unrecognized_response";
+  }
+}
 export function deviceCheckClient(request: typeof fetch = fetch) {
   const kid = process.env.APPLE_DEVICECHECK_KEY_ID?.trim();
   const pem = process.env.APPLE_DEVICECHECK_PRIVATE_KEY?.replace(/\\n/g, "\n");
@@ -18,7 +53,10 @@ export function deviceCheckClient(request: typeof fetch = fetch) {
       503,
       "starter_unavailable",
     );
-  if (!kid || !pem || !/^[A-Z0-9]{10}$/.test(kid)) throw fail();
+  if (!kid || !pem || !/^[A-Z0-9]{10}$/.test(kid)) {
+    diagnostic("configuration", "missing_key");
+    throw fail();
+  }
   let key;
   try {
     key = createPrivateKey(pem);
@@ -28,6 +66,7 @@ export function deviceCheckClient(request: typeof fetch = fetch) {
     )
       throw fail();
   } catch {
+    diagnostic("configuration", "invalid_private_key");
     throw fail();
   }
   const enc = (x: object) =>
@@ -35,50 +74,61 @@ export function deviceCheckClient(request: typeof fetch = fetch) {
   const message = `${enc({ alg: "ES256", kid, typ: "JWT" })}.${enc({ iss: team, iat: Math.floor(Date.now() / 1000) })}`;
   const jwt = `${message}.${sign("sha256", Buffer.from(message), { key, dsaEncoding: "ieee-p1363" }).toString("base64url")}`;
   const signal = AbortSignal.timeout(25_000);
-  async function post(path: string, token: string, values = {}) {
+  async function post(
+    path: Exclude<Stage, "configuration">,
+    token: string,
+    values = {},
+  ) {
+    let response: Response;
     try {
-      const response = await request(
-        "https://api.devicecheck.apple.com/v1/" + path,
-        {
-          method: "POST",
-          redirect: "error",
-          cache: "no-store",
-          signal,
-          headers: {
-            Authorization: `Bearer ${jwt}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            device_token: token,
-            transaction_id: randomUUID(),
-            timestamp: Date.now(),
-            ...values,
-          }),
+      response = await request("https://api.devicecheck.apple.com/v1/" + path, {
+        method: "POST",
+        redirect: "error",
+        cache: "no-store",
+        signal,
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+          "Content-Type": "application/json",
         },
-      );
-      if (!response.ok) {
-        console.warn("siteai_starter_device_check", {
-          stage: path,
-          status: response.status,
-        });
-        throw fail();
-      }
-      return response;
+        body: JSON.stringify({
+          device_token: token,
+          transaction_id: randomUUID(),
+          timestamp: Date.now(),
+          ...values,
+        }),
+      });
     } catch {
+      diagnostic(path, signal.aborted ? "timeout" : "network_failure");
       throw fail();
     }
+    let text: string;
+    try {
+      text = await response.text();
+    } catch {
+      diagnostic(path, "response_read_failed", response.status);
+      throw fail();
+    }
+    if (!response.ok) {
+      diagnostic(path, responseReason(text), response.status);
+      throw fail();
+    }
+    return text;
   }
   return {
     async used(token: string) {
-      const text = await (await post("query_two_bits", token)).text();
+      const text = await post("query_two_bits", token);
       if (text.trim() === "Bit State Not Found") return false;
       let data;
       try {
         data = JSON.parse(text);
       } catch {
+        diagnostic("query_two_bits", "invalid_json", 200);
         throw fail();
       }
-      if (typeof data.bit0 !== "boolean") throw fail();
+      if (!data || typeof data.bit0 !== "boolean") {
+        diagnostic("query_two_bits", "invalid_bit_state", 200);
+        throw fail();
+      }
       return data.bit0;
     },
     async markUsed(token: string) {

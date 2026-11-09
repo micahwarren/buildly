@@ -12,7 +12,11 @@ export async function claimStarter(
   checker = deviceCheckClient(),
 ) {
   if (!hasAdultEligibility(user.user_metadata))
-    throw new DesignError("Confirm you are 18 or older in the latest Site AI app before claiming a starter token.", 403, "adult_eligibility_required");
+    throw new DesignError(
+      "Confirm you are 18 or older in the latest Site AI app before claiming a starter token.",
+      403,
+      "adult_eligibility_required",
+    );
   if (!starterConfigured())
     throw new DesignError(
       "Starter tokens are not ready yet. Please try again shortly.",
@@ -30,11 +34,18 @@ export async function claimStarter(
   let acquired = false;
   const rpc = async (name: string, values: object) => {
     const result = await db.rpc(name, values);
-    if (result.error)
+    if (result.error) {
+      console.warn("siteai_starter_storage", {
+        stage: name,
+        code: /^[A-Z0-9]{1,8}$/.test(result.error.code || "")
+          ? result.error.code
+          : "unknown",
+      });
       throw new DesignError(
         "Your starter token check could not finish. Please try again shortly.",
         503,
       );
+    }
     return result.data;
   };
   try {

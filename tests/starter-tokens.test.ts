@@ -144,10 +144,18 @@ test("an unacknowledged account cannot begin device checks or receive a starter 
   try {
     const user = owner(a);
     user.user_metadata = {};
-    await assert.rejects(claimStarter(client, user, "fixture", {
-      used: async () => { checks++; return false; },
-      markUsed: async () => { checks++; },
-    }), /18 or older/);
+    await assert.rejects(
+      claimStarter(client, user, "fixture", {
+        used: async () => {
+          checks++;
+          return false;
+        },
+        markUsed: async () => {
+          checks++;
+        },
+      }),
+      /18 or older/,
+    );
     assert.equal(checks, 0);
     assert.equal(await balance(a), 0);
   } finally {
@@ -469,4 +477,54 @@ test("device checks sign a valid P-256 JWT, preserve bit 1, and fail closed on u
     canonicalStarterEmail("First.Last+offer@GoogleMail.com"),
     "firstlast@gmail.com",
   );
+});
+
+test("a first device with no saved bit state is eligible and failures expose only controlled diagnostics", async () => {
+  config();
+  const first = deviceCheckClient(
+    (async () =>
+      new Response("Bit State Not Found", { status: 200 })) as typeof fetch,
+  );
+  assert.equal(await first.used("opaque-private-device-token"), false);
+  const logs: unknown[][] = [];
+  const warn = console.warn;
+  console.warn = (...values: unknown[]) => {
+    logs.push(values);
+  };
+  try {
+    for (const [body, status, reason] of [
+      ["Bad Device Token", 400, "bad_device_token"],
+      ["Invalid Authorization Token", 401, "invalid_authorization"],
+      ["opaque-private-device-token", 503, "unrecognized_response"],
+      ["not-json", 200, "invalid_json"],
+      ["null", 200, "invalid_bit_state"],
+    ] as const) {
+      await assert.rejects(
+        deviceCheckClient(
+          (async () => new Response(body, { status })) as typeof fetch,
+        ).used("opaque-private-device-token"),
+        /could not finish/,
+      );
+      assert.deepEqual(logs.at(-1), [
+        "siteai_starter_device_check",
+        { stage: "query_two_bits", reason, status },
+      ]);
+    }
+    await assert.rejects(
+      deviceCheckClient((async () => {
+        throw Error("secret authorization");
+      }) as typeof fetch).used("opaque-private-device-token"),
+      /could not finish/,
+    );
+    assert.deepEqual(logs.at(-1), [
+      "siteai_starter_device_check",
+      { stage: "query_two_bits", reason: "network_failure" },
+    ]);
+    assert.doesNotMatch(
+      JSON.stringify(logs),
+      /opaque-private-device-token|secret authorization|Bearer/,
+    );
+  } finally {
+    console.warn = warn;
+  }
 });
