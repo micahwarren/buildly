@@ -45,19 +45,6 @@ async function main() {
       },
     );
     const t = (await r.text()).trim();
-    // This opt-in probe sends no real device/customer data. Inspect the error
-    // envelope only after removing anything resembling credentials or tokens.
-    // Live customer verification logs continue to contain fixed labels only.
-    const responseEnvelope = t
-      .replaceAll(authorization, "[redacted-auth]")
-      .replaceAll(syntheticDeviceToken, "[redacted-device]")
-      .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
-      .replace(/[A-Za-z0-9+/_=.-]{48,}/g, "[redacted]")
-      .slice(0, 1500);
-    console.info("siteai_devicecheck_synthetic_error_envelope", {
-      status: r.status,
-      responseEnvelope,
-    });
     return {
       httpStatus: r.status,
       outcome: deviceCheckReason(t),

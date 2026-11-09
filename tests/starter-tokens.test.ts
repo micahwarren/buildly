@@ -530,13 +530,13 @@ test("a first device with no saved bit state is eligible and failures expose onl
   }
 });
 
-test("compact first-device replies complete one real grant transaction and unknown replies cannot bypass eligibility", async () => {
+test("first-device plain-text replies complete one ledger grant and unknown replies cannot bypass eligibility", async () => {
   const { db, client, balance } = await fixture();
   try {
     let updates = 0;
     const checker = deviceCheckClient((async (url) => {
       if (String(url).endsWith("query_two_bits"))
-        return new Response("BitStateNotFound", { status: 200 });
+        return new Response("Failed to find bit state", { status: 200 });
       updates++;
       return new Response("", { status: 200 });
     }) as typeof fetch);
@@ -553,6 +553,7 @@ test("compact first-device replies complete one real grant transaction and unkno
     assert.equal(await balance(a), 1);
     for (const reply of [
       "Bit State Not Found",
+      "Failed to find bit state",
       "BitStateNotFound",
       '"BitStateNotFound"',
       '{"reason":"BitStateNotFound"}',
@@ -584,6 +585,16 @@ test("compact first-device replies complete one real grant transaction and unkno
       /could not finish/,
     );
     assert.equal(deviceCheckReason("BadDeviceToken"), "bad_device_token");
+    assert.equal(
+      deviceCheckReason(
+        "Missing or incorrectly formatted device token payload",
+      ),
+      "bad_device_token",
+    );
+    assert.equal(
+      deviceCheckReason("Unable to verify authorization token"),
+      "invalid_authorization",
+    );
     assert.equal(
       deviceCheckReason("InvalidAuthorizationToken"),
       "invalid_authorization",

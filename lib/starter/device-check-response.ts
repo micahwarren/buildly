@@ -17,9 +17,11 @@ export function deviceCheckReason(text: string) {
   if (typeof value !== "string") return "unrecognized_response";
   switch (value.replace(/\s/g, "")) {
     case "BadDeviceToken":
+    case "Missingorincorrectlyformatteddevicetokenpayload":
       return "bad_device_token";
     case "InvalidAuthorizationToken":
     case "BadAuthorizationToken":
+    case "Unabletoverifyauthorizationtoken":
       return "invalid_authorization";
     case "AuthorizationTokenExpired":
     case "TokenExpired":
@@ -35,6 +37,9 @@ export function deviceCheckReason(text: string) {
     case "TooManyRequests":
       return "rate_limited";
     case "BitStateNotFound":
+    // Apple's first-query response differs from the table's reason label.
+    // https://github.com/PepperHQ/ios-device-check/issues/15
+    case "Failedtofindbitstate":
       return "bit_state_not_found";
     default:
       return "unrecognized_response";
