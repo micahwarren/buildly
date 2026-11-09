@@ -5,6 +5,7 @@ import {
   randomUUID,
   generateKeyPairSync,
 } from "node:crypto";
+import { deviceCheckReason } from "../lib/starter/device-check-response";
 async function main() {
   assert.equal(process.env.SITEAI_DEVICECHECK_QA, "1");
   const kid = process.env.APPLE_DEVICECHECK_KEY_ID?.trim(),
@@ -43,15 +44,11 @@ async function main() {
       },
     );
     const t = (await r.text()).trim();
-    const outcome = [
-      "Bad Device Token",
-      "Invalid Authorization Token",
-      "Bad Authorization Token",
-      "Forbidden",
-    ].includes(t)
-      ? t
-      : "other_response";
-    return { httpStatus: r.status, outcome };
+    return {
+      httpStatus: r.status,
+      outcome: deviceCheckReason(t),
+      compactLabel: /^[A-Za-z]+$/.test(t),
+    };
   }
   const configured = await validate(jwt);
   // A negative control checks whether Apple authenticates the JWT before
@@ -69,7 +66,9 @@ async function main() {
       configured.httpStatus === 400 && control.httpStatus === 401,
   });
   assert.equal(configured.httpStatus, 400);
-  assert.equal(configured.outcome, "Bad Device Token");
+  assert.equal(configured.outcome, "bad_device_token");
+  assert.equal(control.httpStatus, 401);
+  assert.equal(control.outcome, "invalid_authorization");
 }
 void main().catch(() => {
   console.error(

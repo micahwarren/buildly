@@ -1,5 +1,6 @@
 import { createPrivateKey, sign, randomUUID } from "node:crypto";
 import { DesignError } from "../services/image-design";
+import { deviceCheckReason } from "./device-check-response";
 export function starterConfigured() {
   return (
     process.env.STARTER_TOKENS_ENABLED === "true" &&
@@ -17,31 +18,6 @@ function diagnostic(stage: Stage, reason: string, status?: number) {
     reason,
     ...(status ? { status } : {}),
   });
-}
-function responseReason(text: string) {
-  switch (text.trim()) {
-    case "Bad Device Token":
-      return "bad_device_token";
-    case "Invalid Authorization Token":
-    case "Bad Authorization Token":
-      return "invalid_authorization";
-    case "Authorization Token Expired":
-      return "authorization_expired";
-    case "Forbidden":
-      return "forbidden";
-    case "Bad Timestamp":
-      return "bad_timestamp";
-    case "Bad Bits":
-      return "bad_bits";
-    case "Bad Transaction Id":
-      return "bad_transaction_id";
-    case "Too Many Requests":
-      return "rate_limited";
-    case "Bit State Not Found":
-      return "bit_state_not_found";
-    default:
-      return "unrecognized_response";
-  }
 }
 export function deviceCheckClient(request: typeof fetch = fetch) {
   const kid = process.env.APPLE_DEVICECHECK_KEY_ID?.trim();
@@ -109,7 +85,7 @@ export function deviceCheckClient(request: typeof fetch = fetch) {
       throw fail();
     }
     if (!response.ok) {
-      diagnostic(path, responseReason(text), response.status);
+      diagnostic(path, deviceCheckReason(text), response.status);
       throw fail();
     }
     return text;
@@ -117,7 +93,7 @@ export function deviceCheckClient(request: typeof fetch = fetch) {
   return {
     async used(token: string) {
       const text = await post("query_two_bits", token);
-      if (text.trim() === "Bit State Not Found") return false;
+      if (deviceCheckReason(text) === "bit_state_not_found") return false;
       let data;
       try {
         data = JSON.parse(text);

@@ -11,6 +11,7 @@ import {
   starterIdentity,
 } from "../lib/starter/identity";
 import { deviceCheckClient } from "../lib/starter/device-check";
+import { deviceCheckReason } from "../lib/starter/device-check-response";
 
 const a = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const b = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
@@ -526,5 +527,68 @@ test("a first device with no saved bit state is eligible and failures expose onl
     );
   } finally {
     console.warn = warn;
+  }
+});
+
+test("compact first-device replies complete one real grant transaction and unknown replies cannot bypass eligibility", async () => {
+  const { db, client, balance } = await fixture();
+  try {
+    let updates = 0;
+    const checker = deviceCheckClient((async (url) => {
+      if (String(url).endsWith("query_two_bits"))
+        return new Response("BitStateNotFound", { status: 200 });
+      updates++;
+      return new Response("", { status: 200 });
+    }) as typeof fetch);
+    assert.deepEqual(
+      await claimStarter(client, owner(a), "private-device-token", checker),
+      { status: "granted", added: true },
+    );
+    assert.equal(await balance(a), 1);
+    assert.deepEqual(
+      await claimStarter(client, owner(a), "fresh-device-token", checker),
+      { status: "granted", added: false },
+    );
+    assert.equal(updates, 1);
+    assert.equal(await balance(a), 1);
+    for (const reply of [
+      "Bit State Not Found",
+      "BitStateNotFound",
+      '"BitStateNotFound"',
+      '{"reason":"BitStateNotFound"}',
+    ]) {
+      assert.equal(
+        await deviceCheckClient(
+          (async () => new Response(reply, { status: 200 })) as typeof fetch,
+        ).used("token"),
+        false,
+      );
+    }
+    for (const reply of [
+      "No data",
+      '{"bit0":1}',
+      '{"bit0":true,"reason":"BitStateNotFound"}',
+    ]) {
+      const check = deviceCheckClient(
+        (async () => new Response(reply, { status: 200 })) as typeof fetch,
+      );
+      if (reply.includes('"bit0":true'))
+        assert.equal(await check.used("token"), true);
+      else await assert.rejects(check.used("token"), /could not finish/);
+    }
+    await assert.rejects(
+      deviceCheckClient(
+        (async () =>
+          new Response("BitStateNotFound", { status: 401 })) as typeof fetch,
+      ).used("token"),
+      /could not finish/,
+    );
+    assert.equal(deviceCheckReason("BadDeviceToken"), "bad_device_token");
+    assert.equal(
+      deviceCheckReason("InvalidAuthorizationToken"),
+      "invalid_authorization",
+    );
+  } finally {
+    await db.close();
   }
 });
