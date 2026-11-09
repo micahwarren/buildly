@@ -644,6 +644,7 @@ export function unavailablePlan(
         "planning_configuration",
         "planning_access",
         "planning_quota",
+        "planning_not_processed",
       ].includes(error.code || "")
     ),
     planSummary: message,

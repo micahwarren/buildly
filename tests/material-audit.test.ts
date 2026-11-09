@@ -8,8 +8,10 @@ import {
   createDesignPlan,
   type DesignPlan,
   planSchema,
+  unavailablePlan,
 } from "../lib/services/design-plan";
 import { makeDemo } from "../lib/project";
+import { DesignError } from "../lib/services/image-design";
 
 const screws = {
   item: "3 in. Exterior Coated Deck Screws (5 lb. Box)",
@@ -212,4 +214,28 @@ test("unknown prices remain unknown and large unrelated products do not trigger 
       { ...corrected, purchase: { ...corrected.purchase, coverage: 350 } },
     ]).length,
   );
+});
+
+test("a provider-restricted final audit stops without retrying the blocked input", async () => {
+  let requests = 0;
+  await assert.rejects(
+    auditMaterials(makeDemo({}), draft(), {
+      apiKey: "fixture",
+      model: "gemini-2.5-flash",
+      parts: [],
+      materialSchema: planSchema.properties.materials.items,
+      fetcher: async () => {
+        requests++;
+        return Response.json({ promptFeedback: { blockReason: "SAFETY" } });
+      },
+    }),
+    (error) => {
+      assert.ok(error instanceof DesignError);
+      assert.equal(error.status, 422);
+      assert.equal(error.code, "planning_not_processed");
+      assert.equal(unavailablePlan(error.message, error).planRetryable, false);
+      return true;
+    },
+  );
+  assert.equal(requests, 1);
 });

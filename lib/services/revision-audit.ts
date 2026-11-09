@@ -62,8 +62,18 @@ Approve only if the requested visible change is present, the current design is p
       502,
       "revision_review_unavailable",
     );
-  if (result.promptFeedback?.blockReason || c?.finishReason !== "STOP")
-    throw fail();
+  if (
+    result.promptFeedback?.blockReason ||
+    ["SAFETY", "PROHIBITED_CONTENT", "RECITATION"].includes(
+      c?.finishReason || "",
+    )
+  )
+    throw new DesignError(
+      "The revision preview could not be processed. Your previous version is unchanged.",
+      422,
+      "image_not_processed",
+    );
+  if (c?.finishReason !== "STOP") throw fail();
   let data: { approved?: unknown; issues?: unknown };
   try {
     data = parseModelJson(

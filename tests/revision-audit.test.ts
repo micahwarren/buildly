@@ -5,6 +5,7 @@ import { makeDemo } from "../lib/project";
 import { refineProject } from "../lib/services/refine-project";
 import { reviewRevisionDesign } from "../lib/services/revision-audit";
 import { createDesign } from "../lib/services/image-design";
+import { DesignError } from "../lib/services/image-design";
 test("the image editor receives the current concept first and the original property as a separate anchor", async () => {
   const image = async (color: string) =>
     (
@@ -195,4 +196,39 @@ test("a revision rejected twice never reaches the saved-image checkpoint or repl
   assert.equal(saves, 0);
   assert.equal(plans, 0);
   assert.deepEqual(p, before);
+});
+
+test("a provider-restricted visual review is not a request to regenerate the same image", async () => {
+  const image =
+    "data:image/jpeg;base64," +
+    (
+      await sharp({
+        create: { width: 20, height: 20, channels: 3, background: "white" },
+      })
+        .jpeg()
+        .toBuffer()
+    ).toString("base64");
+  let calls = 0;
+  await assert.rejects(
+    reviewRevisionDesign(
+      makeDemo({ originalImage: image, generatedImage: image }),
+      image,
+      "Add railings",
+      {
+        apiKey: "fixture",
+        model: "gemini-2.5-flash",
+        fetcher: async () => {
+          calls++;
+          return Response.json({ promptFeedback: { blockReason: "SAFETY" } });
+        },
+      },
+    ),
+    (error) => {
+      assert.ok(error instanceof DesignError);
+      assert.equal(error.code, "image_not_processed");
+      assert.equal(error.status, 422);
+      return true;
+    },
+  );
+  assert.equal(calls, 1);
 });

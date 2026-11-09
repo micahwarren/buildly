@@ -4,6 +4,7 @@ import { materialPurchase } from "../material-purchase";
 import { materialAuditIssues } from "../material-audit";
 import { requestGemini, parseModelJson } from "./gemini-request";
 import { quantityFormula } from "../quantity-formula";
+import { DesignError } from "./image-design";
 export class MaterialAuditError extends Error {}
 export async function auditMaterials(
   project: Project,
@@ -67,7 +68,18 @@ Deterministic outliers to resolve: ${JSON.stringify(materialAuditIssues(plan.mat
     }[];
   };
   const candidate = data.candidates?.[0];
-  if (data.promptFeedback?.blockReason || candidate?.finishReason !== "STOP")
+  if (
+    data.promptFeedback?.blockReason ||
+    ["SAFETY", "PROHIBITED_CONTENT", "RECITATION"].includes(
+      candidate?.finishReason || "",
+    )
+  )
+    throw new DesignError(
+      "The planning service could not review this design. Your saved image is unchanged.",
+      422,
+      "planning_not_processed",
+    );
+  if (candidate?.finishReason !== "STOP")
     throw new MaterialAuditError("final materials audit did not complete");
   let result: { approved?: unknown; issues?: unknown; corrections?: unknown };
   try {
