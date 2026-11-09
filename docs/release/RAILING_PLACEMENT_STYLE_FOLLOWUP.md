@@ -1,6 +1,6 @@
-# Railing placement and style — prepared, not deployed
+# Railing placement and style — deployed
 
-November 9, 2026 UTC. The owner clarified that the reported railing picture had the wrong placement or style. This follow-up is on the local `railing-placement-style` branch; production still runs the previously documented material/revision audit. Paid generation tests and deployment remain paused.
+November 9, 2026 UTC. The owner clarified that the reported railing picture had the wrong placement or style. After the owner resumed delivery, runtime source `e46f3220cb53704a12a79887cd7e394a020006e2` passed [hosted checks 42568797303](https://github.com/micahwarren/buildly/actions/runs/42568797303) and deployed normally. Production alias `site-ai-nomapps.vercel.app` was read back on READY deployment `dpl_CNpaJFR4PRGxP8ZNZEHTTBLf4pP7`. Build-time live-test flags were checked inactive before publishing; no paid generation test was run.
 
 The edit and refinement prompts now preserve requested railing sides, extent, openings, material, color and profile. Existing door/stair access and unrelated deck features remain anchors. An unspecified style uses a simple compatible concept rather than an invented ornate design. Contradictory requested placement requires clarification.
 
@@ -8,4 +8,4 @@ The final visual reviewer now receives the actual uploaded inspiration and mater
 
 Local validation: typecheck, lint, all 154 backend tests and production build passed. After tightening the blank-issue guard, typecheck/lint and all seven focused revision-audit tests passed again. The integrated mock rejects a wrong-edge white railing, includes both style/finish references, corrects from the same original design, and only saves/plans the accepted candidate. Empty and blank rejection messages stop without saving or generating a second image.
 
-These are mocked provider responses, not evidence that a live model will always choose the correct style or placement. No new paid image was generated, customer project changed, token granted or deployment submitted. A real railing revision still needs acceptance before calling the visual issue resolved. Image review does not certify structural safety or building-code compliance.
+These are mocked provider responses, not evidence that a live model will always choose the correct style or placement. Deployment changed the service for future requests; no paid image was generated, customer project rewritten or token manually granted. A real railing revision still needs acceptance before calling the visual issue resolved. Image review does not certify structural safety or building-code compliance.
